@@ -1,0 +1,45 @@
+{
+  "locality": "Lajpat Nagar",
+  "source": "Cached Demo Benchmark Dataset (Delhi Circle Rate & Market Survey Reference)",
+  "fetched_at": "2026-09-11T00:00:00Z",
+  "expiry": "2026-09-12T00:00:00Z",
+  "sample_count": 4,
+  "actual_listings": [
+    {
+      "listing_id": "LJN-APT-101",
+      "address": "Lajpat Nagar III, New Delhi",
+      "property_type": "Apartment",
+      "price_per_sqft": 14000.0,
+      "area_sqft": 1500.0,
+      "total_price_inr": 21000000.0,
+      "source_reference": "Demo Benchmark Record (Lajpat Nagar Sub-Registrar / Market Survey Reference)"
+    },
+    {
+      "listing_id": "LJN-APT-102",
+      "address": "Lajpat Nagar II, New Delhi",
+      "property_type": "Apartment",
+      "price_per_sqft": 15500.0,
+      "area_sqft": 1300.0,
+      "total_price_inr": 20150000.0,
+      "source_reference": "Demo Benchmark Record (Lajpat Nagar Sub-Registrar / Market Survey Reference)"
+    },
+    {
+      "listing_id": "LJN-HSE-201",
+      "address": "Lajpat Nagar I, New Delhi",
+      "property_type": "Independent House",
+      "price_per_sqft": 18000.0,
+      "area_sqft": 2000.0,
+      "total_price_inr": 36000000.0,
+      "source_reference": "Demo Benchmark Record (Lajpat Nagar Residential Market Reference)"
+    },
+    {
+      "listing_id": "LJN-COM-301",
+      "address": "Central Market, Lajpat Nagar IV, New Delhi",
+      "property_type": "Commercial Space",
+      "price_per_sqft": 32000.0,
+      "area_sqft": 500.0,
+      "total_price_inr": 16000000.0,
+      "source_reference": "Demo Benchmark Record (Lajpat Nagar Commercial Registration Reference)"
+    }
+  ]
+}

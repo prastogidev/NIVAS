@@ -1,0 +1,514 @@
+{
+  "timestamp": "2026-09-11T12:44:59.906791+00:00",
+  "input_directory": "/Users/piyushrastogi/NIVAS/data/unsorted_images",
+  "output_directory": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw",
+  "model_checkpoint": "pretrained_backbone_only",
+  "warning": "These labels are MODEL PREDICTIONS, not ground truth. You MUST review and correct them before using as training data. No fine-tuned checkpoint was found — predictions use the pretrained backbone and are likely unreliable. Human review is essential.",
+  "total_images_found": 25,
+  "sorted_count": 25,
+  "skipped_invalid": 0,
+  "skipped_duplicate": 0,
+  "class_distribution": {
+    "clean": 1,
+    "damp": 7,
+    "algae": 7,
+    "mold": 0,
+    "broken": 10
+  },
+  "dry_run": false,
+  "entries": [
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.32.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.32.jpeg",
+      "sha256": "dfad600041dc2d063f4db4644250061e6ba4315d4022224fa1ea0b6316057766",
+      "predicted_class": "algae",
+      "confidence": 0.248,
+      "class_probabilities": {
+        "clean": 0.1757,
+        "damp": 0.2317,
+        "algae": 0.248,
+        "mold": 0.1589,
+        "broken": 0.1857
+      },
+      "review_status": "corrected",
+      "corrected_class": "broken",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/broken/WhatsApp Image 2026-09-11 at 15.56.32.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:45:46.087596+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.33.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.33.jpeg",
+      "sha256": "70cdd9b76e1848ff303242ec8c1ddbda59894b140581b05c99d42bfc8bf312c5",
+      "predicted_class": "damp",
+      "confidence": 0.2628,
+      "class_probabilities": {
+        "clean": 0.2292,
+        "damp": 0.2628,
+        "algae": 0.1671,
+        "mold": 0.1221,
+        "broken": 0.2188
+      },
+      "review_status": "approved",
+      "corrected_class": "damp",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/damp/WhatsApp Image 2026-09-11 at 15.56.33.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:45:55.013753+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.37 (1).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.37 (1).jpeg",
+      "sha256": "f07c8206a756311dc835aefc3eaf397e92cbf8d420241606926766db15355b64",
+      "predicted_class": "damp",
+      "confidence": 0.2975,
+      "class_probabilities": {
+        "clean": 0.1864,
+        "damp": 0.2975,
+        "algae": 0.224,
+        "mold": 0.1438,
+        "broken": 0.1482
+      },
+      "review_status": "corrected",
+      "corrected_class": "broken",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/broken/WhatsApp Image 2026-09-11 at 15.56.37 (1).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:46:06.854572+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.37.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.37.jpeg",
+      "sha256": "718efc9383ca887260e843d47f548887be1846405397b7093c6948747064516d",
+      "predicted_class": "clean",
+      "confidence": 0.3159,
+      "class_probabilities": {
+        "clean": 0.3159,
+        "damp": 0.1926,
+        "algae": 0.1431,
+        "mold": 0.1418,
+        "broken": 0.2065
+      },
+      "review_status": "corrected",
+      "corrected_class": "damp",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/damp/WhatsApp Image 2026-09-11 at 15.56.37.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:46:22.186855+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.39.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.39.jpeg",
+      "sha256": "cd86e112cac7eec68d030d0abf5b3bb532a9a86f540a79ad745153b00636c363",
+      "predicted_class": "damp",
+      "confidence": 0.2604,
+      "class_probabilities": {
+        "clean": 0.183,
+        "damp": 0.2604,
+        "algae": 0.2137,
+        "mold": 0.1501,
+        "broken": 0.1928
+      },
+      "review_status": "approved",
+      "corrected_class": "damp",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/damp/WhatsApp Image 2026-09-11 at 15.56.39.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:46:27.289293+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.40 (1).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.40 (1).jpeg",
+      "sha256": "57831bfa7f8e9e508f8d44eb07c407f1d4b268ce1f050cefdc4172243d571b58",
+      "predicted_class": "broken",
+      "confidence": 0.2413,
+      "class_probabilities": {
+        "clean": 0.1135,
+        "damp": 0.2231,
+        "algae": 0.225,
+        "mold": 0.1972,
+        "broken": 0.2413
+      },
+      "review_status": "approved",
+      "corrected_class": "broken",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/broken/WhatsApp Image 2026-09-11 at 15.56.40 (1).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:46:35.641202+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.40 (2).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.40 (2).jpeg",
+      "sha256": "87dfbe0c4d3b91a8c8621a98c2bb40ff96b6f21fe44e758c01659fc781ebc3c2",
+      "predicted_class": "algae",
+      "confidence": 0.2334,
+      "class_probabilities": {
+        "clean": 0.1946,
+        "damp": 0.2095,
+        "algae": 0.2334,
+        "mold": 0.1893,
+        "broken": 0.1732
+      },
+      "review_status": "approved",
+      "corrected_class": "algae",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/algae/WhatsApp Image 2026-09-11 at 15.56.40 (2).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:46:49.036018+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.40.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.40.jpeg",
+      "sha256": "ceaa9e349ccb69cbd796019da2779efd0a99d78248ecfa2b58c43e08769ce7ce",
+      "predicted_class": "algae",
+      "confidence": 0.262,
+      "class_probabilities": {
+        "clean": 0.1104,
+        "damp": 0.2214,
+        "algae": 0.262,
+        "mold": 0.16,
+        "broken": 0.246
+      },
+      "review_status": "corrected",
+      "corrected_class": "broken",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/broken/WhatsApp Image 2026-09-11 at 15.56.40.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:46:54.120179+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.41 (1).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.41 (1).jpeg",
+      "sha256": "f314531eb8dedcf4c41f3a62a4616137e42433f0324650468b5c171921a62b47",
+      "predicted_class": "broken",
+      "confidence": 0.2599,
+      "class_probabilities": {
+        "clean": 0.1275,
+        "damp": 0.2264,
+        "algae": 0.2328,
+        "mold": 0.1534,
+        "broken": 0.2599
+      },
+      "review_status": "corrected",
+      "corrected_class": "clean",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/clean/WhatsApp Image 2026-09-11 at 15.56.41 (1).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:47:19.331055+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.41.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.41.jpeg",
+      "sha256": "f5803ab87c8c46d0bae6391d69fcf3e50fc46f1037090aca183e28f34e242aed",
+      "predicted_class": "algae",
+      "confidence": 0.2885,
+      "class_probabilities": {
+        "clean": 0.1405,
+        "damp": 0.2283,
+        "algae": 0.2885,
+        "mold": 0.1684,
+        "broken": 0.1744
+      },
+      "review_status": "corrected",
+      "corrected_class": "damp",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/damp/WhatsApp Image 2026-09-11 at 15.56.41.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:47:25.511218+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.42 (1).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.42 (1).jpeg",
+      "sha256": "64eea0cc4d5969101c0c7a842c4210f6aa5209a4878da937df16ff885703a9d1",
+      "predicted_class": "damp",
+      "confidence": 0.2468,
+      "class_probabilities": {
+        "clean": 0.1707,
+        "damp": 0.2468,
+        "algae": 0.2317,
+        "mold": 0.1411,
+        "broken": 0.2097
+      },
+      "review_status": "corrected",
+      "corrected_class": "algae",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/algae/WhatsApp Image 2026-09-11 at 15.56.42 (1).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:47:32.238360+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.42.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.42.jpeg",
+      "sha256": "adea5a3111f1bd5f415eaf6daafede37cbf169d9bf8838ba05028aec965b6346",
+      "predicted_class": "algae",
+      "confidence": 0.2669,
+      "class_probabilities": {
+        "clean": 0.1417,
+        "damp": 0.1962,
+        "algae": 0.2669,
+        "mold": 0.1543,
+        "broken": 0.2409
+      },
+      "review_status": "corrected",
+      "corrected_class": "damp",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/damp/WhatsApp Image 2026-09-11 at 15.56.42.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:47:38.640695+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.43 (1).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.43 (1).jpeg",
+      "sha256": "dc62feed93927b1af7432ced487fcfd0232b13e2c252ab91f02eebd575019056",
+      "predicted_class": "broken",
+      "confidence": 0.2731,
+      "class_probabilities": {
+        "clean": 0.1527,
+        "damp": 0.1207,
+        "algae": 0.2486,
+        "mold": 0.2049,
+        "broken": 0.2731
+      },
+      "review_status": "corrected",
+      "corrected_class": "mold",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/mold/WhatsApp Image 2026-09-11 at 15.56.43 (1).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:47:45.851224+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.43 (2).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.43 (2).jpeg",
+      "sha256": "b747710f3585daf1d0454ef2bb11420f9665764fe65d181098426e26750a5965",
+      "predicted_class": "broken",
+      "confidence": 0.288,
+      "class_probabilities": {
+        "clean": 0.1532,
+        "damp": 0.2121,
+        "algae": 0.2217,
+        "mold": 0.125,
+        "broken": 0.288
+      },
+      "review_status": "approved",
+      "corrected_class": "broken",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/broken/WhatsApp Image 2026-09-11 at 15.56.43 (2).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:47:55.474596+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.43.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.43.jpeg",
+      "sha256": "d9bc933e1bbf5cea11063aa100e6b235ab2105946822faf3c62276d5ce1a2303",
+      "predicted_class": "damp",
+      "confidence": 0.2633,
+      "class_probabilities": {
+        "clean": 0.2047,
+        "damp": 0.2633,
+        "algae": 0.1844,
+        "mold": 0.1742,
+        "broken": 0.1734
+      },
+      "review_status": "approved",
+      "corrected_class": "damp",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/damp/WhatsApp Image 2026-09-11 at 15.56.43.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:47:59.429710+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.44 (1).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.44 (1).jpeg",
+      "sha256": "7330866a5ddf6eda181a9281fb83fc038a30ef8332d136af4c247971851b45ab",
+      "predicted_class": "damp",
+      "confidence": 0.2403,
+      "class_probabilities": {
+        "clean": 0.137,
+        "damp": 0.2403,
+        "algae": 0.1954,
+        "mold": 0.203,
+        "broken": 0.2244
+      },
+      "review_status": "corrected",
+      "corrected_class": "clean",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/clean/WhatsApp Image 2026-09-11 at 15.56.44 (1).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:48:06.243733+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.44.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.44.jpeg",
+      "sha256": "39731031c95eca42a3d0d04208f8057a3950982a0dffa02a70bc7bb9f64753e8",
+      "predicted_class": "broken",
+      "confidence": 0.2839,
+      "class_probabilities": {
+        "clean": 0.131,
+        "damp": 0.2132,
+        "algae": 0.2228,
+        "mold": 0.149,
+        "broken": 0.2839
+      },
+      "review_status": "corrected",
+      "corrected_class": "clean",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/clean/WhatsApp Image 2026-09-11 at 15.56.44.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:48:11.604745+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.45 (1).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.45 (1).jpeg",
+      "sha256": "d54a295a50e3a970809cc7357df1307fb7d1301d4e6bb1950ca8923920f914d3",
+      "predicted_class": "damp",
+      "confidence": 0.2327,
+      "class_probabilities": {
+        "clean": 0.1798,
+        "damp": 0.2327,
+        "algae": 0.202,
+        "mold": 0.1864,
+        "broken": 0.1991
+      },
+      "review_status": "corrected",
+      "corrected_class": "broken",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/broken/WhatsApp Image 2026-09-11 at 15.56.45 (1).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:48:20.916135+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.45 (2).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.45 (2).jpeg",
+      "sha256": "c29e64c7b8f17f62c3ecd712943cc72f4d91becd5944d6b84d679f0fbb2ffcc6",
+      "predicted_class": "broken",
+      "confidence": 0.2775,
+      "class_probabilities": {
+        "clean": 0.2183,
+        "damp": 0.159,
+        "algae": 0.1929,
+        "mold": 0.1522,
+        "broken": 0.2775
+      },
+      "review_status": "corrected",
+      "corrected_class": "algae",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/algae/WhatsApp Image 2026-09-11 at 15.56.45 (2).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:48:27.554646+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 15.56.45.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 15.56.45.jpeg",
+      "sha256": "d68ad7611d9a2dd37af7fd1140e9373e656db53eb3a096e94dbb5f16f0b1053b",
+      "predicted_class": "broken",
+      "confidence": 0.2479,
+      "class_probabilities": {
+        "clean": 0.1578,
+        "damp": 0.1608,
+        "algae": 0.2002,
+        "mold": 0.2333,
+        "broken": 0.2479
+      },
+      "review_status": "approved",
+      "corrected_class": "broken",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/broken/WhatsApp Image 2026-09-11 at 15.56.45.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:48:33.429549+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 17.52.45.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 17.52.45.jpeg",
+      "sha256": "89ada8a034c0b824766a1e7c2615d64982f011d66d9d33e9cd2f85319b09df15",
+      "predicted_class": "broken",
+      "confidence": 0.2387,
+      "class_probabilities": {
+        "clean": 0.1654,
+        "damp": 0.2,
+        "algae": 0.2342,
+        "mold": 0.1617,
+        "broken": 0.2387
+      },
+      "review_status": "approved",
+      "corrected_class": "broken",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/broken/WhatsApp Image 2026-09-11 at 17.52.45.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:48:38.632120+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 17.52.46 (1).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 17.52.46 (1).jpeg",
+      "sha256": "31060e5d6de61387a5f5a3d90ca0d14dea97ac7ae12390a0a253cca361c17bce",
+      "predicted_class": "algae",
+      "confidence": 0.2438,
+      "class_probabilities": {
+        "clean": 0.1553,
+        "damp": 0.2017,
+        "algae": 0.2438,
+        "mold": 0.2336,
+        "broken": 0.1656
+      },
+      "review_status": "corrected",
+      "corrected_class": "clean",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/clean/WhatsApp Image 2026-09-11 at 17.52.46 (1).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:48:44.426802+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 17.52.46 (2).jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 17.52.46 (2).jpeg",
+      "sha256": "770b033c4089a8cb8d3342f06cd4a39ce63549bd012a441e5c46108709e71165",
+      "predicted_class": "broken",
+      "confidence": 0.3421,
+      "class_probabilities": {
+        "clean": 0.1224,
+        "damp": 0.223,
+        "algae": 0.1521,
+        "mold": 0.1605,
+        "broken": 0.3421
+      },
+      "review_status": "corrected",
+      "corrected_class": "clean",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/clean/WhatsApp Image 2026-09-11 at 17.52.46 (2).jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:48:48.116520+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 17.52.46.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 17.52.46.jpeg",
+      "sha256": "2d657a13f75d360ab39b98c6fc6004cf281ee558a20aaaf52741dbf789f053fb",
+      "predicted_class": "algae",
+      "confidence": 0.2418,
+      "class_probabilities": {
+        "clean": 0.1848,
+        "damp": 0.2088,
+        "algae": 0.2418,
+        "mold": 0.1778,
+        "broken": 0.1868
+      },
+      "review_status": "corrected",
+      "corrected_class": "clean",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/clean/WhatsApp Image 2026-09-11 at 17.52.46.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:48:50.778319+00:00"
+    },
+    {
+      "original_filename": "WhatsApp Image 2026-09-11 at 17.52.47.jpeg",
+      "original_path": "/Users/piyushrastogi/NIVAS/data/unsorted_images/WhatsApp Image 2026-09-11 at 17.52.47.jpeg",
+      "sha256": "698e11f9ef2a5e9689d899506f65ef84bcd27bb4aa092afb2427de5496488a99",
+      "predicted_class": "broken",
+      "confidence": 0.2203,
+      "class_probabilities": {
+        "clean": 0.185,
+        "damp": 0.2123,
+        "algae": 0.1862,
+        "mold": 0.1962,
+        "broken": 0.2203
+      },
+      "review_status": "corrected",
+      "corrected_class": "clean",
+      "sorted_path": "/Users/piyushrastogi/NIVAS/data/wall_condition_dataset/raw/clean/WhatsApp Image 2026-09-11 at 17.52.47.jpeg",
+      "status": "sorted",
+      "reviewed_at": "2026-09-11T12:48:52.942165+00:00"
+    }
+  ],
+  "last_reviewed": "2026-09-11T12:48:52.942235+00:00",
+  "review_summary": {
+    "total": 25,
+    "approved": 8,
+    "auto_approved": 0,
+    "corrected": 17,
+    "deleted": 0,
+    "pending": 0,
+    "skipped_invalid": 0,
+    "skipped_duplicate": 0
+  },
+  "finalized_class_distribution": {
+    "broken": 8,
+    "damp": 6,
+    "algae": 3,
+    "clean": 7,
+    "mold": 1
+  }
+}

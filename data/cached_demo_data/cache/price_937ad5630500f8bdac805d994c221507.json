@@ -1,0 +1,49 @@
+{
+  "timestamp": 1789108123.5338528,
+  "data": {
+    "estimated_price_per_sqft": 8500.0,
+    "fairness_score": 85.0,
+    "source": "Cached Demo Benchmark Dataset (Delhi Circle Rate & Market Survey Reference)",
+    "fetched_at": "2026-09-11T00:00:00Z",
+    "expiry": "2026-09-12T00:00:00Z",
+    "sample_count": 4,
+    "actual_listings": [
+      {
+        "listing_id": "DWK-APT-101",
+        "address": "Sector 12, Dwarka, New Delhi",
+        "property_type": "Apartment",
+        "price_per_sqft": 8500.0,
+        "area_sqft": 1450.0,
+        "total_price_inr": 12325000.0,
+        "source_reference": "Demo Benchmark Record (Dwarka Sub-Registrar / Market Survey Reference)"
+      },
+      {
+        "listing_id": "DWK-APT-102",
+        "address": "Sector 6, Dwarka, New Delhi",
+        "property_type": "Apartment",
+        "price_per_sqft": 9200.0,
+        "area_sqft": 1650.0,
+        "total_price_inr": 15180000.0,
+        "source_reference": "Demo Benchmark Record (Dwarka Sub-Registrar / Market Survey Reference)"
+      },
+      {
+        "listing_id": "DWK-HSE-201",
+        "address": "Sector 19, Dwarka, New Delhi",
+        "property_type": "Independent House",
+        "price_per_sqft": 10500.0,
+        "area_sqft": 2200.0,
+        "total_price_inr": 23100000.0,
+        "source_reference": "Demo Benchmark Record (Dwarka DDA Allotment / Market Reference)"
+      },
+      {
+        "listing_id": "DWK-COM-301",
+        "address": "Sector 10 District Centre, Dwarka, New Delhi",
+        "property_type": "Commercial Space",
+        "price_per_sqft": 18500.0,
+        "area_sqft": 850.0,
+        "total_price_inr": 15725000.0,
+        "source_reference": "Demo Benchmark Record (Dwarka Commercial Registration Reference)"
+      }
+    ]
+  }
+}

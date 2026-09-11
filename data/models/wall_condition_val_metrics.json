@@ -1,0 +1,8 @@
+{
+  "status": "cancelled_no_dataset",
+  "message": "Training skipped because no valid real wall-condition images exist in dataset directory.",
+  "valid_samples_count": 0,
+  "final_val_accuracy": null,
+  "final_val_loss": null,
+  "metrics_by_epoch": []
+}

@@ -1,0 +1,90 @@
+/* ==========================================================================
+   NIVAS DESIGN TOKENS — BRAND MARK PALETTE & SURVEY DOCUMENT TEXTURE
+   Extracted directly from the official NIVAS logo:
+     - Deep Navy house mark & primary ink: #1E3A5F
+     - Teal-Green roof & primary interactive accent: #2E7D6B
+     - Leaf-Green accent & verified states ONLY: #5A9B6F
+     - Warm off-white background: #FAF9F6
+     - Content panel background: slightly warmer paper tone #FFFEFB
+     - Thin navy ink border at 15% opacity: rgba(30, 58, 95, 0.15)
+     - Required fields, validation errors & alerts ONLY: #D64545
+     - Secondary/muted text: Charcoal #4A4A4A
+     - Dividers & hairlines: Ledger dotted/perforated lines
+   ========================================================================== */
+
+:root {
+  /* ── Grounded Surface Palette ───────────────────────────────────────────── */
+  /* Background: Warm off-white #FAF9F6 */
+  --bg-page: #FAF9F6;
+  /* Content panel background: warmer paper tone #FFFEFB */
+  --bg-paper: #FFFEFB;
+  --bg-card: #FFFEFB;
+  --bg-subtle: #F2EFE9;
+  --bg-muted: #E8E4DC;
+  --bg-blueprint: #102138;
+
+  /* Primary Deep Navy #1E3A5F (from the logo house mark) */
+  --ink-deep: #1E3A5F;
+  --ink-navy: #152A45;
+  --ink-blueprint: #284D7D;
+  --ink-blueprint-subtle: rgba(30, 58, 95, 0.04);
+  --ink-blueprint-border: rgba(30, 58, 95, 0.15);
+
+  /* Primary Text & Secondary Charcoal #4A4A4A */
+  --text-main: #1E3A5F;
+  --text-muted: #4A4A4A;
+  --text-light: #5A6270;
+  --text-dim: #8A94A6;
+  --text-inverse: #FFFFFF;
+
+  /* Primary Interactive Accent: Teal-Green #2E7D6B (from the logo roof)
+     Used for active tab underlines, links, primary CTA button, focus states */
+  --accent: #2E7D6B;
+  --accent-hover: #256657;
+  --accent-active: #1D5044;
+  --accent-subtle: rgba(46, 125, 107, 0.08);
+  --accent-border: rgba(46, 125, 107, 0.28);
+
+  /* Borders & Dividers: Thin navy ink border at 15% opacity */
+  --border-color: rgba(30, 58, 95, 0.15);
+  --border-hairline: rgba(30, 58, 95, 0.12);
+  --border-strong: rgba(30, 58, 95, 0.25);
+  --border-ink: #1E3A5F;
+  --border-focus: #2E7D6B;
+  --border-light: rgba(30, 58, 95, 0.1);
+
+  /* Meaning-Carrying Semantic States:
+     Leaf-Green #5A9B6F = ONLY where something is genuinely confirmed/verified
+     Alert Red #D64545 = ONLY where required, validation errors, or alerts
+  */
+  --success: #5A9B6F;
+  --success-bg: rgba(90, 155, 111, 0.1);
+  --success-border: #5A9B6F;
+
+  --warning: #C97A2B;
+  --warning-bg: rgba(201, 122, 43, 0.1);
+  --warning-border: #C97A2B;
+
+  --danger: #D64545;
+  --danger-bg: rgba(214, 69, 69, 0.09);
+  --danger-border: #D64545;
+
+  /* ── Typography Stack ───────────────────────────────────────────────────── */
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  /* ── Precision Geometries ───────────────────────────────────────────────── */
+  --radius-card: 2px;
+  --radius-btn: 2px;
+  --radius-input: 2px;
+  --radius-badge: 2px;
+  --radius-none: 0px;
+
+  /* ── Mechanical Shadows ─────────────────────────────────────────────────── */
+  --shadow-subtle: none;
+  --shadow-card: 2px 2px 0px rgba(30, 58, 95, 0.06);
+  --shadow-button: 2px 2px 0px rgba(30, 58, 95, 0.25);
+  --shadow-button-hover: 3px 3px 0px rgba(30, 58, 95, 0.35);
+  --shadow-dossier: 3px 3px 0px rgba(30, 58, 95, 0.1);
+}

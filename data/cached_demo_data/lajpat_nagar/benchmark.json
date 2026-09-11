@@ -1,0 +1,32 @@
+{
+  "locality": "Lajpat Nagar",
+  "city": "New Delhi",
+  "delhi_circle_category": "Category A/B",
+  "base_circle_rate_sqft": 71900,
+  "market_price_stats": {
+    "Apartment": {
+      "median_price_per_sqft": 14000,
+      "min_price_per_sqft": 11500,
+      "max_price_per_sqft": 18500,
+      "sample_listings_count": 28
+    },
+    "Independent House": {
+      "median_price_per_sqft": 18000,
+      "min_price_per_sqft": 14500,
+      "max_price_per_sqft": 24000,
+      "sample_listings_count": 15
+    },
+    "Villa": {
+      "median_price_per_sqft": 22000,
+      "min_price_per_sqft": 17500,
+      "max_price_per_sqft": 30000,
+      "sample_listings_count": 8
+    },
+    "Commercial Space": {
+      "median_price_per_sqft": 32000,
+      "min_price_per_sqft": 24000,
+      "max_price_per_sqft": 45000,
+      "sample_listings_count": 31
+    }
+  }
+}
