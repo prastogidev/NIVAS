@@ -3,10 +3,10 @@ import logging
 from typing import Any
 from fastapi import APIRouter, HTTPException, status
 
-from backend.models.score import ScoreRequest, ScoreResponse, CompareRequest, CompareResponse
+from backend.models.score import ScoreRequest, ScoreResponse, CompareRequest, CompareResponse, PriceBenchmarkResult, AQIResult
 from backend.services.location import fetch_location
 from backend.services.aqi import fetch_aqi
-from backend.services.price import fetch_price_benchmark
+from backend.services.price import fetch_price_benchmark_with_status
 from backend.services.cv_model import run_cv_analysis
 from backend.services.thermal import run_thermal_analysis
 from backend.services.scoring import calculate_overall_score
@@ -36,7 +36,7 @@ async def evaluate_single_property(request: ScoreRequest) -> ScoreResponse:
     lon = location_res.longitude if location_res else None
 
     aqi_task = fetch_aqi(request.address, lat=lat, lon=lon)
-    price_task = fetch_price_benchmark(request.address, request.property_type)
+    price_task = fetch_price_benchmark_with_status(request.address, request.property_type)
     cv_task = run_cv_analysis(request.image_info)
     thermal_task = run_thermal_analysis(request.image_info)
 
@@ -48,11 +48,32 @@ async def evaluate_single_property(request: ScoreRequest) -> ScoreResponse:
         return_exceptions=True,
     )
 
-    aqi_res = safe_result(raw_results[0])
-    price_res = safe_result(raw_results[1])
+    aqi_raw = safe_result(raw_results[0])
+    price_raw = safe_result(raw_results[1])
     cv_res = safe_result(raw_results[2])
     thermal_res = safe_result(raw_results[3])
-    aqi_status = "available" if aqi_res is not None else "unavailable"
+
+    if isinstance(aqi_raw, tuple) and len(aqi_raw) == 3:
+        aqi_res, aqi_status, aqi_err = aqi_raw
+    elif isinstance(aqi_raw, AQIResult):
+        aqi_res = aqi_raw
+        aqi_status = "active" if aqi_res.environmental_score is not None else "data_unavailable"
+        aqi_err = None
+    else:
+        aqi_res = None
+        aqi_status = "provider_not_configured"
+        aqi_err = "AQI provider not configured in environment"
+
+    if isinstance(price_raw, tuple) and len(price_raw) == 3:
+        price_res, price_status, price_err = price_raw
+    elif isinstance(price_raw, PriceBenchmarkResult):
+        price_res = price_raw
+        price_status = "active" if price_res.fairness_score is not None else "data_unavailable"
+        price_err = None
+    else:
+        price_res = None
+        price_status = "data_unavailable"
+        price_err = "Price benchmark data unavailable"
 
     # Compute composite score & report asynchronously based on module outputs
     overall_score, is_provisional, active_count, coverage_pct = await calculate_overall_score(
@@ -95,7 +116,10 @@ async def evaluate_single_property(request: ScoreRequest) -> ScoreResponse:
         location=location_res,
         aqi=aqi_res,
         aqi_status=aqi_status,
+        aqi_error=aqi_err,
         price=price_res,
+        price_status=price_status,
+        price_error=price_err,
         cv=cv_res,
         thermal=thermal_res,
         overall_score=overall_score,

@@ -259,8 +259,12 @@ class TestAutoSortSourceRemoval(unittest.TestCase):
         old_sorted_path = Path(entry["sorted_path"])
         self.assertTrue(old_sorted_path.exists())
 
-        # Correct to class 4 (broken)
-        with patch("builtins.input", side_effect=["4"]):
+        # Correct to a class different from predicted
+        pred_class = entry["predicted_class"]
+        target_idx = "4" if pred_class != "broken" else "0"
+        target_class = WALL_CONDITION_CLASSES[int(target_idx)]
+
+        with patch("builtins.input", side_effect=[target_idx]):
             actions = interactive_review(
                 manifest_path=str(self.manifest_path),
                 output_dir=str(self.output_dir),
@@ -269,16 +273,16 @@ class TestAutoSortSourceRemoval(unittest.TestCase):
 
         self.assertEqual(actions["corrected"], 1)
 
-        # Verify old sorted path is gone and moved to broken folder
+        # Verify old sorted path is gone and moved to target folder
         self.assertFalse(old_sorted_path.exists())
-        broken_file = self.output_dir / "broken" / src_img.name
-        self.assertTrue(broken_file.exists(), "File should be moved to raw/broken/")
+        target_file = self.output_dir / target_class / src_img.name
+        self.assertTrue(target_file.exists(), f"File should be moved to raw/{target_class}/")
 
         # Verify updated manifest
         updated_manifest = load_manifest(self.manifest_path)
         up_entry = updated_manifest["entries"][0]
-        self.assertEqual(up_entry["corrected_class"], "broken")
-        self.assertEqual(up_entry["sorted_path"], str(broken_file.resolve()))
+        self.assertEqual(up_entry["corrected_class"], target_class)
+        self.assertEqual(up_entry["sorted_path"], str(target_file.resolve()))
         self.assertEqual(up_entry["original_filename"], "wall_to_correct.jpg")
 
 

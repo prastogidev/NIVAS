@@ -93,12 +93,11 @@ def calculate_location_score(infra: Optional[InfrastructureSummary]) -> Optional
 
 
 OVERPASS_ENDPOINTS = [
+    "https://lz4.overpass-api.de/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",
-    "https://lz4.overpass-api.de/api/interpreter",
-    "https://z.overpass-api.de/api/interpreter",
-    "https://overpass-api.de/api/interpreter",
 ]
 
 
@@ -186,14 +185,14 @@ async def fetch_overpass_infrastructure(
     lat: float,
     lon: float,
     radius: int = 1200,
-    connect_timeout: float = 2.0,
-    read_timeout: float = 4.0,
+    connect_timeout: float = 2.5,
+    read_timeout: float = 6.0,
     endpoints: Optional[List[str]] = None,
 ) -> Optional[InfrastructureSummary]:
     """
     Fetch real infrastructure elements from OpenStreetMap Overpass API around (lat, lon).
-    Iterates through OVERPASS_ENDPOINTS with fast per-mirror connect/read timeouts.
-    If a mirror fails or times out, immediately falls back to the next mirror.
+    Iterates through OVERPASS_ENDPOINTS with concurrent per-mirror requests.
+    Short-circuits immediately upon first successful mirror response and cancels remaining tasks.
     Returns None if all API mirrors fail or time out (never treats missing API data as zero).
     """
     if lat is None or lon is None:
@@ -202,7 +201,7 @@ async def fetch_overpass_infrastructure(
     query = f"""[out:json][timeout:8];(node["amenity"~"school|hospital|clinic|pharmacy|police|fire_station|bus_station"](around:{radius},{lat},{lon});node["railway"="station"](around:{radius + 800},{lat},{lon});node["highway"~"primary|secondary|trunk|motorway"](around:{radius},{lat},{lon});way["highway"~"primary|secondary|trunk|motorway"](around:{radius},{lat},{lon}););out tags 40;"""
 
     headers = {
-        "User-Agent": "NIVAS-Property-Inspection/1.0 (contact@nivas.app)"
+        "User-Agent": "NIVAS-Inspection-App/1.0"
     }
 
     mirrors = endpoints if endpoints is not None else OVERPASS_ENDPOINTS
@@ -234,9 +233,12 @@ async def fetch_location(address: str) -> Optional[LocationResult]:
     Fetch location data and real infrastructure elements from OpenStreetMap Overpass API.
 
     Guarantees:
-    - If geocoding fails, returns None.
-    - If Overpass API infrastructure cannot be retrieved (mirrors unreachable, timeouts, network issues),
-      fails gracefully by returning LocationResult with risk_score=None and infrastructure=None (never 0).
+    - If geocoding fails (bad/unresolvable address), returns LocationResult with
+      fetch_status='invalid_address' without attempting Overpass retries.
+    - If Overpass API infrastructure cannot be retrieved on attempt 1, retries once
+      automatically after a brief backoff before marking as 'fetch_failed'.
+    - Preserves resolved geocoded coordinates even if infrastructure query fails,
+      ensuring map rendering remains possible while clearly flagging the fetch failure.
     - Never invents or substitutes synthetic location/infrastructure data.
     """
     if not address or not address.strip():
@@ -245,27 +247,80 @@ async def fetch_location(address: str) -> Optional[LocationResult]:
     try:
         geo = await geocode_address(address)
         if geo is None:
-            return None
+            locality_name = address.split(",")[0].strip()
+            logger.warning("Geocoding unfulfilled for address: '%s'", address)
+            return LocationResult(
+                locality=locality_name,
+                latitude=None,
+                longitude=None,
+                risk_score=None,
+                infrastructure=None,
+                fetch_status="invalid_address",
+                error_message="Address could not be geocoded or resolved to coordinates",
+            )
 
         locality_name = address.split(",")[0].strip()
 
-        # Query real infrastructure from Overpass API
+        # Query real infrastructure from Overpass API (Attempt 1)
+        infra = None
         try:
             infra = await fetch_overpass_infrastructure(lat=geo.latitude, lon=geo.longitude)
         except Exception as infra_err:
-            logger.warning("Error fetching Overpass infrastructure for (%s, %s): %s", geo.latitude, geo.longitude, str(infra_err))
-            infra = None
+            logger.warning(
+                "Attempt 1 Overpass infrastructure error for '%s' (%s, %s): %s",
+                locality_name, geo.latitude, geo.longitude, str(infra_err)
+            )
 
-        # Calculate 0-100 location score if infrastructure API data was returned
-        location_score = calculate_location_score(infra) if infra is not None else None
+        # Single automatic retry if attempt 1 timed out or failed
+        if infra is None:
+            logger.info(
+                "Overpass infrastructure fetch unfulfilled on attempt 1 for '%s' (%s, %s); retrying once...",
+                locality_name, geo.latitude, geo.longitude
+            )
+            await asyncio.sleep(0.5)
+            try:
+                infra = await fetch_overpass_infrastructure(lat=geo.latitude, lon=geo.longitude)
+            except Exception as retry_err:
+                logger.warning(
+                    "Attempt 2 (retry) Overpass infrastructure error for '%s' (%s, %s): %s",
+                    locality_name, geo.latitude, geo.longitude, str(retry_err)
+                )
 
-        return LocationResult(
-            locality=locality_name,
-            latitude=geo.latitude,
-            longitude=geo.longitude,
-            risk_score=location_score,
-            infrastructure=infra,
-        )
+        if infra is not None:
+            location_score = calculate_location_score(infra)
+            logger.info("Successfully fetched infrastructure for '%s' (score: %s)", locality_name, location_score)
+            return LocationResult(
+                locality=locality_name,
+                latitude=geo.latitude,
+                longitude=geo.longitude,
+                risk_score=location_score,
+                infrastructure=infra,
+                fetch_status="active",
+                error_message=None,
+            )
+        else:
+            logger.warning(
+                "All Overpass API mirrors failed or timed out after retry for '%s' (%s, %s)",
+                locality_name, geo.latitude, geo.longitude
+            )
+            return LocationResult(
+                locality=locality_name,
+                latitude=geo.latitude,
+                longitude=geo.longitude,
+                risk_score=None,
+                infrastructure=None,
+                fetch_status="fetch_failed",
+                error_message="Civic infrastructure data temporarily unavailable from OpenStreetMap mirrors (request timed out)",
+            )
+
     except Exception as err:
-        logger.error("Error in fetch_location for '%s': %s", address, str(err))
-        return None
+        logger.error("Unexpected error in fetch_location for '%s': %s", address, str(err), exc_info=True)
+        return LocationResult(
+            locality=address.split(",")[0].strip() if address else "Unknown",
+            latitude=None,
+            longitude=None,
+            risk_score=None,
+            infrastructure=None,
+            fetch_status="fetch_failed",
+            error_message=f"Location service error: {str(err)}",
+        )

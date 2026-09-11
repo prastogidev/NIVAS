@@ -11,6 +11,8 @@ from backend.models.score import PriceBenchmarkResult, PropertyListing
 logger = logging.getLogger("nivas.services.price")
 
 # Path to local compliant benchmark repository & cache directory
+# Canonical data location: /NIVAS/data/cached_demo_data
+# From backend/services/price.py: parent.parent.parent is /NIVAS
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "cached_demo_data"
 CACHE_DIR = DATA_DIR / "cache"
 
@@ -115,11 +117,13 @@ def save_price_cache(filepath: Path, result: PriceBenchmarkResult) -> None:
 
 
 # O(1) locality keyword → canonical key lookup table
+# Only includes localities with verified cached benchmark data
 _LOCALITY_KEYWORD_MAP: dict[str, str] = {
-    "dwarka":     "dwarka",
-    "rohini":     "rohini",
-    "lajpat":     "lajpat_nagar",
+    "dwarka":       "dwarka",
+    "rohini":       "rohini",
+    "lajpat":       "lajpat_nagar",
     "lajpat_nagar": "lajpat_nagar",
+    # No verified benchmark data exists for Connaught Place
 }
 
 
@@ -136,16 +140,22 @@ def normalize_locality_key(address: str) -> str:
     return addr_lower.strip().replace(" ", "_")
 
 
-async def fetch_price_benchmark(
+async def fetch_price_benchmark_with_status(
     address: str, property_type: str
-) -> Optional[PriceBenchmarkResult]:
+) -> tuple[Optional[PriceBenchmarkResult], str, Optional[str]]:
     """
     Fetch property price benchmarks and valuation fairness using compliant data sources.
-    Checks TTL cache under data/cached_demo_data/cache/ first to avoid unnecessary hits.
-    Caches only successful non-null responses.
+    Returns:
+        (result, status, error_message)
+        where status is one of:
+        - 'active': benchmark found and fairness score computed
+        - 'not_assessed': address is empty or missing
+        - 'provider_not_configured': PROPSTACK_API_KEY missing AND no local benchmark dataset for locality
+        - 'fetch_failed': Propstack API network/timeout error
+        - 'data_unavailable': Propstack returned 200 with 0 listings / no price, or local dataset has no data for property type
     """
     if not address or not address.strip():
-        return None
+        return None, "not_assessed", "Address is required for price valuation benchmark."
 
     clean_prop_type = property_type.strip() if property_type else "Apartment"
     cache_path = get_cache_filepath(address, clean_prop_type)
@@ -153,16 +163,19 @@ async def fetch_price_benchmark(
     # 1. Check TTL Cache
     cached_res = get_cached_price(cache_path)
     if cached_res is not None:
-        return cached_res
+        return cached_res, "active", None
 
     res: Optional[PriceBenchmarkResult] = None
+    propstack_key = getattr(settings, "PROPSTACK_API_KEY", None)
+    propstack_failed = False
+    propstack_error: Optional[str] = None
 
     # 2. Commercial Propstack API integration if key exists
-    if getattr(settings, "PROPSTACK_API_KEY", None):
+    if propstack_key and propstack_key.strip():
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 url = "https://api.propstack.com/v1/valuation/benchmark"
-                headers = {"Authorization": f"Bearer {settings.PROPSTACK_API_KEY}"}
+                headers = {"Authorization": f"Bearer {propstack_key.strip()}"}
                 params = {"address": address, "property_type": clean_prop_type}
                 resp = await client.get(url, params=params, headers=headers)
                 if resp.status_code == 200:
@@ -175,9 +188,20 @@ async def fetch_price_benchmark(
                             estimated_price_per_sqft=price,
                             fairness_score=fairness,
                             source="Propstack Valuation API",
+                            fetch_status="active",
                         )
+                else:
+                    propstack_failed = True
+                    propstack_error = f"Propstack API returned HTTP status {resp.status_code}"
+                    logger.warning(propstack_error)
+        except httpx.TimeoutException:
+            propstack_failed = True
+            propstack_error = "Propstack API request timed out"
+            logger.warning(propstack_error)
         except Exception as err:
-            logger.warning("Propstack API benchmark lookup failed: %s", str(err))
+            propstack_failed = True
+            propstack_error = f"Propstack API error: {str(err)}"
+            logger.warning(propstack_error)
 
     # 3. Compliant Local Benchmark Datasets fallback if no Propstack result
     if res is None:
@@ -238,12 +262,37 @@ async def fetch_price_benchmark(
                             expiry=expiry_str,
                             sample_count=sample_count_val,
                             actual_listings=actual_listings_list,
+                            fetch_status="active",
                         )
+                    else:
+                        return None, "data_unavailable", f"No price listings or valid median rate found for '{clean_prop_type}' in {address} benchmark."
+                else:
+                    return None, "data_unavailable", f"No benchmark data available for property type '{clean_prop_type}' in {address}."
             except Exception as err:
                 logger.error("Error reading price benchmark file '%s': %s", benchmark_file, str(err))
+                return None, "fetch_failed", f"Error reading local benchmark dataset: {str(err)}"
+        else:
+            # Local benchmark does not exist for this locality
+            if propstack_failed:
+                return None, "fetch_failed", propstack_error or "Propstack API connection failed."
+            elif propstack_key and propstack_key.strip():
+                return None, "data_unavailable", f"No listings or price benchmark found for '{address}' via Propstack."
+            else:
+                return None, "provider_not_configured", "Propstack API key is not configured and no local benchmark dataset exists for this locality."
 
     # 4. Save successful real response to cache
     if res is not None:
         save_price_cache(cache_path, res)
+        return res, "active", None
 
+    return None, "data_unavailable", f"Price benchmark data unavailable for '{address}'."
+
+
+async def fetch_price_benchmark(
+    address: str, property_type: str
+) -> Optional[PriceBenchmarkResult]:
+    """
+    Backward-compatible wrapper returning PriceBenchmarkResult or None.
+    """
+    res, _, _ = await fetch_price_benchmark_with_status(address, property_type)
     return res

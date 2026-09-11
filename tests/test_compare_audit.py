@@ -154,7 +154,7 @@ class TestPropertyCompareAudit(unittest.TestCase):
         self.assertEqual(cv_diff.coverage_status, "only_a_active")
         self.assertEqual(cv_diff.advantage, "Property A")
         self.assertIn("Property A has verified visual wall scan", cv_diff.explanation)
-        self.assertEqual(cv_diff.provenance_b, "Disconnected (No Image)")
+        self.assertEqual(cv_diff.provenance_b, "Not assessed (No Image)")
 
 
 if __name__ == "__main__":

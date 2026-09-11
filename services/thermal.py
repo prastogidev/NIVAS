@@ -84,26 +84,40 @@ async def run_thermal_analysis(image_info=None) -> Optional[ThermalModuleResult]
 
     # ── 2. Try uploaded thermal image (Base64 or URL) ─────────────────────────
     if thermal_matrix is None and image_info:
+        thermal_b64 = getattr(image_info, "thermal_base64", None)
+        thermal_url = getattr(image_info, "thermal_url", None)
+
         img_type = getattr(image_info, "image_type", None) or ""
-        if img_type.lower() in ("thermal", "ir", "infrared", "thermal_scan"):
+        if not thermal_b64 and not thermal_url and img_type.lower() in ("thermal", "ir", "infrared", "thermal_scan"):
+            thermal_b64 = getattr(image_info, "image_base64", None)
+            thermal_url = getattr(image_info, "image_url", None)
+
+        if not thermal_b64 and not thermal_url and getattr(image_info, "images", None):
+            for item in image_info.images:
+                if isinstance(item, dict) and item.get("image_type", "").lower() in ("thermal", "ir", "infrared", "thermal_scan"):
+                    thermal_b64 = item.get("image_base64")
+                    thermal_url = item.get("image_url")
+                    break
+
+        if thermal_b64 or thermal_url:
             try:
                 from io import BytesIO
                 from PIL import Image
                 import base64
 
                 img = None
-                if getattr(image_info, "image_base64", None) and image_info.image_base64.strip():
-                    b64_data = image_info.image_base64.strip()
+                if thermal_b64 and str(thermal_b64).strip():
+                    b64_data = str(thermal_b64).strip()
                     if "," in b64_data:
                         b64_data = b64_data.split(",", 1)[1]
                     img_bytes = base64.b64decode(b64_data)
                     if len(img_bytes) > 0:
                         img = Image.open(BytesIO(img_bytes)).convert("L").resize((32, 24))
                         sensor_status = "Thermal Image (Upload) — Pixel-Normalized to °C"
-                elif getattr(image_info, "image_url", None) and image_info.image_url.strip():
+                elif thermal_url and str(thermal_url).strip():
                     import httpx
                     async with httpx.AsyncClient(timeout=5.0) as client:
-                        resp = await client.get(str(image_info.image_url.strip()))
+                        resp = await client.get(str(thermal_url).strip())
                     if resp.status_code == 200:
                         img = Image.open(BytesIO(resp.content)).convert("L").resize((32, 24))
                         sensor_status = "Thermal Image (URL) — Pixel-Normalized to °C"

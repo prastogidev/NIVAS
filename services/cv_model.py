@@ -1,10 +1,11 @@
 import base64
+import hashlib
 import io
 import logging
 import os
 import tempfile
 from pathlib import Path
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict, Any
 import numpy as np
 from PIL import Image
 import httpx
@@ -35,14 +36,28 @@ def compute_blur_variance(pil_img: Image.Image) -> float:
     return float(np.var(lap))
 
 
-async def load_and_validate_image(image_info: ImageInfo) -> Tuple[Optional[Image.Image], Optional[str]]:
+def _image_signature(b64: Optional[str], url: Optional[str]) -> Optional[str]:
+    """Generate a unique content signature for image deduplication."""
+    if b64 and str(b64).strip():
+        data = str(b64).strip()
+        if "," in data:
+            data = data.split(",", 1)[1]
+        return hashlib.sha256(data.encode("utf-8")).hexdigest()
+    if url and str(url).strip():
+        return f"url:{str(url).strip()}"
+    return None
+
+
+async def _load_candidate_image(
+    image_base64: Optional[str], image_url: Optional[str]
+) -> Tuple[Optional[Image.Image], Optional[str]]:
     """
     Safely load and validate PIL RGB Image from URL or Base64 payload.
     Returns (img, error_message).
     """
     try:
-        if image_info.image_base64 and image_info.image_base64.strip():
-            b64_data = image_info.image_base64.strip()
+        if image_base64 and str(image_base64).strip():
+            b64_data = str(image_base64).strip()
             if "," in b64_data:
                 b64_data = b64_data.split(",", 1)[1]
             img_bytes = base64.b64decode(b64_data)
@@ -53,9 +68,9 @@ async def load_and_validate_image(image_info: ImageInfo) -> Tuple[Optional[Image
             img.load()
             return img, None
 
-        if image_info.image_url and image_info.image_url.strip():
+        if image_url and str(image_url).strip():
             async with httpx.AsyncClient(timeout=8.0) as client:
-                resp = await client.get(image_info.image_url.strip())
+                resp = await client.get(str(image_url).strip())
                 if resp.status_code != 200:
                     return None, f"HTTP {resp.status_code} error downloading property image."
 
@@ -72,142 +87,77 @@ async def load_and_validate_image(image_info: ImageInfo) -> Tuple[Optional[Image
     return None, "No image_url or image_base64 provided."
 
 
-async def run_cv_analysis(image_info: Optional[ImageInfo]) -> Optional[CVModelResult]:
+async def load_and_validate_image(image_info: ImageInfo) -> Tuple[Optional[Image.Image], Optional[str]]:
+    """Safely load and validate PIL RGB Image from ImageInfo. Retained for backwards compatibility."""
+    if not image_info:
+        return None, "No image_info provided."
+    return await _load_candidate_image(image_info.image_base64, image_info.image_url)
+
+
+def _extract_image_candidates(image_info: ImageInfo) -> List[Dict[str, Any]]:
     """
-    Run Computer Vision Wall-Condition Analysis (EfficientNet-B0 Transfer Learning).
-
-    Classes: clean, damp, algae, mold, broken.
-
-    Safeguards:
-    1. Missing Image: Returns None if no image is provided.
-    2. Invalid/Corrupted Image: Logs warning and returns None cleanly.
-    3. Blurry Image: Flags is_blurry=True and returns None score to prevent inaccurate scoring.
-    4. Missing Model Weights: Returns None without fabricating fake predictions or metrics.
+    Extract individual image candidates from ImageInfo while deduplicating
+    and excluding thermal payloads. Preserves original upload order.
     """
-    if image_info and (image_info.video_url or image_info.video_base64):
-        return await run_video_cv_analysis(image_info)
+    candidates: List[Dict[str, Any]] = []
+    seen_signatures = set()
 
-    if not image_info or (not image_info.image_url and not image_info.image_base64):
-        logger.info("No property image provided in request. Returning None.")
-        return None
+    thermal_b64_sig = _image_signature(getattr(image_info, "thermal_base64", None), None)
+    thermal_url_sig = _image_signature(None, getattr(image_info, "thermal_url", None))
 
-    # Step 1: Safe image loading & validation
-    img, err_msg = await load_and_validate_image(image_info)
-    if img is None:
-        logger.warning("Invalid property wall image: %s", err_msg)
-        return None
+    def _is_thermal(img_type: Optional[str], sig: Optional[str]) -> bool:
+        if img_type and str(img_type).strip().lower() in ("thermal", "ir", "infrared", "thermal_scan"):
+            return True
+        if sig and (sig == thermal_b64_sig or sig == thermal_url_sig):
+            return True
+        return False
 
-    # Step 2: Blurry image quality check
-    blur_var = compute_blur_variance(img)
-    if blur_var < BLUR_VARIANCE_THRESHOLD:
-        logger.warning(
-            "Property image is too blurry for accurate defect classification (blur_variance=%.2f < %.2f).",
-            blur_var, BLUR_VARIANCE_THRESHOLD
-        )
-        return CVModelResult(
-            predicted_class="unclear_blurry",
-            confidence=None,
-            defects_detected=["blurry_image_warning"],
-            defect_coverage_ratio=None,
-            structural_score=None,
-            is_blurry=True,
-        )
+    # 1. Process items from image_info.images list first if present
+    raw_images = getattr(image_info, "images", None)
+    if raw_images and isinstance(raw_images, list):
+        for item in raw_images:
+            b64 = item.get("image_base64") if isinstance(item, dict) else getattr(item, "image_base64", None)
+            url = item.get("image_url") if isinstance(item, dict) else getattr(item, "image_url", None)
+            file_name = item.get("file_name") if isinstance(item, dict) else getattr(item, "file_name", None)
+            img_type = item.get("image_type") if isinstance(item, dict) else getattr(item, "image_type", None)
 
-    # Step 3 & 4: Model loading & inference
-    try:
-        device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
-        if MODEL_WEIGHTS_PATH.exists():
-            model = build_efficientnet_b0(num_classes=len(WALL_CONDITION_CLASSES), pretrained=False)
-            state_dict = torch.load(MODEL_WEIGHTS_PATH, map_location=device)
-            model.load_state_dict(state_dict)
-            logger.info("Loaded fine-tuned EfficientNet-B0 checkpoint from %s", MODEL_WEIGHTS_PATH)
-        else:
-            model = build_efficientnet_b0(num_classes=len(WALL_CONDITION_CLASSES), pretrained=True)
-            logger.info("Using pretrained EfficientNet-B0 transfer learning architecture for wall inference")
+            sig = _image_signature(b64, url)
+            if not sig:
+                continue
 
-        model.to(device)
-        model.eval()
+            if _is_thermal(img_type, sig):
+                logger.debug("Skipping thermal image from RGB CV candidate list: %s", file_name)
+                continue
 
-        transform = get_eval_transforms()
-        input_tensor = transform(img).unsqueeze(0).to(device)
+            if sig in seen_signatures:
+                continue
 
-        with torch.no_grad():
-            outputs = model(input_tensor)
-            probs = F.softmax(outputs, dim=1).squeeze(0).cpu().tolist()
+            seen_signatures.add(sig)
+            candidates.append({
+                "image_base64": b64,
+                "image_url": url,
+                "file_name": file_name,
+                "image_type": img_type or "RGB",
+            })
 
-        prob_dict = {cls_name: prob for cls_name, prob in zip(WALL_CONDITION_CLASSES, probs)}
+    # 2. Check primary image_base64 / image_url (for legacy or single image requests)
+    primary_b64 = getattr(image_info, "image_base64", None)
+    primary_url = getattr(image_info, "image_url", None)
+    primary_file_name = getattr(image_info, "file_name", None)
+    primary_type = getattr(image_info, "image_type", None)
 
-        # Predicted class & confidence
-        top_idx = int(np.argmax(probs))
-        top_class = WALL_CONDITION_CLASSES[top_idx]
-        confidence = round(float(probs[top_idx]), 4)
+    primary_sig = _image_signature(primary_b64, primary_url)
+    if primary_sig and not _is_thermal(primary_type, primary_sig):
+        if primary_sig not in seen_signatures:
+            seen_signatures.add(primary_sig)
+            candidates.append({
+                "image_base64": primary_b64,
+                "image_url": primary_url,
+                "file_name": primary_file_name,
+                "image_type": primary_type or "RGB",
+            })
 
-        # Defect detection threshold (>= 25% probability)
-        detected_defects: List[str] = []
-        defect_prob_sum = 0.0
-        for defect_cls in ["damp", "algae", "mold", "broken"]:
-            if prob_dict.get(defect_cls, 0.0) >= 0.25:
-                detected_defects.append(defect_cls)
-                defect_prob_sum += prob_dict[defect_cls]
-
-        defect_coverage_ratio = round(min(1.0, defect_prob_sum), 3)
-
-        # Transparent 0-100 normalized condition score
-        # Weights reflect severity: clean=100, damp=70, algae=50, mold=30, broken=20
-        # broken (20.0) is the most severe — direct physical/structural damage
-        clean_p = prob_dict.get("clean", 1.0)
-        damp_p = prob_dict.get("damp", 0.0)
-        algae_p = prob_dict.get("algae", 0.0)
-        mold_p = prob_dict.get("mold", 0.0)
-        broken_p = prob_dict.get("broken", 0.0)
-
-        structural_score = 100.0 * clean_p + 70.0 * damp_p + 50.0 * algae_p + 30.0 * mold_p + 20.0 * broken_p
-        structural_score = round(max(0.0, min(100.0, structural_score)), 2)
-
-        # Build visual evidence item from the actual analyzed image
-        evidence_item = VisualEvidenceItem(
-            file_name=image_info.file_name,
-            image_url=image_info.image_url,
-            image_base64=image_info.image_base64,
-            predicted_class=top_class,
-            confidence=confidence,
-            is_video_frame=False
-        )
-
-        return CVModelResult(
-            predicted_class=top_class,
-            confidence=confidence,
-            defects_detected=detected_defects if detected_defects else ["none"],
-            defect_coverage_ratio=defect_coverage_ratio,
-            structural_score=structural_score,
-            is_blurry=False,
-            visual_evidence=[evidence_item]
-        )
-    except Exception as err:
-        logger.error("Error executing EfficientNet-B0 CV model inference: %s", str(err))
-        return None
-
-
-async def _load_video_bytes(image_info: ImageInfo) -> Tuple[Optional[bytes], Optional[str]]:
-    """Load an uploaded video without treating its contents as a prediction."""
-    try:
-        if image_info.video_base64 and image_info.video_base64.strip():
-            encoded = image_info.video_base64.strip()
-            if "," in encoded:
-                encoded = encoded.split(",", 1)[1]
-            content = base64.b64decode(encoded)
-            return (content, None) if content else (None, "Corrupted 0-byte Base64 video payload.")
-
-        if image_info.video_url and image_info.video_url.strip():
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.get(image_info.video_url.strip())
-            if response.status_code != 200:
-                return None, f"HTTP {response.status_code} error downloading property video."
-            return (response.content, None) if response.content else (None, "Downloaded 0-byte video file.")
-    except Exception as err:
-        return None, f"Video parsing error ({type(err).__name__}): {str(err)}"
-
-    return None, "No video_url or video_base64 provided."
+    return candidates
 
 
 def _result_from_probabilities(probabilities: List[float]) -> CVModelResult:
@@ -238,6 +188,147 @@ def _result_from_probabilities(probabilities: List[float]) -> CVModelResult:
         structural_score=round(max(0.0, min(100.0, structural_score)), 2),
         is_blurry=False,
     )
+
+
+async def run_cv_analysis(image_info: Optional[ImageInfo]) -> Optional[CVModelResult]:
+    """
+    Run Computer Vision Wall-Condition Analysis (EfficientNet-B0 Transfer Learning).
+
+    Classes: clean, damp, algae, mold, broken.
+
+    Supports:
+    - Multi-image RGB inspection: performs independent inference on each image,
+      records individual visual evidence, and aggregates probability distributions.
+    - Video-based CV analysis: sampled frame aggregation via run_video_cv_analysis.
+    - Single image analysis: 100% backward compatible.
+
+    Safeguards:
+    1. Missing Image: Returns None if no image is provided.
+    2. Invalid/Corrupted Image: Logs warning, skips corrupt image, continues with remaining valid images.
+    3. Blurry Image: Skips blurry frames from score aggregation; flags is_blurry=True if all images are blurry.
+    4. Thermal Filtering: Excludes thermal images from RGB CV pipeline.
+    5. Deduplication: Ensures images are not evaluated multiple times.
+    """
+    if not image_info:
+        logger.info("No image_info provided in request. Returning None.")
+        return None
+
+    if image_info.video_url or image_info.video_base64:
+        return await run_video_cv_analysis(image_info)
+
+    candidates = _extract_image_candidates(image_info)
+    if not candidates:
+        logger.info("No valid RGB property image candidates found. Returning None.")
+        return None
+
+    # Load model weights once for all candidates
+    try:
+        device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+        if MODEL_WEIGHTS_PATH.exists():
+            model = build_efficientnet_b0(num_classes=len(WALL_CONDITION_CLASSES), pretrained=False)
+            state_dict = torch.load(MODEL_WEIGHTS_PATH, map_location=device)
+            model.load_state_dict(state_dict)
+            logger.info("Loaded fine-tuned EfficientNet-B0 checkpoint from %s", MODEL_WEIGHTS_PATH)
+        else:
+            model = build_efficientnet_b0(num_classes=len(WALL_CONDITION_CLASSES), pretrained=True)
+            logger.info("Using pretrained EfficientNet-B0 transfer learning architecture for wall inference")
+
+        model.to(device)
+        model.eval()
+        transform = get_eval_transforms()
+    except Exception as model_err:
+        logger.error("Failed to initialize EfficientNet-B0 model: %s", str(model_err))
+        return None
+
+    valid_probabilities: List[List[float]] = []
+    evidence_items: List[VisualEvidenceItem] = []
+    blurry_count = 0
+
+    for candidate in candidates:
+        file_name = candidate.get("file_name")
+        b64 = candidate.get("image_base64")
+        url = candidate.get("image_url")
+
+        img, err_msg = await _load_candidate_image(b64, url)
+        if img is None:
+            logger.warning("Invalid property image candidate '%s': %s", file_name or "unknown", err_msg)
+            continue
+
+        blur_var = compute_blur_variance(img)
+        if blur_var < BLUR_VARIANCE_THRESHOLD:
+            logger.warning(
+                "Property image '%s' is too blurry for defect classification (blur_variance=%.2f < %.2f).",
+                file_name or "unknown", blur_var, BLUR_VARIANCE_THRESHOLD
+            )
+            blurry_count += 1
+            continue
+
+        try:
+            input_tensor = transform(img).unsqueeze(0).to(device)
+            with torch.no_grad():
+                outputs = model(input_tensor)
+                probs = F.softmax(outputs, dim=1).squeeze(0).cpu().tolist()
+
+            top_idx = int(np.argmax(probs))
+            top_class = WALL_CONDITION_CLASSES[top_idx]
+            confidence = round(float(probs[top_idx]), 4)
+
+            evidence_item = VisualEvidenceItem(
+                file_name=file_name,
+                image_url=url,
+                image_base64=b64,
+                predicted_class=top_class,
+                confidence=confidence,
+                is_video_frame=False
+            )
+            evidence_items.append(evidence_item)
+            valid_probabilities.append(probs)
+        except Exception as inf_err:
+            logger.error("Inference failed for image '%s': %s", file_name or "unknown", str(inf_err))
+            continue
+
+    if not valid_probabilities:
+        if blurry_count > 0:
+            logger.warning("All provided property images (%d) were too blurry for CV analysis.", blurry_count)
+            return CVModelResult(
+                predicted_class="unclear_blurry",
+                confidence=None,
+                defects_detected=["blurry_image_warning"],
+                defect_coverage_ratio=None,
+                structural_score=None,
+                is_blurry=True,
+            )
+        logger.warning("No valid images could be evaluated for CV analysis.")
+        return None
+
+    # Aggregate probabilities across all valid analyzed images
+    averaged_probabilities = np.mean(np.asarray(valid_probabilities), axis=0).tolist()
+    result = _result_from_probabilities(averaged_probabilities)
+    result.visual_evidence = evidence_items
+    return result
+
+
+async def _load_video_bytes(image_info: ImageInfo) -> Tuple[Optional[bytes], Optional[str]]:
+    """Load an uploaded video without treating its contents as a prediction."""
+    try:
+        if image_info.video_base64 and image_info.video_base64.strip():
+            encoded = image_info.video_base64.strip()
+            if "," in encoded:
+                encoded = encoded.split(",", 1)[1]
+            content = base64.b64decode(encoded)
+            return (content, None) if content else (None, "Corrupted 0-byte Base64 video payload.")
+
+        if image_info.video_url and image_info.video_url.strip():
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.get(image_info.video_url.strip())
+            if response.status_code != 200:
+                return None, f"HTTP {response.status_code} error downloading property video."
+            return (response.content, None) if response.content else (None, "Downloaded 0-byte video file.")
+    except Exception as err:
+        return None, f"Video parsing error ({type(err).__name__}): {str(err)}"
+
+    return None, "No video_url or video_base64 provided."
+
 
 
 async def run_video_cv_analysis(image_info: ImageInfo) -> Optional[CVModelResult]:

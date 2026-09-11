@@ -20,6 +20,9 @@ class ImageInfo(BaseOptimizedModel):
     video_base64: Optional[str] = Field(None, description="Base64 encoded property video for frame-based CV analysis")
     video_type: Optional[str] = Field(None, description="Video MIME type, such as video/mp4")
     images: Optional[List[Dict[str, Any]]] = Field(None, description="List of multiple uploaded property images")
+    thermal_base64: Optional[str] = Field(None, description="Dedicated base64 encoded radiometric thermal scan image")
+    thermal_url: Optional[str] = Field(None, description="URL of dedicated radiometric thermal scan image")
+    thermal_file_name: Optional[str] = Field(None, description="Filename of uploaded thermal scan image")
 
 
 class ScoreRequest(BaseOptimizedModel):
@@ -47,6 +50,8 @@ class LocationResult(BaseOptimizedModel):
     longitude: Optional[float] = None
     risk_score: Optional[float] = Field(None, description="Transparent 0-100 infrastructure score (null if API data is missing)")
     infrastructure: Optional[InfrastructureSummary] = None
+    fetch_status: Optional[str] = Field("active", description="Fetch status: 'active', 'fetch_failed', 'timeout', 'invalid_address', 'unassessed'")
+    error_message: Optional[str] = Field(None, description="Human-readable explanation if fetch failed")
 
 
 
@@ -57,6 +62,8 @@ class AQIResult(BaseOptimizedModel):
     environmental_score: Optional[float] = Field(
         None, description="Converted 0-100 environmental score (100=pristine, 0=hazardous)"
     )
+    fetch_status: Optional[str] = Field("active", description="Fetch status: 'active', 'provider_not_configured', 'fetch_failed', 'data_unavailable', 'not_assessed'")
+    error_message: Optional[str] = Field(None, description="Detailed explanation if fetch failed or unavailable")
 
 
 
@@ -79,6 +86,8 @@ class PriceBenchmarkResult(BaseOptimizedModel):
     expiry: Optional[str] = None
     sample_count: Optional[int] = None
     actual_listings: Optional[List[PropertyListing]] = None
+    fetch_status: Optional[str] = Field("active", description="Fetch status: 'active', 'provider_not_configured', 'fetch_failed', 'data_unavailable', 'not_assessed'")
+    error_message: Optional[str] = Field(None, description="Detailed explanation if price benchmark failed or unavailable")
 
 
 
@@ -158,10 +167,16 @@ class ScoreResponse(BaseOptimizedModel):
     location: Optional[LocationResult] = None
     aqi: Optional[AQIResult] = None
     aqi_status: str = Field(
-        "unavailable",
-        description="AQI availability: 'available' only when AQICN returns a geographically verified nearby station",
+        "not_assessed",
+        description="AQI availability: 'active', 'provider_not_configured', 'fetch_failed', 'data_unavailable', 'not_assessed'",
     )
+    aqi_error: Optional[str] = Field(None, description="Human-readable explanation of AQI fetch status or failure")
     price: Optional[PriceBenchmarkResult] = None
+    price_status: str = Field(
+        "not_assessed",
+        description="Price benchmark availability: 'active', 'provider_not_configured', 'fetch_failed', 'data_unavailable', 'not_assessed'",
+    )
+    price_error: Optional[str] = Field(None, description="Human-readable explanation of price benchmark fetch status or failure")
     cv: Optional[CVModelResult] = None
     thermal: Optional[ThermalModuleResult] = None
     overall_score: Optional[float] = Field(None, description="Overall score, null if modules are disconnected")
@@ -191,6 +206,12 @@ class ModuleDifference(BaseOptimizedModel):
     provenance_a: Optional[str] = Field(None, description="Data provenance/source for Property A")
     provenance_b: Optional[str] = Field(None, description="Data provenance/source for Property B")
     coverage_status: str = Field("both_active", description="Coverage status: 'both_active', 'only_a_active', 'only_b_active', 'both_null'")
+    fetch_failed_a: bool = Field(False, description="True if Property A experienced a live data fetch failure or timeout")
+    fetch_failed_b: bool = Field(False, description="True if Property B experienced a live data fetch failure or timeout")
+    status_a: Optional[str] = Field(None, description="Detailed status for Property A: 'active', 'provider_not_configured', 'fetch_failed', 'data_unavailable', 'not_assessed'")
+    status_b: Optional[str] = Field(None, description="Detailed status for Property B: 'active', 'provider_not_configured', 'fetch_failed', 'data_unavailable', 'not_assessed'")
+    error_message_a: Optional[str] = Field(None, description="Detailed explanation if Property A fetch failed")
+    error_message_b: Optional[str] = Field(None, description="Detailed explanation if Property B fetch failed")
 
 
 class CompareResponse(BaseOptimizedModel):
