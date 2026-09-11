@@ -82,28 +82,42 @@ async def run_thermal_analysis(image_info=None) -> Optional[ThermalModuleResult]
     except Exception as hw_err:
         logger.warning("MLX90640 hardware read failed: %s", str(hw_err))
 
-    # ── 2. Try uploaded thermal image URL ─────────────────────────────────────
-    if thermal_matrix is None and image_info and image_info.image_url:
-        try:
-            import httpx
-            from io import BytesIO
-            from PIL import Image
+    # ── 2. Try uploaded thermal image (Base64 or URL) ─────────────────────────
+    if thermal_matrix is None and image_info:
+        img_type = getattr(image_info, "image_type", None) or ""
+        if img_type.lower() in ("thermal", "ir", "infrared", "thermal_scan"):
+            try:
+                from io import BytesIO
+                from PIL import Image
+                import base64
 
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(str(image_info.image_url))
-            if resp.status_code == 200:
-                img = Image.open(BytesIO(resp.content)).convert("L").resize((32, 24))
-                raw = np.array(img, dtype=np.float32)
-                # Normalize pixel values to a plausible thermal range [15°C, 45°C]
-                raw_min, raw_max = raw.min(), raw.max()
-                if raw_max > raw_min:
-                    thermal_matrix = 15.0 + (raw - raw_min) / (raw_max - raw_min) * 30.0
-                else:
-                    thermal_matrix = np.full((24, 32), 25.0, dtype=np.float32)
-                sensor_status = "Thermal Image (URL) — Pixel-Normalized to °C"
-                logger.info("Thermal image loaded and normalized from URL")
-        except Exception as img_err:
-            logger.warning("Thermal image load from URL failed: %s", str(img_err))
+                img = None
+                if getattr(image_info, "image_base64", None) and image_info.image_base64.strip():
+                    b64_data = image_info.image_base64.strip()
+                    if "," in b64_data:
+                        b64_data = b64_data.split(",", 1)[1]
+                    img_bytes = base64.b64decode(b64_data)
+                    if len(img_bytes) > 0:
+                        img = Image.open(BytesIO(img_bytes)).convert("L").resize((32, 24))
+                        sensor_status = "Thermal Image (Upload) — Pixel-Normalized to °C"
+                elif getattr(image_info, "image_url", None) and image_info.image_url.strip():
+                    import httpx
+                    async with httpx.AsyncClient(timeout=5.0) as client:
+                        resp = await client.get(str(image_info.image_url.strip()))
+                    if resp.status_code == 200:
+                        img = Image.open(BytesIO(resp.content)).convert("L").resize((32, 24))
+                        sensor_status = "Thermal Image (URL) — Pixel-Normalized to °C"
+
+                if img is not None:
+                    raw = np.array(img, dtype=np.float32)
+                    raw_min, raw_max = raw.min(), raw.max()
+                    if raw_max > raw_min:
+                        thermal_matrix = 15.0 + (raw - raw_min) / (raw_max - raw_min) * 30.0
+                    else:
+                        thermal_matrix = np.full((24, 32), 25.0, dtype=np.float32)
+                    logger.info("Thermal image loaded and normalized successfully")
+            except Exception as img_err:
+                logger.warning("Thermal image load failed: %s", str(img_err))
 
     # ── 3. No real data available ─────────────────────────────────────────────
     if thermal_matrix is None:

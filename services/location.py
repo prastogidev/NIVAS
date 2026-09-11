@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Optional, List, Dict, Any
 import httpx
@@ -101,6 +102,86 @@ OVERPASS_ENDPOINTS = [
 ]
 
 
+def _parse_overpass_infrastructure(elements: List[Dict[str, Any]]) -> InfrastructureSummary:
+    """Convert a verified Overpass response into the existing response schema."""
+    schools = 0
+    hospitals = 0
+    clinics = 0
+    pharmacies = 0
+    police = 0
+    fire_stations = 0
+    bus_stations = 0
+    railway_stations = 0
+    major_roads = 0
+    nearby_places_set = set()
+
+    for elem in elements:
+        tags = elem.get("tags", {})
+        name = tags.get("name")
+        if name:
+            nearby_places_set.add(name)
+
+        amenity = tags.get("amenity")
+        railway = tags.get("railway")
+        highway = tags.get("highway")
+
+        if amenity == "school":
+            schools += 1
+        elif amenity == "hospital":
+            hospitals += 1
+        elif amenity == "clinic":
+            clinics += 1
+        elif amenity == "pharmacy":
+            pharmacies += 1
+        elif amenity == "police":
+            police += 1
+        elif amenity == "fire_station":
+            fire_stations += 1
+        elif amenity == "bus_station":
+            bus_stations += 1
+
+        if railway == "station":
+            railway_stations += 1
+        if highway in ("primary", "secondary", "trunk", "motorway"):
+            major_roads += 1
+
+    return InfrastructureSummary(
+        schools_count=schools,
+        hospitals_count=hospitals,
+        clinics_count=clinics,
+        pharmacies_count=pharmacies,
+        police_stations_count=police,
+        fire_stations_count=fire_stations,
+        public_transport_count=bus_stations,
+        railway_stations_count=railway_stations,
+        major_roads_count=major_roads,
+        nearby_places=list(nearby_places_set)[:10],
+    )
+
+
+async def _request_overpass_mirror(
+    client: httpx.AsyncClient,
+    endpoint: str,
+    query: str,
+    headers: Dict[str, str],
+) -> tuple[str, Optional[List[Dict[str, Any]]]]:
+    """Return parsed elements from one mirror, or None when that mirror fails."""
+    try:
+        response = await client.post(endpoint, data={"data": query}, headers=headers)
+        if response.status_code != 200:
+            logger.warning("Overpass mirror %s returned HTTP %s", endpoint, response.status_code)
+            return endpoint, None
+        payload = response.json()
+        elements = payload.get("elements", [])
+        if not isinstance(elements, list):
+            logger.warning("Overpass mirror %s returned an invalid elements payload", endpoint)
+            return endpoint, None
+        return endpoint, elements
+    except Exception as err:
+        logger.warning("Overpass mirror %s failed (%s: %s)", endpoint, type(err).__name__, str(err))
+        return endpoint, None
+
+
 async def fetch_overpass_infrastructure(
     lat: float,
     lon: float,
@@ -127,75 +208,22 @@ async def fetch_overpass_infrastructure(
     mirrors = endpoints if endpoints is not None else OVERPASS_ENDPOINTS
     per_mirror_timeout = httpx.Timeout(connect=connect_timeout, read=read_timeout, write=2.0, pool=2.0)
 
-    for endpoint in mirrors:
+    async with httpx.AsyncClient(timeout=per_mirror_timeout) as client:
+        tasks = [
+            asyncio.create_task(_request_overpass_mirror(client, endpoint, query, headers))
+            for endpoint in mirrors
+        ]
         try:
-            async with httpx.AsyncClient(timeout=per_mirror_timeout) as client:
-                resp = await client.post(endpoint, data={"data": query}, headers=headers)
-                if resp.status_code != 200:
-                    logger.warning("Overpass mirror %s returned HTTP %s — trying next mirror", endpoint, resp.status_code)
-                    continue
-
-                data = resp.json()
-                elements = data.get("elements", [])
-
-                schools = 0
-                hospitals = 0
-                clinics = 0
-                pharmacies = 0
-                police = 0
-                fire_stations = 0
-                bus_stations = 0
-                railway_stations = 0
-                major_roads = 0
-                nearby_places_set = set()
-
-                for elem in elements:
-                    tags = elem.get("tags", {})
-                    name = tags.get("name")
-                    if name:
-                        nearby_places_set.add(name)
-
-                    amenity = tags.get("amenity")
-                    railway = tags.get("railway")
-                    highway = tags.get("highway")
-
-                    if amenity == "school":
-                        schools += 1
-                    elif amenity == "hospital":
-                        hospitals += 1
-                    elif amenity == "clinic":
-                        clinics += 1
-                    elif amenity == "pharmacy":
-                        pharmacies += 1
-                    elif amenity == "police":
-                        police += 1
-                    elif amenity == "fire_station":
-                        fire_stations += 1
-                    elif amenity == "bus_station":
-                        bus_stations += 1
-
-                    if railway == "station":
-                        railway_stations += 1
-
-                    if highway in ("primary", "secondary", "trunk", "motorway"):
-                        major_roads += 1
-
-                logger.info("Overpass infrastructure retrieved successfully from mirror: %s", endpoint)
-                return InfrastructureSummary(
-                    schools_count=schools,
-                    hospitals_count=hospitals,
-                    clinics_count=clinics,
-                    pharmacies_count=pharmacies,
-                    police_stations_count=police,
-                    fire_stations_count=fire_stations,
-                    public_transport_count=bus_stations,
-                    railway_stations_count=railway_stations,
-                    major_roads_count=major_roads,
-                    nearby_places=list(nearby_places_set)[:10],
-                )
-        except Exception as err:
-            logger.warning("Overpass mirror %s failed (%s: %s) — proceeding immediately to next mirror", endpoint, type(err).__name__, str(err))
-            continue
+            for completed_task in asyncio.as_completed(tasks):
+                endpoint, elements = await completed_task
+                if elements is not None:
+                    logger.info("Overpass infrastructure retrieved successfully from mirror: %s", endpoint)
+                    return _parse_overpass_infrastructure(elements)
+        finally:
+            for task in tasks:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
 
     logger.warning("All Overpass API mirrors failed or timed out for lat=%s, lon=%s", lat, lon)
     return None

@@ -60,7 +60,7 @@ class OverpassFallbackTests(unittest.IsolatedAsyncioTestCase):
                 endpoints=endpoints,
             )
 
-        self.assertEqual(_FakeAsyncClient.calls, endpoints)
+        self.assertCountEqual(_FakeAsyncClient.calls, endpoints)
         self.assertIsNotNone(infrastructure)
         self.assertEqual(infrastructure.hospitals_count, 1)
         self.assertEqual(infrastructure.schools_count, 1)
@@ -69,5 +69,6 @@ class OverpassFallbackTests(unittest.IsolatedAsyncioTestCase):
             infrastructure.nearby_places,
             ["Fallback Hospital", "Fallback Road", "Fallback School"],
         )
+        self.assertEqual(len(_FakeAsyncClient.timeouts), 1)
         self.assertEqual(_FakeAsyncClient.timeouts[0].connect, 0.1)
         self.assertEqual(_FakeAsyncClient.timeouts[0].read, 0.2)

@@ -11,6 +11,7 @@ from backend.services.cv_model import run_cv_analysis
 from backend.services.thermal import run_thermal_analysis
 from backend.services.scoring import calculate_overall_score
 from backend.services.report import generate_report
+from backend.services.decision import generate_decision_insights
 from backend.services.compare import compare_inspection_results
 
 router = APIRouter(prefix="/api", tags=["scoring"])
@@ -57,7 +58,6 @@ async def evaluate_single_property(request: ScoreRequest) -> ScoreResponse:
     overall_score, is_provisional, active_count, coverage_pct = await calculate_overall_score(
         location=location_res,
         aqi=aqi_res,
-        aqi_status=aqi_status,
         price=price_res,
         cv=cv_res,
         thermal=thermal_res,
@@ -77,9 +77,24 @@ async def evaluate_single_property(request: ScoreRequest) -> ScoreResponse:
         thermal=thermal_res,
     )
 
+    decision_res = generate_decision_insights(
+        address=request.address,
+        property_type=request.property_type,
+        overall_score=overall_score,
+        is_provisional=is_provisional,
+        active_modules_count=active_count,
+        score_weight_coverage=coverage_pct,
+        location=location_res,
+        aqi=aqi_res,
+        price=price_res,
+        cv=cv_res,
+        thermal=thermal_res,
+    )
+
     return ScoreResponse(
         location=location_res,
         aqi=aqi_res,
+        aqi_status=aqi_status,
         price=price_res,
         cv=cv_res,
         thermal=thermal_res,
@@ -87,6 +102,7 @@ async def evaluate_single_property(request: ScoreRequest) -> ScoreResponse:
         is_provisional=is_provisional,
         active_modules_count=active_count,
         score_weight_coverage=coverage_pct,
+        decision_insights=decision_res,
         report=report_res,
     )
 

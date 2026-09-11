@@ -4,7 +4,7 @@ from torchvision import models
 from torchvision.transforms import transforms
 from typing import List
 
-WALL_CONDITION_CLASSES: List[str] = ["clean", "damp", "algae", "mold"]
+WALL_CONDITION_CLASSES: List[str] = ["clean", "damp", "algae", "mold", "broken"]
 
 
 def get_eval_transforms() -> transforms.Compose:
@@ -19,10 +19,10 @@ def get_eval_transforms() -> transforms.Compose:
     ])
 
 
-def build_efficientnet_b0(num_classes: int = 4, pretrained: bool = True) -> nn.Module:
+def build_efficientnet_b0(num_classes: int = 5, pretrained: bool = True) -> nn.Module:
     """
     Build EfficientNet-B0 transfer learning architecture for wall-condition classification.
-    Replaces the final classifier linear layer with num_classes outputs (clean, damp, algae, mold).
+    Replaces the final classifier linear layer with num_classes outputs (clean, damp, algae, mold, broken).
     """
     if pretrained:
         try:

@@ -13,60 +13,20 @@ logger = logging.getLogger("nivas.services.compare")
 
 # ── Shared module comparison helper ──────────────────────────────────────────
 
-def _resolve_advantage(score_a: Optional[float], score_b: Optional[float]) -> tuple[str, Optional[float]]:
-    """Return (advantage_label, abs_delta) for two nullable module scores."""
+def _resolve_advantage(score_a: Optional[float], score_b: Optional[float]) -> Tuple[str, Optional[float], str]:
+    """Return (advantage_label, abs_delta, coverage_status)."""
     if score_a is not None and score_b is not None:
         delta = round(abs(score_a - score_b), 1)
         if score_a > score_b:
-            return "Property A", delta
+            return "Property A", delta, "both_active"
         elif score_b > score_a:
-            return "Property B", delta
-        return "Tie", delta
+            return "Property B", delta, "both_active"
+        return "Tie", delta, "both_active"
     elif score_a is not None:
-        return "Property A", None
+        return "Property A", None, "only_a_active"
     elif score_b is not None:
-        return "Property B", None
-    return "Incomparable", None
-
-
-def _compare_module(
-    *,
-    module_key: str,
-    module_label: str,
-    weight_pct: str,
-    score_a: Optional[float],
-    score_b: Optional[float],
-    reason_both: str,
-    reason_only_a: str,
-    reason_only_b: str,
-    reason_neither: str,
-) -> ModuleDifference:
-    """
-    Generic module-level comparison builder.
-    Accepts pre-formatted reason strings for each branch to keep per-module
-    functions focused purely on metric extraction.
-    """
-    adv, delta = _resolve_advantage(score_a, score_b)
-
-    if score_a is not None and score_b is not None:
-        reason = reason_both
-    elif score_a is not None:
-        reason = reason_only_a
-    elif score_b is not None:
-        reason = reason_only_b
-    else:
-        reason = reason_neither
-
-    return ModuleDifference(
-        module_key=module_key,
-        module_label=module_label,
-        weight_pct=weight_pct,
-        score_a=score_a,
-        score_b=score_b,
-        score_delta=delta,
-        advantage=adv,
-        reason=reason,
-    )
+        return "Property B", None, "only_b_active"
+    return "Incomparable", None, "both_null"
 
 
 # ── Per-module comparison functions ──────────────────────────────────────────
@@ -74,130 +34,295 @@ def _compare_module(
 def _compare_location(loc_a, loc_b, label_a: str, label_b: str) -> ModuleDifference:
     score_a = loc_a.risk_score if loc_a else None
     score_b = loc_b.risk_score if loc_b else None
+    adv, delta, cov_status = _resolve_advantage(score_a, score_b)
 
     infra_a = loc_a.infrastructure if loc_a else None
     infra_b = loc_b.infrastructure if loc_b else None
-    hosp_a  = infra_a.hospitals_count          if infra_a else 0
-    hosp_b  = infra_b.hospitals_count          if infra_b else 0
-    rail_a  = infra_a.railway_stations_count   if infra_a else 0
-    rail_b  = infra_b.railway_stations_count   if infra_b else 0
+    hosp_a = infra_a.hospitals_count if infra_a else 0
+    hosp_b = infra_b.hospitals_count if infra_b else 0
+    school_a = infra_a.schools_count if infra_a else 0
+    school_b = infra_b.schools_count if infra_b else 0
+    rail_a = infra_a.railway_stations_count if infra_a else 0
+    rail_b = infra_b.railway_stations_count if infra_b else 0
+    roads_a = infra_a.major_roads_count if infra_a else 0
+    roads_b = infra_b.major_roads_count if infra_b else 0
 
-    adv, delta = _resolve_advantage(score_a, score_b)
+    prov_a = f"OpenStreetMap Overpass API ({loc_a.latitude:.4f}, {loc_a.longitude:.4f})" if (loc_a and loc_a.latitude) else "Disconnected"
+    prov_b = f"OpenStreetMap Overpass API ({loc_b.latitude:.4f}, {loc_b.longitude:.4f})" if (loc_b and loc_b.latitude) else "Disconnected"
 
-    return _compare_module(
+    if score_a is not None and score_b is not None:
+        reason = (
+            f"Location score: Property A ({score_a:.0f}/100) vs Property B ({score_b:.0f}/100), Delta: {delta} pts. "
+            f"Advantage {adv}. Property A amenities: {hosp_a} hospital(s), {school_a} school(s), {rail_a} transit station(s), {roads_a} road(s) vs "
+            f"Property B amenities: {hosp_b} hospital(s), {school_b} school(s), {rail_b} transit station(s), {roads_b} road(s)."
+        )
+        if score_a > score_b:
+            explanation = (
+                f"Property A exhibits stronger civic connectivity (+{delta} pts) due to higher density of emergency healthcare "
+                f"({hosp_a} vs {hosp_b}), education ({school_a} vs {school_b}), and transit access ({rail_a} vs {rail_b} stations) within 1.2km."
+            )
+        elif score_b > score_a:
+            explanation = (
+                f"Property B exhibits stronger civic connectivity (+{delta} pts) due to higher density of emergency healthcare "
+                f"({hosp_b} vs {hosp_a}), education ({school_b} vs {school_a}), and transit access ({rail_b} vs {rail_a} stations) within 1.2km."
+            )
+        else:
+            explanation = "Both properties provide equivalent local infrastructure access within their respective 1.2km evaluation zones."
+    elif score_a is not None:
+        reason = f"Property A location active ({score_a:.0f}/100) for '{loc_a.locality if loc_a else 'A'}'. Property B location data unavailable."
+        explanation = f"Property A has verified OpenStreetMap infrastructure data ({hosp_a} hospitals, {rail_a} stations), whereas Property B's location infrastructure is unassessed."
+    elif score_b is not None:
+        reason = f"Property B location active ({score_b:.0f}/100) for '{loc_b.locality if loc_b else 'B'}'. Property A location data unavailable."
+        explanation = f"Property B has verified OpenStreetMap infrastructure data ({hosp_b} hospitals, {rail_b} stations), whereas Property A's location infrastructure is unassessed."
+    else:
+        reason = "Location infrastructure data unavailable (null) for both properties."
+        explanation = "Neither property could be evaluated for civic infrastructure due to unfulfilled geocoding/Overpass queries."
+
+    return ModuleDifference(
         module_key="location",
         module_label="Location & Infrastructure Risk",
         weight_pct="25%",
         score_a=score_a,
         score_b=score_b,
-        reason_both=(
-            f"Location score: Property A ({score_a}/100) vs Property B ({score_b}/100), Delta: {delta} pts. "
-            f"Advantage {adv}. Property A: {hosp_a} hospital(s), {rail_a} transit station(s) vs "
-            f"Property B: {hosp_b} hospital(s), {rail_b} transit station(s)."
-        ),
-        reason_only_a=f"Property A location active ({score_a}/100) for locality '{loc_a.locality if loc_a else 'A'}'. Property B unavailable.",
-        reason_only_b=f"Property B location active ({score_b}/100) for locality '{loc_b.locality if loc_b else 'B'}'. Property A unavailable.",
-        reason_neither="Location risk modules disconnected (null) for both properties.",
+        score_delta=delta,
+        advantage=adv,
+        reason=reason,
+        explanation=explanation,
+        provenance_a=prov_a,
+        provenance_b=prov_b,
+        coverage_status=cov_status,
     )
 
 
 def _compare_price(price_a, price_b, label_a: str, label_b: str) -> ModuleDifference:
     score_a = price_a.fairness_score if price_a else None
     score_b = price_b.fairness_score if price_b else None
+    adv, delta, cov_status = _resolve_advantage(score_a, score_b)
 
-    rate_a = f"₹{price_a.estimated_price_per_sqft:,.0f}/sq.ft." if price_a and price_a.estimated_price_per_sqft else "N/A"
-    rate_b = f"₹{price_b.estimated_price_per_sqft:,.0f}/sq.ft." if price_b and price_b.estimated_price_per_sqft else "N/A"
-    adv, delta = _resolve_advantage(score_a, score_b)
+    val_a = price_a.estimated_price_per_sqft if price_a else None
+    val_b = price_b.estimated_price_per_sqft if price_b else None
+    rate_a_str = f"₹{val_a:,.0f}/sq.ft." if val_a else "N/A"
+    rate_b_str = f"₹{val_b:,.0f}/sq.ft." if val_b else "N/A"
+    samples_a = price_a.sample_count if price_a else 0
+    samples_b = price_b.sample_count if price_b else 0
 
-    return _compare_module(
+    prov_a = f"{price_a.source} ({samples_a} samples)" if (price_a and price_a.source) else "Disconnected"
+    prov_b = f"{price_b.source} ({samples_b} samples)" if (price_b and price_b.source) else "Disconnected"
+
+    if score_a is not None and score_b is not None:
+        reason = (
+            f"Price fairness: Property A ({score_a:.0f}/100 at {rate_a_str}) vs Property B ({score_b:.0f}/100 at {rate_b_str}), "
+            f"Delta: {delta} pts. Advantage {adv} based on regional valuation benchmark alignment."
+        )
+        if score_a > score_b:
+            explanation = (
+                f"Property A offers better price alignment (+{delta} pts fairness at {rate_a_str}) compared to Property B "
+                f"({rate_b_str}), which trades at a higher premium relative to its locality reference baseline."
+            )
+        elif score_b > score_a:
+            explanation = (
+                f"Property B offers better price alignment (+{delta} pts fairness at {rate_b_str}) compared to Property A "
+                f"({rate_a_str}), which trades at a higher premium relative to its locality reference baseline."
+            )
+        else:
+            explanation = f"Both properties demonstrate identical valuation fairness relative to their locality benchmarks ({rate_a_str} vs {rate_b_str})."
+    elif score_a is not None:
+        reason = f"Property A price benchmark active ({score_a:.0f}/100 at {rate_a_str}). Property B price benchmark unavailable."
+        explanation = f"Property A has verified pricing data ({rate_a_str} from {prov_a}), whereas Property B lacks price benchmark references."
+    elif score_b is not None:
+        reason = f"Property B price benchmark active ({score_b:.0f}/100 at {rate_b_str}). Property A price benchmark unavailable."
+        explanation = f"Property B has verified pricing data ({rate_b_str} from {prov_b}), whereas Property A lacks price benchmark references."
+    else:
+        reason = "Price benchmark modules disconnected (null) for both properties."
+        explanation = "Neither property could be evaluated against local circle rates or market valuation benchmarks."
+
+    return ModuleDifference(
         module_key="price",
         module_label="Price Valuation Benchmark",
         weight_pct="25%",
         score_a=score_a,
         score_b=score_b,
-        reason_both=(
-            f"Price fairness: Property A ({score_a}/100 at {rate_a}) vs Property B ({score_b}/100 at {rate_b}), "
-            f"Delta: {delta} pts. Advantage {adv} based on regional benchmark alignment."
-        ),
-        reason_only_a=f"Property A price benchmark active ({score_a}/100). Property B price benchmark unavailable.",
-        reason_only_b=f"Property B price benchmark active ({score_b}/100). Property A price benchmark unavailable.",
-        reason_neither="Price benchmark modules disconnected (null) for both properties.",
+        score_delta=delta,
+        advantage=adv,
+        reason=reason,
+        explanation=explanation,
+        provenance_a=prov_a,
+        provenance_b=prov_b,
+        coverage_status=cov_status,
     )
 
 
 def _compare_cv(cv_a, cv_b, label_a: str, label_b: str) -> ModuleDifference:
     score_a = cv_a.structural_score if cv_a else None
     score_b = cv_b.structural_score if cv_b else None
+    adv, delta, cov_status = _resolve_advantage(score_a, score_b)
 
-    class_a = (cv_a.predicted_class or "clean") if cv_a else ""
-    class_b = (cv_b.predicted_class or "clean") if cv_b else ""
-    conf_a  = f"{cv_a.confidence * 100:.1f}%" if cv_a and cv_a.confidence else "N/A"
-    conf_b  = f"{cv_b.confidence * 100:.1f}%" if cv_b and cv_b.confidence else "N/A"
-    adv, delta = _resolve_advantage(score_a, score_b)
+    class_a = cv_a.predicted_class if cv_a else "N/A"
+    class_b = cv_b.predicted_class if cv_b else "N/A"
+    conf_a = f"{cv_a.confidence * 100:.1f}%" if (cv_a and cv_a.confidence is not None) else "N/A"
+    conf_b = f"{cv_b.confidence * 100:.1f}%" if (cv_b and cv_b.confidence is not None) else "N/A"
+    cov_ratio_a = f"{(cv_a.defect_coverage_ratio * 100):.1f}%" if (cv_a and cv_a.defect_coverage_ratio is not None) else "0%"
+    cov_ratio_b = f"{(cv_b.defect_coverage_ratio * 100):.1f}%" if (cv_b and cv_b.defect_coverage_ratio is not None) else "0%"
 
-    return _compare_module(
+    prov_a = f"EfficientNet-B0 Visual Model ({class_a}, {conf_a} conf)" if cv_a else "Disconnected (No Image)"
+    prov_b = f"EfficientNet-B0 Visual Model ({class_b}, {conf_b} conf)" if cv_b else "Disconnected (No Image)"
+
+    if score_a is not None and score_b is not None:
+        reason = (
+            f"CV structural score: Property A ({score_a:.0f}/100, '{class_a}' at {conf_a}) vs "
+            f"Property B ({score_b:.0f}/100, '{class_b}' at {conf_b}), Delta: {delta} pts. Advantage {adv}."
+        )
+        if score_a > score_b:
+            explanation = (
+                f"Property A exhibits superior wall condition (+{delta} pts). Property A was evaluated as '{class_a}' "
+                f"with {conf_a} confidence, whereas Property B was flagged for '{class_b}' ({cov_ratio_b} surface defect coverage)."
+            )
+        elif score_b > score_a:
+            explanation = (
+                f"Property B exhibits superior wall condition (+{delta} pts). Property B was evaluated as '{class_b}' "
+                f"with {conf_b} confidence, whereas Property A was flagged for '{class_a}' ({cov_ratio_a} surface defect coverage)."
+            )
+        else:
+            explanation = f"Both properties exhibit equivalent visual wall surface structural integrity ({class_a} at {score_a:.0f}/100)."
+    elif score_a is not None:
+        reason = f"Property A wall image evaluated as '{class_a}' ({score_a:.0f}/100). Property B image disconnected (null)."
+        explanation = f"Property A has verified visual wall scan data ('{class_a}'), whereas Property B has no uploaded images for automated defect screening."
+    elif score_b is not None:
+        reason = f"Property B wall image evaluated as '{class_b}' ({score_b:.0f}/100). Property A image disconnected (null)."
+        explanation = f"Property B has verified visual wall scan data ('{class_b}'), whereas Property A has no uploaded images for automated defect screening."
+    else:
+        reason = "Computer vision defect scan disconnected (null) for both properties (no images provided)."
+        explanation = "Neither property provided wall facade images for computer vision defect analysis."
+
+    return ModuleDifference(
         module_key="cv",
         module_label="Computer Vision Wall Defect",
         weight_pct="30%",
         score_a=score_a,
         score_b=score_b,
-        reason_both=(
-            f"CV structural score: Property A ({score_a}/100, '{class_a}' at {conf_a}) vs "
-            f"Property B ({score_b}/100, '{class_b}' at {conf_b}), Delta: {delta} pts. Advantage {adv}."
-        ),
-        reason_only_a=f"Property A wall image evaluated as '{class_a}' ({score_a}/100). Property B image disconnected (null).",
-        reason_only_b=f"Property B wall image evaluated as '{class_b}' ({score_b}/100). Property A image disconnected (null).",
-        reason_neither="Computer vision defect scan disconnected (null) for both properties (no images provided).",
+        score_delta=delta,
+        advantage=adv,
+        reason=reason,
+        explanation=explanation,
+        provenance_a=prov_a,
+        provenance_b=prov_b,
+        coverage_status=cov_status,
     )
 
 
 def _compare_thermal(thermal_a, thermal_b, label_a: str, label_b: str) -> ModuleDifference:
     score_a = thermal_a.insulation_score if thermal_a else None
     score_b = thermal_b.insulation_score if thermal_b else None
+    adv, delta, cov_status = _resolve_advantage(score_a, score_b)
 
-    anom_a = (thermal_a.anomalies_detected_count or 0) if thermal_a else 0
-    anom_b = (thermal_b.anomalies_detected_count or 0) if thermal_b else 0
-    adv, delta = _resolve_advantage(score_a, score_b)
+    anom_a = thermal_a.anomalies_detected_count if thermal_a else 0
+    anom_b = thermal_b.anomalies_detected_count if thermal_b else 0
+    mean_a = f"{thermal_a.mean_temp:.1f}°C" if (thermal_a and thermal_a.mean_temp is not None) else "N/A"
+    mean_b = f"{thermal_b.mean_temp:.1f}°C" if (thermal_b and thermal_b.mean_temp is not None) else "N/A"
+    delta_t_a = f"{thermal_a.thermal_anomaly_delta:.1f}°C" if (thermal_a and thermal_a.thermal_anomaly_delta is not None) else "N/A"
+    delta_t_b = f"{thermal_b.thermal_anomaly_delta:.1f}°C" if (thermal_b and thermal_b.thermal_anomaly_delta is not None) else "N/A"
 
-    return _compare_module(
+    prov_a = f"MLX90640 Sensor ({thermal_a.sensor_status})" if (thermal_a and thermal_a.sensor_status) else "Disconnected (No Thermal Data)"
+    prov_b = f"MLX90640 Sensor ({thermal_b.sensor_status})" if (thermal_b and thermal_b.sensor_status) else "Disconnected (No Thermal Data)"
+
+    if score_a is not None and score_b is not None:
+        reason = (
+            f"Thermal score: Property A ({score_a:.0f}/100, {anom_a} anomaly spots, delta {delta_t_a}) vs "
+            f"Property B ({score_b:.0f}/100, {anom_b} anomaly spots, delta {delta_t_b}), Delta: {delta} pts. Advantage {adv}."
+        )
+        if score_a > score_b:
+            explanation = (
+                f"Property A exhibits better thermal envelope insulation (+{delta} pts) with fewer localized temperature anomalies "
+                f"({anom_a} vs {anom_b} anomaly pixels) and lower overall temperature gradient ({delta_t_a} vs {delta_t_b})."
+            )
+        elif score_b > score_a:
+            explanation = (
+                f"Property B exhibits better thermal envelope insulation (+{delta} pts) with fewer localized temperature anomalies "
+                f"({anom_b} vs {anom_a} anomaly pixels) and lower overall temperature gradient ({delta_t_b} vs {delta_t_a})."
+            )
+        else:
+            explanation = f"Both properties demonstrate equivalent thermal insulation performance ({score_a:.0f}/100)."
+    elif score_a is not None:
+        reason = f"Property A thermal scan active ({score_a:.0f}/100). Property B thermal hardware disconnected (null)."
+        explanation = "Property A provided empirical thermal infrared data, whereas Property B has no hardware sensor readings."
+    elif score_b is not None:
+        reason = f"Property B thermal scan active ({score_b:.0f}/100). Property A thermal hardware disconnected (null)."
+        explanation = "Property B provided empirical thermal infrared data, whereas Property A has no hardware sensor readings."
+    else:
+        reason = "Thermal insulation modules disconnected (null) for both properties."
+        explanation = "Neither property provided MLX90640 thermal infrared frame matrices or thermal scans."
+
+    return ModuleDifference(
         module_key="thermal",
         module_label="Thermal Insulation & Sensor",
         weight_pct="20%",
         score_a=score_a,
         score_b=score_b,
-        reason_both=(
-            f"Thermal score: Property A ({score_a}/100, {anom_a} anomaly spots) vs "
-            f"Property B ({score_b}/100, {anom_b} anomaly spots), Delta: {delta} pts. Advantage {adv}."
-        ),
-        reason_only_a=f"Property A thermal scan active ({score_a}/100). Property B thermal hardware disconnected (null).",
-        reason_only_b=f"Property B thermal scan active ({score_b}/100). Property A thermal hardware disconnected (null).",
-        reason_neither="Thermal insulation modules disconnected (null) for both properties.",
+        score_delta=delta,
+        advantage=adv,
+        reason=reason,
+        explanation=explanation,
+        provenance_a=prov_a,
+        provenance_b=prov_b,
+        coverage_status=cov_status,
     )
 
 
 def _compare_aqi(aqi_a, aqi_b, label_a: str, label_b: str) -> ModuleDifference:
     score_a = aqi_a.environmental_score if aqi_a else None
     score_b = aqi_b.environmental_score if aqi_b else None
+    adv, delta, cov_status = _resolve_advantage(score_a, score_b)
 
-    val_a = aqi_a.aqi_value if aqi_a else "N/A"
-    val_b = aqi_b.aqi_value if aqi_b else "N/A"
+    val_a = f"{aqi_a.aqi_value:.0f}" if (aqi_a and aqi_a.aqi_value is not None) else "N/A"
+    val_b = f"{aqi_b.aqi_value:.0f}" if (aqi_b and aqi_b.aqi_value is not None) else "N/A"
     cat_a = (aqi_a.category or "") if aqi_a else ""
     cat_b = (aqi_b.category or "") if aqi_b else ""
-    adv, delta = _resolve_advantage(score_a, score_b)
+    stn_a = aqi_a.station_name if (aqi_a and aqi_a.station_name) else "Local Station"
+    stn_b = aqi_b.station_name if (aqi_b and aqi_b.station_name) else "Local Station"
 
-    return _compare_module(
+    prov_a = f"AQICN Station '{stn_a}'" if (aqi_a and aqi_a.station_name) else "Unavailable (No Station <= 50km)"
+    prov_b = f"AQICN Station '{stn_b}'" if (aqi_b and aqi_b.station_name) else "Unavailable (No Station <= 50km)"
+
+    if score_a is not None and score_b is not None:
+        reason = (
+            f"Air quality: Property A ({score_a:.0f}/100, AQI {val_a} {cat_a}) vs "
+            f"Property B ({score_b:.0f}/100, AQI {val_b} {cat_b}), Delta: {delta} pts. Advantage {adv}."
+        )
+        if score_a > score_b:
+            explanation = (
+                f"Property A has superior ambient air quality (+{delta} pts environmental score) with an AQI of {val_a} ({cat_a} at {stn_a}) "
+                f"compared to Property B's AQI of {val_b} ({cat_b} at {stn_b})."
+            )
+        elif score_b > score_a:
+            explanation = (
+                f"Property B has superior ambient air quality (+{delta} pts environmental score) with an AQI of {val_b} ({cat_b} at {stn_b}) "
+                f"compared to Property A's AQI of {val_a} ({cat_a} at {stn_a})."
+            )
+        else:
+            explanation = f"Both properties share comparable ambient air quality index levels (AQI {val_a})."
+    elif score_a is not None:
+        reason = f"Property A AQI active ({score_a:.0f}/100, AQI {val_a} from {stn_a}). Property B AQI station unavailable."
+        explanation = f"Property A resolved a verified AQICN station ({stn_a}, AQI {val_a}), whereas Property B has no verified station within 50 km."
+    elif score_b is not None:
+        reason = f"Property B AQI active ({score_b:.0f}/100, AQI {val_b} from {stn_b}). Property A AQI station unavailable."
+        explanation = f"Property B resolved a verified AQICN station ({stn_b}, AQI {val_b}), whereas Property A has no verified station within 50 km."
+    else:
+        reason = "AQI air quality modules disconnected (null) for both properties."
+        explanation = "Neither property resolved a verified local AQICN monitoring station within the 50km radius threshold."
+
+    return ModuleDifference(
         module_key="aqi",
         module_label="Air Quality (AQI) Indicator",
         weight_pct="Supplemental",
         score_a=score_a,
         score_b=score_b,
-        reason_both=(
-            f"Air quality: Property A ({score_a}/100, AQI {val_a} {cat_a}) vs "
-            f"Property B ({score_b}/100, AQI {val_b} {cat_b}), Delta: {delta} pts. Advantage {adv}."
-        ),
-        reason_only_a=f"Property A AQI active ({score_a}/100, AQI {val_a}). Property B AQI station unavailable.",
-        reason_only_b=f"Property B AQI active ({score_b}/100, AQI {val_b}). Property A AQI station unavailable.",
-        reason_neither="AQI air quality modules disconnected (null) for both properties.",
+        score_delta=delta,
+        advantage=adv,
+        reason=reason,
+        explanation=explanation,
+        provenance_a=prov_a,
+        provenance_b=prov_b,
+        coverage_status=cov_status,
     )
 
 
@@ -213,33 +338,58 @@ def _build_comparison_narrative(
     req_a: ScoreRequest,
     req_b: ScoreRequest,
     module_diffs: List[ModuleDifference],
-) -> Tuple[str, List[str]]:
+) -> Tuple[str, List[str], str, Optional[str]]:
+    cov_a = resp_a.score_weight_coverage or 0.0
+    cov_b = resp_b.score_weight_coverage or 0.0
+    is_asymmetric = cov_a != cov_b
+
+    # Determine confidence level and asymmetric warning
+    if is_asymmetric:
+        confidence = "Limited"
+        asymmetric_warning = (
+            f"Asymmetric assessment coverage: Property A was evaluated with {cov_a}% weight coverage "
+            f"({resp_a.active_modules_count or 0}/4 core modules), whereas Property B was evaluated with "
+            f"{cov_b}% weight coverage ({resp_b.active_modules_count or 0}/4 core modules). "
+            "Direct composite score delta must be interpreted with caution as differing module subsets contribute to each score."
+        )
+    else:
+        asymmetric_warning = None
+        if cov_a >= 100.0:
+            confidence = "High"
+        elif cov_a >= 50.0:
+            confidence = "Medium"
+        else:
+            confidence = "Limited"
+
     if score_a is not None and score_b is not None:
         if score_a > score_b:
             winner_addr, loser_addr = req_a.address, req_b.address
             winner_score, loser_score = score_a, score_b
             winner_prov = 'PROVISIONAL' if resp_a.is_provisional else 'FINAL'
-            loser_prov  = 'PROVISIONAL' if resp_b.is_provisional else 'FINAL'
-            winner_cov, loser_cov = resp_a.score_weight_coverage, resp_b.score_weight_coverage
+            loser_prov = 'PROVISIONAL' if resp_b.is_provisional else 'FINAL'
+            winner_cov, loser_cov = cov_a, cov_b
         elif score_b > score_a:
             winner_addr, loser_addr = req_b.address, req_a.address
             winner_score, loser_score = score_b, score_a
             winner_prov = 'PROVISIONAL' if resp_b.is_provisional else 'FINAL'
-            loser_prov  = 'PROVISIONAL' if resp_a.is_provisional else 'FINAL'
-            winner_cov, loser_cov = resp_b.score_weight_coverage, resp_a.score_weight_coverage
+            loser_prov = 'PROVISIONAL' if resp_a.is_provisional else 'FINAL'
+            winner_cov, loser_cov = cov_b, cov_a
         else:
             summary = (
                 f"Comparative Assessment: Both '{req_a.address}' and '{req_b.address}' "
-                f"achieved equal composite scores of {score_a:.1f}/100."
+                f"achieved equal composite scores of {score_a:.1f}/100. "
+                f"Comparison Confidence: {confidence} ({cov_a}% vs {cov_b}% coverage)."
             )
-            return summary, [d.reason for d in module_diffs]
+            takeaways = [d.explanation or d.reason for d in module_diffs]
+            return summary, takeaways, confidence, asymmetric_warning
 
+        asym_note = f" Note: Comparison confidence is {confidence} due to asymmetric data coverage." if is_asymmetric else ""
         summary = (
             f"Comparative Assessment: '{winner_addr}' outperforms '{loser_addr}' "
             f"with a composite score of {winner_score:.1f}/100 vs {loser_score:.1f}/100 "
             f"(margin +{overall_delta:.1f} pts). "
             f"Winner rating: {winner_prov} ({winner_cov}% coverage). "
-            f"Runner-up: {loser_prov} ({loser_cov}% coverage)."
+            f"Runner-up: {loser_prov} ({loser_cov}% coverage).{asym_note}"
         )
     else:
         summary = (
@@ -247,7 +397,8 @@ def _build_comparison_narrative(
             f"One or both composite scores are null due to disconnected modules."
         )
 
-    return summary, [d.reason for d in module_diffs]
+    takeaways = [d.explanation or d.reason for d in module_diffs]
+    return summary, takeaways, confidence, asymmetric_warning
 
 
 # ── Public entry point ────────────────────────────────────────────────────────
@@ -258,20 +409,24 @@ def compare_inspection_results(
     req_a: ScoreRequest,
     req_b: ScoreRequest,
 ) -> CompareResponse:
-    """Compare two real property inspection responses using grounded metric logic."""
+    """Compare two real property inspection responses using grounded metric logic and provenance."""
     label_a = f"{req_a.address} ({req_a.property_type})"
     label_b = f"{req_b.address} ({req_b.property_type})"
 
     module_diffs: List[ModuleDifference] = [
-        _compare_location(resp_a.location,  resp_b.location,  label_a, label_b),
-        _compare_price   (resp_a.price,     resp_b.price,     label_a, label_b),
-        _compare_cv      (resp_a.cv,        resp_b.cv,        label_a, label_b),
-        _compare_thermal (resp_a.thermal,   resp_b.thermal,   label_a, label_b),
-        _compare_aqi     (resp_a.aqi,       resp_b.aqi,       label_a, label_b),
+        _compare_location(resp_a.location, resp_b.location, label_a, label_b),
+        _compare_price   (resp_a.price,    resp_b.price,    label_a, label_b),
+        _compare_cv      (resp_a.cv,       resp_b.cv,       label_a, label_b),
+        _compare_thermal (resp_a.thermal,  resp_b.thermal,  label_a, label_b),
+        _compare_aqi     (resp_a.aqi,      resp_b.aqi,      label_a, label_b),
     ]
 
     score_a = resp_a.overall_score
     score_b = resp_b.overall_score
+    cov_a = float(resp_a.score_weight_coverage or 0.0)
+    cov_b = float(resp_b.score_weight_coverage or 0.0)
+    active_a = int(resp_a.active_modules_count or 0)
+    active_b = int(resp_b.active_modules_count or 0)
 
     if score_a is not None and score_b is not None:
         overall_delta = round(abs(score_a - score_b), 1)
@@ -291,7 +446,7 @@ def compare_inspection_results(
         overall_delta = None
         overall_winner = "Incomparable (both properties disconnected)"
 
-    summary, takeaways = _build_comparison_narrative(
+    summary, takeaways, confidence, asym_warning = _build_comparison_narrative(
         score_a, score_b, overall_delta, overall_winner,
         resp_a, resp_b, req_a, req_b, module_diffs,
     )
@@ -305,6 +460,12 @@ def compare_inspection_results(
         overall_score_b=score_b,
         overall_delta=overall_delta,
         overall_winner=overall_winner,
+        coverage_a=cov_a,
+        coverage_b=cov_b,
+        active_modules_a=active_a,
+        active_modules_b=active_b,
+        comparison_confidence=confidence,
+        asymmetric_warning=asym_warning,
         module_differences=module_diffs,
         comparison_summary=summary,
         key_takeaways=takeaways,
