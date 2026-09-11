@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, MapPin, Image as ImageIcon, Scale, AlertTriangle, Info, Sliders, Compass } from 'lucide-react';
+import { Building2, MapPin, Scale, AlertTriangle, Info, Sliders, Compass } from 'lucide-react';
 
 const PRESETS = [
   {
@@ -56,14 +56,10 @@ export default function CompareForm({ onSubmit, error }) {
   // Property A State
   const [addressA, setAddressA] = useState('Dwarka Sector 12, New Delhi');
   const [typeA, setTypeA] = useState('Apartment');
-  const [imageUrlA, setImageUrlA] = useState('');
-  const [imageTypeA, setImageTypeA] = useState('RGB');
 
   // Property B State
   const [addressB, setAddressB] = useState('Connaught Place, New Delhi');
   const [typeB, setTypeB] = useState('Commercial Space');
-  const [imageUrlB, setImageUrlB] = useState('');
-  const [imageTypeB, setImageTypeB] = useState('RGB');
 
   const presetA = PRESETS.find((p) => p.val.toLowerCase() === addressA.trim().toLowerCase());
   const presetB = PRESETS.find((p) => p.val.toLowerCase() === addressB.trim().toLowerCase());
@@ -76,13 +72,11 @@ export default function CompareForm({ onSubmit, error }) {
       property_a: {
         address: addressA.trim(),
         property_type: typeA,
-        image_info: imageUrlA.trim() ? { image_url: imageUrlA.trim(), image_type: imageTypeA } : null
       },
       property_b: {
         address: addressB.trim(),
         property_type: typeB,
-        image_info: imageUrlB.trim() ? { image_url: imageUrlB.trim(), image_type: imageTypeB } : null
-      }
+      },
     };
 
     onSubmit(comparePayload);
@@ -183,30 +177,6 @@ export default function CompareForm({ onSubmit, error }) {
               </select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="imageUrlA">
-                <ImageIcon size={14} style={{ display: 'inline', marginRight: 4 }} />
-                Property Image A URL (Optional)
-              </label>
-              <input
-                id="imageUrlA"
-                type="url"
-                placeholder="https://example.com/property-a.jpg"
-                value={imageUrlA}
-                onChange={(e) => setImageUrlA(e.target.value)}
-              />
-            </div>
-
-            {imageUrlA.trim() && (
-              <div className="form-group">
-                <label htmlFor="imageTypeA">Image Category A</label>
-                <select id="imageTypeA" value={imageTypeA} onChange={(e) => setImageTypeA(e.target.value)}>
-                  <option value="RGB">Standard Visual (RGB)</option>
-                  <option value="Thermal">Thermal Infrared</option>
-                  <option value="Defect">Close-up Defect Scan</option>
-                </select>
-              </div>
-            )}
             {/* Property A Location Map */}
             <div className="compare-map-section">
               <div className="compare-map-header">
@@ -273,31 +243,6 @@ export default function CompareForm({ onSubmit, error }) {
               </select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="imageUrlB">
-                <ImageIcon size={14} style={{ display: 'inline', marginRight: 4 }} />
-                Property Image B URL (Optional)
-              </label>
-              <input
-                id="imageUrlB"
-                type="url"
-                placeholder="https://example.com/property-b.jpg"
-                value={imageUrlB}
-                onChange={(e) => setImageUrlB(e.target.value)}
-              />
-            </div>
-
-            {imageUrlB.trim() && (
-              <div className="form-group">
-                <label htmlFor="imageTypeB">Image Category B</label>
-                <select id="imageTypeB" value={imageTypeB} onChange={(e) => setImageTypeB(e.target.value)}>
-                  <option value="RGB">Standard Visual (RGB)</option>
-                  <option value="Thermal">Thermal Infrared</option>
-                  <option value="Defect">Close-up Defect Scan</option>
-                </select>
-              </div>
-            )}
-
             {/* Property B Location Map */}
             <div className="compare-map-section">
               <div className="compare-map-header">
@@ -333,7 +278,7 @@ export default function CompareForm({ onSubmit, error }) {
         <div className="info-box">
           <Info size={18} style={{ color: '#8B1E2D', flexShrink: 0, marginTop: 2 }} />
           <div style={{ fontSize: '0.85rem', color: '#2D2D2D' }}>
-            <strong>Comparison Rule:</strong> Both properties are evaluated using the identical scoring engine and weights (Location 25%, Price 25%, CV 30%, Thermal 20%). Unprovided images or disconnected hardware are flagged as <code>Disconnected (null)</code> for that property without fabricating numbers.
+            <strong>Comparison Rule:</strong> Both properties are evaluated using the identical scoring engine and weights (Location 25%, Price 25%, CV 30%, Thermal 20%). Disconnected modules or unassessed inputs are flagged as <code>Not assessed</code> for that property without fabricating numbers.
           </div>
         </div>
 

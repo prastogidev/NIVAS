@@ -135,31 +135,51 @@ export default function ReportScreen({ result, onReset }) {
               <tr>
                 <td>Location & Infrastructure</td>
                 <td>25%</td>
-                <td>{result.location?.risk_score !== null ? <span className="status-badge status-active">Active</span> : <span className="status-badge status-null">Disconnected (null)</span>}</td>
+                <td>
+                  {result.location?.risk_score !== null ? (
+                    <span className="status-badge status-active">Active</span>
+                  ) : result.location?.fetch_status === 'fetch_failed' ? (
+                    <span className="status-badge status-warning">Fetch Failed</span>
+                  ) : (
+                    <span className="status-badge status-null">Not assessed</span>
+                  )}
+                </td>
                 <td>{result.location?.risk_score !== null ? `${Math.round(result.location.risk_score)} / 100` : 'N/A'}</td>
               </tr>
               <tr>
                 <td>Price Benchmark</td>
                 <td>25%</td>
-                <td>{result.price?.fairness_score !== null ? <span className="status-badge status-active">Active</span> : <span className="status-badge status-null">Disconnected (null)</span>}</td>
+                <td>{result.price?.fairness_score !== null ? <span className="status-badge status-active">Active</span> : <span className="status-badge status-null">Not assessed</span>}</td>
                 <td>{result.price?.fairness_score !== null ? `${Math.round(result.price.fairness_score)} / 100` : 'N/A'}</td>
               </tr>
               <tr>
                 <td>Computer Vision Wall Defect</td>
                 <td>30%</td>
-                <td>{result.cv?.structural_score !== null ? <span className="status-badge status-active">Active</span> : <span className="status-badge status-null">Disconnected (null)</span>}</td>
+                <td>{result.cv?.structural_score !== null ? <span className="status-badge status-active">Active</span> : <span className="status-badge status-null">Not assessed</span>}</td>
                 <td>{result.cv?.structural_score !== null ? `${Math.round(result.cv.structural_score)} / 100` : 'N/A'}</td>
               </tr>
               <tr>
                 <td>Thermal Insulation & Sensor</td>
                 <td>20%</td>
-                <td>{result.thermal?.insulation_score !== null && result.thermal?.insulation_score !== undefined ? <span className="status-badge status-active">Active</span> : <span className="status-badge status-null">Disconnected (null)</span>}</td>
+                <td>{result.thermal?.insulation_score !== null && result.thermal?.insulation_score !== undefined ? <span className="status-badge status-active">Active</span> : <span className="status-badge status-null">Not assessed</span>}</td>
                 <td>{result.thermal?.insulation_score !== null && result.thermal?.insulation_score !== undefined ? `${Math.round(result.thermal.insulation_score)} / 100` : 'N/A'}</td>
               </tr>
               <tr>
                 <td>Air Quality (AQI) Indicator</td>
                 <td>Supplemental</td>
-                <td>{result.aqi?.environmental_score !== null && result.aqi?.environmental_score !== undefined ? <span className="status-badge status-active">Active</span> : <span className="status-badge status-null">{result.aqi_status === 'unavailable' ? 'Unavailable (null)' : 'Disconnected (null)'}</span>}</td>
+                <td>
+                  {result.aqi?.environmental_score !== null && result.aqi?.environmental_score !== undefined ? (
+                    <span className="status-badge status-active">Active</span>
+                  ) : result.aqi_status === 'provider_not_configured' ? (
+                    <span className="status-badge status-null">Provider not configured</span>
+                  ) : result.aqi_status === 'fetch_failed' ? (
+                    <span className="status-badge status-warning">Fetch Failed</span>
+                  ) : result.aqi_status === 'station_unavailable' || result.aqi_status === 'unavailable' ? (
+                    <span className="status-badge status-null">Station unavailable</span>
+                  ) : (
+                    <span className="status-badge status-null">Not assessed</span>
+                  )}
+                </td>
                 <td>{result.aqi?.environmental_score !== null && result.aqi?.environmental_score !== undefined ? `${Math.round(result.aqi.environmental_score)} / 100` : 'N/A'}</td>
               </tr>
               <tr className="table-highlight">

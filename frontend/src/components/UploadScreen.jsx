@@ -90,13 +90,20 @@ export default function UploadScreen({ onSubmit, error }) {
   const [isReadingVideo, setIsReadingVideo] = useState(false);
 
   const [imageType, setImageType] = useState('RGB');
-  const [thermalOption, setThermalOption] = useState(false);
+
+  // Dedicated Thermal Scan State
+  const [thermalBase64, setThermalBase64] = useState('');
+  const [thermalFileName, setThermalFileName] = useState('');
+  const [thermalSize, setThermalSize] = useState(0);
+  const [thermalError, setThermalError] = useState('');
+  const [isReadingThermal, setIsReadingThermal] = useState(false);
 
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlDraft, setUrlDraft] = useState('');
 
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
+  const thermalInputRef = useRef(null);
 
   // Match address to a verified preset for real coordinates & map
   const activePreset = PRESETS.find((p) =>
@@ -149,7 +156,7 @@ export default function UploadScreen({ onSubmit, error }) {
                 base64: reader.result,
                 fileName: file.name,
                 size: file.size,
-                type: thermalOption ? 'Thermal' : imageType,
+                type: 'RGB',
               });
             } else {
               reject(new Error(`Failed to encode image ${file.name}`));
@@ -179,6 +186,54 @@ export default function UploadScreen({ onSubmit, error }) {
         event.target.value = '';
       }
     }
+  };
+
+  const handleThermalFileChange = (event) => {
+    const file = event.target.files?.[0];
+    setThermalError('');
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setThermalError('Select a valid radiometric thermal image file (JPEG, PNG, or WebP).');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      setThermalError('Thermal scan images must be 8 MB or smaller.');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    setIsReadingThermal(true);
+    reader.onload = () => {
+      setIsReadingThermal(false);
+      if (typeof reader.result !== 'string') {
+        setThermalError('The selected thermal scan could not be encoded for analysis.');
+        return;
+      }
+      setThermalBase64(reader.result);
+      setThermalFileName(file.name);
+      setThermalSize(file.size);
+    };
+    reader.onerror = () => {
+      setIsReadingThermal(false);
+      setThermalError('The selected thermal scan could not be read.');
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const clearThermal = () => {
+    setThermalBase64('');
+    setThermalFileName('');
+    setThermalSize(0);
+    setThermalError('');
+    if (thermalInputRef.current) thermalInputRef.current.value = '';
   };
 
   const handleVideoFileChange = (event) => {
@@ -260,32 +315,50 @@ export default function UploadScreen({ onSubmit, error }) {
     e.preventDefault();
     if (!address.trim()) return;
 
-    const resolvedImageType = thermalOption ? 'Thermal' : (images[0]?.type || imageType);
+    const hasVisualEvidence = Boolean(videoBase64 || images.length > 0 || imageUrl.trim());
+    const hasThermal = Boolean(thermalBase64);
+
+    let imageInfoPayload = null;
+
+    if (hasVisualEvidence || hasThermal) {
+      imageInfoPayload = {};
+
+      if (videoBase64) {
+        imageInfoPayload.video_base64 = videoBase64;
+        imageInfoPayload.video_type = videoType;
+        imageInfoPayload.file_name = videoFileName || null;
+      } else if (images.length > 0) {
+        imageInfoPayload.image_base64 = images[0].base64;
+        imageInfoPayload.file_name = images[0].fileName;
+        imageInfoPayload.image_type = images[0].type || 'RGB';
+        imageInfoPayload.images = images.map((img) => ({
+          image_base64: img.base64,
+          file_name: img.fileName,
+          image_type: img.type || 'RGB',
+          size: img.size,
+        }));
+      } else if (imageUrl.trim()) {
+        imageInfoPayload.image_url = imageUrl.trim();
+        imageInfoPayload.image_type = 'RGB';
+        imageInfoPayload.file_name = imageUrl.split('/').pop() || null;
+      }
+
+      if (hasThermal) {
+        imageInfoPayload.thermal_base64 = thermalBase64;
+        imageInfoPayload.thermal_file_name = thermalFileName;
+        // If no visual photos were provided, also populate image_base64 as thermal for backward compatibility
+        if (!hasVisualEvidence) {
+          imageInfoPayload.image_base64 = thermalBase64;
+          imageInfoPayload.image_type = 'Thermal';
+          imageInfoPayload.file_name = thermalFileName;
+        }
+      }
+    }
 
     const payload = {
       address: address.trim(),
       property_type: propertyType,
-      image_info: videoBase64 ? {
-        video_base64: videoBase64,
-        video_type: videoType,
-        file_name: videoFileName || null,
-      } : images.length > 0 ? {
-        image_base64: images[0].base64,
-        file_name: images[0].fileName,
-        image_type: resolvedImageType,
-        images: images.map((img) => ({
-          image_base64: img.base64,
-          file_name: img.fileName,
-          image_type: thermalOption ? 'Thermal' : (img.type || resolvedImageType),
-          size: img.size,
-        })),
-      } : imageUrl.trim() ? {
-        image_url: imageUrl.trim(),
-        image_type: resolvedImageType,
-        file_name: imageUrl.split('/').pop() || null,
-      } : thermalOption ? {
-        image_type: 'Thermal',
-      } : null,
+      image_info: imageInfoPayload,
     };
 
     onSubmit(payload);
@@ -518,7 +591,6 @@ export default function UploadScreen({ onSubmit, error }) {
                             >
                               <option value="RGB">Visual (RGB)</option>
                               <option value="Defect">Defect</option>
-                              <option value="Thermal">Thermal</option>
                             </select>
                           </div>
                         </div>
@@ -570,7 +642,6 @@ export default function UploadScreen({ onSubmit, error }) {
                     <select value={imageType} onChange={(e) => setImageType(e.target.value)}>
                       <option value="RGB">Standard Visual (RGB)</option>
                       <option value="Defect">Close-up Structural Defect</option>
-                      <option value="Thermal">Thermal Infrared Scan</option>
                     </select>
                   </div>
                 </div>
@@ -681,31 +752,70 @@ export default function UploadScreen({ onSubmit, error }) {
                 <span className="thermal-title">Thermal Scan</span>
                 <span className="badge-optional">Optional</span>
               </div>
-              <p className="thermal-subtitle">Add thermal data when available.</p>
+              <p className="thermal-subtitle">
+                Connect thermal sensor or provide thermal scan data when available.
+              </p>
             </div>
 
-            <div className="thermal-controls">
-              <label className="thermal-toggle-label">
-                <input
-                  type="checkbox"
-                  checked={thermalOption || (images.length > 0 && images.every((img) => img.type === 'Thermal'))}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setThermalOption(checked);
-                    if (checked) {
-                      setImageType('Thermal');
-                      setImages((prev) => prev.map((img) => ({ ...img, type: 'Thermal' })));
-                    } else {
-                      setImageType('RGB');
-                      setImages((prev) => prev.map((img) => ({ ...img, type: 'RGB' })));
-                    }
-                  }}
-                />
-                <span>Include thermal radiometric / MLX90640 scan data</span>
-              </label>
-              <span className="thermal-hardware-note">
-                When thermal hardware or scans are unavailable, the thermal module remains disconnected (null) and overall scoring normalizes across active modules.
-              </span>
+            <div className="thermal-status-panel">
+              <div className="thermal-status-row">
+                <span className="thermal-status-label">Status:</span>
+                <span className={`thermal-status-pill ${thermalBase64 ? 'status-provided' : 'status-not-provided'}`}>
+                  {thermalBase64 ? 'Thermal scan provided' : 'Not provided'}
+                </span>
+              </div>
+
+              {thermalBase64 ? (
+                <div className="thermal-preview-card">
+                  <div className="thermal-preview-thumb-wrap">
+                    <img src={thermalBase64} alt="Thermal radiometric scan preview" className="thermal-preview-thumb" />
+                    <span className="thermal-preview-badge">IR Scan</span>
+                  </div>
+                  <div className="thermal-preview-meta">
+                    <span className="thermal-preview-name" title={thermalFileName}>{thermalFileName}</span>
+                    <span className="thermal-preview-desc">
+                      {formatFileSize(thermalSize)} · Radiometric IR scan · Ready for thermal insulation analysis
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-remove-thumb"
+                    onClick={clearThermal}
+                    title="Remove thermal scan"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className="thermal-upload-box">
+                  <p className="thermal-upload-note">
+                    Thermal analysis evaluates building envelope insulation, draft leaks, and temperature variance using radiometric thermal images (FLIR / IR camera) or an MLX90640 I2C sensor. Normal visual photographs are not thermal data.
+                  </p>
+                  <div className="thermal-action-row">
+                    <button
+                      type="button"
+                      className="btn-secondary-sm btn-thermal-upload"
+                      onClick={() => thermalInputRef.current?.click()}
+                    >
+                      <UploadCloud size={14} />
+                      <span>Upload Thermal Scan</span>
+                    </button>
+                    <span className="thermal-unavail-note">
+                      If omitted, Thermal remains <em>Unavailable (null)</em> without scoring penalty.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <input
+                type="file"
+                ref={thermalInputRef}
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'none' }}
+                onChange={handleThermalFileChange}
+              />
+
+              {thermalError && <div className="field-error">{thermalError}</div>}
             </div>
           </div>
         </div>
@@ -715,9 +825,9 @@ export default function UploadScreen({ onSubmit, error }) {
           <button
             type="submit"
             className="btn-primary btn-analyze-large"
-            disabled={!address.trim() || isReadingImage || isReadingVideo}
+            disabled={!address.trim() || isReadingImage || isReadingVideo || isReadingThermal}
           >
-            {isReadingImage || isReadingVideo ? (
+            {isReadingImage || isReadingVideo || isReadingThermal ? (
               <>
                 <div className="spinner" />
                 <span>Reading Evidence...</span>

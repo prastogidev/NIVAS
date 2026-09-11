@@ -55,7 +55,7 @@ export default function ScoreResultView({ result }) {
               </div>
 
               {m.val === null ? (
-                <span className="status-badge status-null">Disconnected (null)</span>
+                <span className="status-badge status-null">Not assessed</span>
               ) : (
                 <span className="status-badge status-active">Connected ({JSON.stringify(m.val)})</span>
               )}

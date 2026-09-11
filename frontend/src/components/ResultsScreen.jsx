@@ -339,11 +339,11 @@ export default function ResultsScreen({ result, onViewReport }) {
         </div>
 
         {/* LOCATION CARD */}
-        <div className={`card assessment-module-card ${locationScore === null || locationScore === undefined ? 'card-unavailable' : ''}`}>
+        <div className={`card assessment-module-card ${locationScore === null || locationScore === undefined ? (location?.fetch_status === 'fetch_failed' ? 'card-warning' : 'card-unavailable') : ''}`}>
           <div className="module-card-top">
             <span className="module-card-label">LOCATION</span>
-            <span className="module-card-status">
-              {locationScore !== null && locationScore !== undefined ? 'Available' : 'Unavailable'}
+            <span className={`module-card-status ${location?.fetch_status === 'fetch_failed' ? 'status-warning' : ''}`}>
+              {locationScore !== null && locationScore !== undefined ? 'Available' : (location?.fetch_status === 'fetch_failed' ? 'Fetch Failed' : 'Unavailable')}
             </span>
           </div>
           <div className="module-card-score">
@@ -352,6 +352,8 @@ export default function ResultsScreen({ result, onViewReport }) {
                 <span className="module-score-num">{Math.round(locationScore * 10) / 10}</span>
                 <span className="module-score-denom">/ 100</span>
               </>
+            ) : location?.fetch_status === 'fetch_failed' ? (
+              <span className="module-unavailable-text" style={{ color: '#B45309' }}>API Timeout</span>
             ) : (
               <span className="module-unavailable-text">Unavailable</span>
             )}
@@ -359,6 +361,8 @@ export default function ResultsScreen({ result, onViewReport }) {
           <p className="module-card-explanation">
             {locationScore !== null && locationScore !== undefined
               ? (location.locality ? `Location intelligence (${location.locality})` : 'Location intelligence')
+              : location?.fetch_status === 'fetch_failed'
+              ? 'Address resolved, but civic infrastructure timed out'
               : 'Location data unavailable'}
           </p>
         </div>
@@ -716,8 +720,13 @@ export default function ResultsScreen({ result, onViewReport }) {
               <div className="module-score-badge" style={{ backgroundColor: `${getScoreColor(location.risk_score)}18`, color: getScoreColor(location.risk_score) }}>
                 {Math.round(location.risk_score)} / 100
               </div>
+            ) : location?.fetch_status === 'fetch_failed' ? (
+              <div className="fetch-error-badge-wrap">
+                <span className="status-badge status-warning">Fetch Failed</span>
+                <span className="fetch-error-subtext">API Timeout</span>
+              </div>
             ) : (
-              <span className="status-badge status-null">Disconnected (null)</span>
+              <span className="status-badge status-null">Not assessed</span>
             )}
           </div>
 
@@ -758,6 +767,10 @@ export default function ResultsScreen({ result, onViewReport }) {
                   </>
                 )}
               </>
+            ) : location?.fetch_status === 'fetch_failed' ? (
+              <div className="fetch-error-alert-banner" style={{ marginTop: '0.25rem' }}>
+                ⚠️ <strong>Live Infrastructure Unavailable:</strong> Address was resolved to {location.locality || 'coordinates'}{location.latitude ? ` (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})` : ''}, but live civic amenities could not be retrieved from OpenStreetMap mirrors (request timed out).
+              </div>
             ) : (
               <p className="disconnected-msg">Location risk module data unavailable or geocoding unfulfilled.</p>
             )}
@@ -779,7 +792,7 @@ export default function ResultsScreen({ result, onViewReport }) {
                 {Math.round(price.fairness_score)} / 100
               </div>
             ) : (
-              <span className="status-badge status-null">Disconnected (null)</span>
+              <span className="status-badge status-null">Not assessed</span>
             )}
           </div>
 
@@ -837,7 +850,7 @@ export default function ResultsScreen({ result, onViewReport }) {
                 {Math.round(cv.structural_score)} / 100
               </div>
             ) : (
-              <span className="status-badge status-null">Disconnected (null)</span>
+              <span className="status-badge status-null">Not assessed</span>
             )}
           </div>
 
@@ -895,7 +908,7 @@ export default function ResultsScreen({ result, onViewReport }) {
                 {Math.round(thermal.insulation_score)} / 100
               </div>
             ) : (
-              <span className="status-badge status-null">Disconnected (null)</span>
+              <span className="status-badge status-null">Not assessed</span>
             )}
           </div>
 
@@ -953,10 +966,14 @@ export default function ResultsScreen({ result, onViewReport }) {
               <div className="module-score-badge" style={{ backgroundColor: `${getScoreColor(aqi.environmental_score)}18`, color: getScoreColor(aqi.environmental_score) }}>
                 {Math.round(aqi.environmental_score)} / 100
               </div>
+            ) : aqi_status === 'provider_not_configured' ? (
+              <span className="status-badge status-null">Provider not configured</span>
+            ) : aqi_status === 'fetch_failed' ? (
+              <span className="status-badge status-warning">Fetch Failed</span>
+            ) : aqi_status === 'station_unavailable' || aqi_status === 'unavailable' ? (
+              <span className="status-badge status-null">Station unavailable</span>
             ) : (
-              <span className="status-badge status-null">
-                {aqi_status === 'unavailable' ? 'Unavailable (null)' : 'Disconnected (null)'}
-              </span>
+              <span className="status-badge status-null">Not assessed</span>
             )}
           </div>
 
@@ -974,9 +991,13 @@ export default function ResultsScreen({ result, onViewReport }) {
               </>
             ) : (
               <p className="disconnected-msg">
-                {aqi_status === 'unavailable'
+                {aqi_status === 'provider_not_configured'
+                  ? 'Air quality provider not configured: AQICN API token is missing from environment.'
+                  : aqi_status === 'fetch_failed'
+                  ? 'Air quality data fetch failed: Unable to retrieve monitoring station data from API.'
+                  : aqi_status === 'station_unavailable' || aqi_status === 'unavailable'
                   ? 'AQI unavailable: no verified AQICN station was found within 50 km of this property.'
-                  : 'AQICN API key or regional air quality station unavailable.'}
+                  : 'Property address coordinates could not be resolved for air quality assessment.'}
               </p>
             )}
           </div>

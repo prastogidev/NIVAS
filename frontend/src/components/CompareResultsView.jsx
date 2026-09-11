@@ -64,6 +64,13 @@ export default function CompareResultsView({ compareResult, onReset }) {
     }
   };
 
+  const MODULE_ORDER = ['price', 'aqi', 'location', 'cv', 'thermal'];
+  const orderedModuleDiffs = [...(module_differences || [])].sort((a, b) => {
+    const idxA = MODULE_ORDER.indexOf(a.module_key);
+    const idxB = MODULE_ORDER.indexOf(b.module_key);
+    return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+  });
+
   const covA = coverage_a ?? property_a?.score_weight_coverage ?? 0;
   const covB = coverage_b ?? property_b?.score_weight_coverage ?? 0;
   const countA = active_modules_a ?? property_a?.active_modules_count ?? 0;
@@ -254,7 +261,7 @@ export default function CompareResultsView({ compareResult, onReset }) {
       {/* Module-by-Module Side-by-Side Comparison */}
       <h3 className="section-title">Module-by-Module Score Breakdown</h3>
       <div className="compare-modules-list">
-        {module_differences.map((diff) => {
+        {orderedModuleDiffs.map((diff) => {
           const Icon = getModuleIcon(diff.module_key);
           const isWinnerA = diff.advantage === 'Property A';
           const isWinnerB = diff.advantage === 'Property B';
@@ -291,8 +298,17 @@ export default function CompareResultsView({ compareResult, onReset }) {
                     <span className="sub-box-val" style={{ color: getScoreColor(diff.score_a) }}>
                       {Math.round(diff.score_a)} / 100
                     </span>
+                  ) : diff.status_a === 'provider_not_configured' ? (
+                    <span className="status-badge status-null">Provider not configured</span>
+                  ) : diff.status_a === 'data_unavailable' ? (
+                    <span className="status-badge status-null">Data unavailable</span>
+                  ) : diff.fetch_failed_a || diff.status_a === 'fetch_failed' ? (
+                    <div className="fetch-error-badge-wrap">
+                      <span className="status-badge status-warning">Fetch Failed</span>
+                      <span className="fetch-error-subtext">API Timeout</span>
+                    </div>
                   ) : (
-                    <span className="status-badge status-null">Disconnected (null)</span>
+                    <span className="status-badge status-null">Not assessed</span>
                   )}
                 </div>
 
@@ -311,11 +327,31 @@ export default function CompareResultsView({ compareResult, onReset }) {
                     <span className="sub-box-val" style={{ color: getScoreColor(diff.score_b) }}>
                       {Math.round(diff.score_b)} / 100
                     </span>
+                  ) : diff.status_b === 'provider_not_configured' ? (
+                    <span className="status-badge status-null">Provider not configured</span>
+                  ) : diff.status_b === 'data_unavailable' ? (
+                    <span className="status-badge status-null">Data unavailable</span>
+                  ) : diff.fetch_failed_b || diff.status_b === 'fetch_failed' ? (
+                    <div className="fetch-error-badge-wrap">
+                      <span className="status-badge status-warning">Fetch Failed</span>
+                      <span className="fetch-error-subtext">API Timeout</span>
+                    </div>
                   ) : (
-                    <span className="status-badge status-null">Disconnected (null)</span>
+                    <span className="status-badge status-null">Not assessed</span>
                   )}
                 </div>
               </div>
+
+              {(diff.fetch_failed_a || diff.fetch_failed_b) && (
+                <div className="fetch-error-alert-banner">
+                  {diff.fetch_failed_a && (
+                    <div>⚠️ <strong>Property A:</strong> {diff.error_message_a || 'Live data could not be fetched from API mirrors (request timed out).'}</div>
+                  )}
+                  {diff.fetch_failed_b && (
+                    <div>⚠️ <strong>Property B:</strong> {diff.error_message_b || 'Live data could not be fetched from API mirrors (request timed out).'}</div>
+                  )}
+                </div>
+              )}
 
               {diff.explanation && (
                 <div className="module-explanation-box">

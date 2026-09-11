@@ -10,7 +10,9 @@ export default function ProcessingScreen({ payload, error, isError, onRetry, onB
   );
 
   const hasThermalEvidence = Boolean(
-    payload?.image_info?.image_type === 'Thermal'
+    payload?.image_info?.thermal_base64 ||
+    payload?.image_info?.thermal_url ||
+    (payload?.image_info?.image_type === 'Thermal' && (payload?.image_info?.image_base64 || payload?.image_info?.image_url))
   );
 
   // The 4 real analysis modules in specified order
