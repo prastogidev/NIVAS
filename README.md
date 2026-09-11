@@ -1,4 +1,4 @@
-# NIVAS Backend - Smart India Hackathon
+# NIVAS
 
 **NIVAS** is an intelligent property inspection and risk assessment system that combines computer vision, thermal imaging analysis, air quality monitoring, and location-based risk evaluation to provide comprehensive property scoring.
 
