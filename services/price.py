@@ -123,6 +123,7 @@ _LOCALITY_KEYWORD_MAP: dict[str, str] = {
     "rohini":       "rohini",
     "lajpat":       "lajpat_nagar",
     "lajpat_nagar": "lajpat_nagar",
+    "lajpat nagar": "lajpat_nagar",
     # No verified benchmark data exists for Connaught Place
 }
 
@@ -130,7 +131,7 @@ _LOCALITY_KEYWORD_MAP: dict[str, str] = {
 def normalize_locality_key(address: str) -> str:
     """
     Return a canonical locality key for local benchmark dataset lookup.
-    Uses O(1) keyword dict matching against the lowercased address.
+    Uses keyword matching against the lowercased address.
     Falls back to a slugified address string for unknown localities.
     """
     addr_lower = address.lower()
@@ -190,6 +191,10 @@ async def fetch_price_benchmark_with_status(
                             source="Propstack Valuation API",
                             fetch_status="active",
                         )
+                elif resp.status_code == 401 or resp.status_code == 403:
+                    propstack_failed = True
+                    propstack_error = f"Propstack API authentication failed (HTTP {resp.status_code}). Check PROPSTACK_API_KEY credentials."
+                    logger.warning(propstack_error)
                 else:
                     propstack_failed = True
                     propstack_error = f"Propstack API returned HTTP status {resp.status_code}"
@@ -214,6 +219,7 @@ async def fetch_price_benchmark_with_status(
                 with open(benchmark_file, "r", encoding="utf-8") as f:
                     b_data = json.load(f)
 
+                circle_category = b_data.get("delhi_circle_category")
                 market_stats = b_data.get("market_price_stats", {})
                 type_key = "Apartment"
                 if "house" in clean_prop_type.lower():
@@ -262,6 +268,7 @@ async def fetch_price_benchmark_with_status(
                             expiry=expiry_str,
                             sample_count=sample_count_val,
                             actual_listings=actual_listings_list,
+                            delhi_circle_category=circle_category,
                             fetch_status="active",
                         )
                     else:

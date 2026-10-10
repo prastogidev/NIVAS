@@ -91,6 +91,7 @@ class PriceBenchmarkResult(BaseOptimizedModel):
     expiry: Optional[str] = None
     sample_count: Optional[int] = None
     actual_listings: Optional[List[PropertyListing]] = None
+    delhi_circle_category: Optional[str] = Field(None, description="Delhi circle rate category (e.g. Category B, Category G)")
     fetch_status: Optional[str] = Field("active", description="Fetch status: 'active', 'provider_not_configured', 'fetch_failed', 'data_unavailable', 'not_assessed'")
     error_message: Optional[str] = Field(None, description="Detailed explanation if price benchmark failed or unavailable")
 
