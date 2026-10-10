@@ -404,24 +404,30 @@ def _compare_aqi(
     failed_a = (st_a == "fetch_failed")
     failed_b = (st_b == "fetch_failed")
 
-    def _provenance_for_aqi(score, stn, status):
-        if score is not None:
-            return f"AQICN Station '{stn}'"
+    def _provenance_for_aqi(score, aqi_obj, stn, status):
+        if score is not None and aqi_obj:
+            src = getattr(aqi_obj, "source", None) or "Air Quality API"
+            scale_lbl = getattr(aqi_obj, "scale", "")
+            scale_str = f" [Scale: {scale_lbl}]" if scale_lbl else ""
+            return f"{src} ('{stn}'){scale_str}"
         if status == "provider_not_configured":
             return "Provider not configured"
         if status == "fetch_failed":
             return "Fetch Failed (API Error / Timeout)"
         if status == "data_unavailable":
-            return "Data unavailable (No station ≤ 50km)"
+            return "Data unavailable (No nearby readings)"
         return "Not assessed"
 
-    prov_a = _provenance_for_aqi(score_a, stn_a, st_a)
-    prov_b = _provenance_for_aqi(score_b, stn_b, st_b)
+    prov_a = _provenance_for_aqi(score_a, aqi_a, stn_a, st_a)
+    prov_b = _provenance_for_aqi(score_b, aqi_b, stn_b, st_b)
+
+    scale_a_str = f" (Scale: {aqi_a.scale})" if (aqi_a and getattr(aqi_a, "scale", None)) else ""
+    scale_b_str = f" (Scale: {aqi_b.scale})" if (aqi_b and getattr(aqi_b, "scale", None)) else ""
 
     if score_a is not None and score_b is not None:
         reason = (
-            f"Air quality: Property A ({score_a:.0f}/100, AQI {val_a} {cat_a}) vs "
-            f"Property B ({score_b:.0f}/100, AQI {val_b} {cat_b}), Delta: {delta} pts. Advantage {adv}."
+            f"Air quality: Property A ({score_a:.0f}/100, AQI {val_a}{scale_a_str} {cat_a}) vs "
+            f"Property B ({score_b:.0f}/100, AQI {val_b}{scale_b_str} {cat_b}), Delta: {delta} pts. Advantage {adv}."
         )
         if score_a > score_b:
             explanation = (
@@ -438,40 +444,40 @@ def _compare_aqi(
     elif score_a is not None:
         if st_b == "provider_not_configured":
             reason = f"Property A AQI active ({score_a:.0f}/100, AQI {val_a} from {stn_a}). Property B AQI provider not configured."
-            explanation = f"Property A resolved a verified AQICN station ({stn_a}, AQI {val_a}), whereas Property B could not be evaluated because the AQICN API token is unconfigured."
+            explanation = f"Property A resolved verified air quality data ({stn_a}, AQI {val_a}), whereas Property B could not be evaluated because no air pollution API key is configured."
         elif st_b == "fetch_failed":
             reason = f"Property A AQI active ({score_a:.0f}/100, AQI {val_a} from {stn_a}). Property B live AQI fetch failed."
-            explanation = f"Property A resolved a verified AQICN station ({stn_a}, AQI {val_a}), whereas Property B live AQI station fetch failed ({err_b or 'API error'})."
+            explanation = f"Property A resolved verified air quality data ({stn_a}, AQI {val_a}), whereas Property B live AQI fetch failed ({err_b or 'API error'})."
         elif st_b == "data_unavailable":
             reason = f"Property A AQI active ({score_a:.0f}/100, AQI {val_a} from {stn_a}). Property B AQI data unavailable."
-            explanation = f"Property A resolved a verified AQICN station ({stn_a}, AQI {val_a}), whereas Property B has no verified monitoring station within 50 km."
+            explanation = f"Property A resolved verified air quality data ({stn_a}, AQI {val_a}), whereas Property B has no valid air pollution readings."
         else:
             reason = f"Property A AQI active ({score_a:.0f}/100, AQI {val_a} from {stn_a}). Property B AQI not assessed."
-            explanation = f"Property A resolved a verified AQICN station ({stn_a}, AQI {val_a}), whereas Property B AQI was not assessed."
+            explanation = f"Property A resolved verified air quality data ({stn_a}, AQI {val_a}), whereas Property B AQI was not assessed."
     elif score_b is not None:
         if st_a == "provider_not_configured":
             reason = f"Property B AQI active ({score_b:.0f}/100, AQI {val_b} from {stn_b}). Property A AQI provider not configured."
-            explanation = f"Property B resolved a verified AQICN station ({stn_b}, AQI {val_b}), whereas Property A could not be evaluated because the AQICN API token is unconfigured."
+            explanation = f"Property B resolved verified air quality data ({stn_b}, AQI {val_b}), whereas Property A could not be evaluated because no air pollution API key is configured."
         elif st_a == "fetch_failed":
             reason = f"Property B AQI active ({score_b:.0f}/100, AQI {val_b} from {stn_b}). Property A live AQI fetch failed."
-            explanation = f"Property B resolved a verified AQICN station ({stn_b}, AQI {val_b}), whereas Property A live AQI station fetch failed ({err_a or 'API error'})."
+            explanation = f"Property B resolved verified air quality data ({stn_b}, AQI {val_b}), whereas Property A live AQI fetch failed ({err_a or 'API error'})."
         elif st_a == "data_unavailable":
             reason = f"Property B AQI active ({score_b:.0f}/100, AQI {val_b} from {stn_b}). Property A AQI data unavailable."
-            explanation = f"Property B resolved a verified AQICN station ({stn_b}, AQI {val_b}), whereas Property A has no verified monitoring station within 50 km."
+            explanation = f"Property B resolved verified air quality data ({stn_b}, AQI {val_b}), whereas Property A has no valid air pollution readings."
         else:
             reason = f"Property B AQI active ({score_b:.0f}/100, AQI {val_b} from {stn_b}). Property A AQI not assessed."
-            explanation = f"Property B resolved a verified AQICN station ({stn_b}, AQI {val_b}), whereas Property A AQI was not assessed."
+            explanation = f"Property B resolved verified air quality data ({stn_b}, AQI {val_b}), whereas Property A AQI was not assessed."
     else:
         # Both null
         if st_a == "provider_not_configured" and st_b == "provider_not_configured":
-            reason = "Air quality provider not configured (AQICN API token missing from backend environment)."
-            explanation = "Neither property could evaluate ambient air quality because no valid AQICN API token is configured in the environment."
+            reason = "Air quality provider not configured (OPENWEATHER_API_KEY / AQICN_TOKEN missing from backend environment)."
+            explanation = "Neither property could evaluate ambient air quality because no valid air pollution API key is configured in the environment."
         elif failed_a or failed_b:
-            reason = "Air quality data fetch failed due to API connection error or timeout."
-            explanation = f"Live ambient air quality readings could not be retrieved from AQICN for one or both properties (Property A: {st_a}, Property B: {st_b})."
+            reason = "Air quality data fetch failed due to API connection error, invalid key, or timeout."
+            explanation = f"Live ambient air quality readings could not be retrieved for one or both properties (Property A: {st_a}, Property B: {st_b})."
         elif st_a == "data_unavailable" and st_b == "data_unavailable":
-            reason = "AQI data unavailable for both properties (no monitoring station within 50km)."
-            explanation = "Neither property resolved a verified local AQICN monitoring station within the 50km radius threshold."
+            reason = "AQI data unavailable for both properties."
+            explanation = "Neither property resolved valid air pollution readings from configured providers."
         else:
             reason = "Air quality (AQI) not assessed for both properties."
             explanation = "Neither property could be evaluated for ambient air quality."

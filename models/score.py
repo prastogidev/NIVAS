@@ -59,6 +59,11 @@ class AQIResult(BaseOptimizedModel):
     aqi_value: Optional[float] = None
     category: Optional[str] = None
     station_name: Optional[str] = None
+    source: Optional[str] = Field("OpenWeather Air Pollution API", description="Underlying air quality data provider")
+    scale: Optional[str] = Field("1-5 (OpenWeather)", description="Native AQI index scale")
+    components: Optional[Dict[str, float]] = Field(
+        None, description="Pollutant concentrations in µg/m³ (pm2_5, pm10, no2, o3, so2, co, etc.)"
+    )
     environmental_score: Optional[float] = Field(
         None, description="Converted 0-100 environmental score (100=pristine, 0=hazardous)"
     )
