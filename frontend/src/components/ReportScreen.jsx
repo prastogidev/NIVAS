@@ -149,8 +149,20 @@ export default function ReportScreen({ result, onReset }) {
               <tr>
                 <td>Price Benchmark</td>
                 <td>25%</td>
-                <td>{result.price?.fairness_score !== null ? <span className="status-badge status-active">Active</span> : <span className="status-badge status-null">Not assessed</span>}</td>
-                <td>{result.price?.fairness_score !== null ? `${Math.round(result.price.fairness_score)} / 100` : 'N/A'}</td>
+                <td>
+                  {result.price?.fairness_score !== null && result.price?.fairness_score !== undefined ? (
+                    <span className="status-badge status-active">Active</span>
+                  ) : result.price_status === 'provider_not_configured' ? (
+                    <span className="status-badge status-null">Provider not configured</span>
+                  ) : result.price_status === 'fetch_failed' ? (
+                    <span className="status-badge status-warning">Fetch Failed</span>
+                  ) : result.price_status === 'data_unavailable' ? (
+                    <span className="status-badge status-null">Data unavailable</span>
+                  ) : (
+                    <span className="status-badge status-null">Not assessed</span>
+                  )}
+                </td>
+                <td>{result.price?.fairness_score !== null && result.price?.fairness_score !== undefined ? `${Math.round(result.price.fairness_score)} / 100` : 'N/A'}</td>
               </tr>
               <tr>
                 <td>Computer Vision Wall Defect</td>

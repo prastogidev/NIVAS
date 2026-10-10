@@ -1,5 +1,5 @@
 {
-  "timestamp": 1791615150.361957,
+  "timestamp": 1791620314.458991,
   "data": {
     "estimated_price_per_sqft": 8500.0,
     "fairness_score": 85.0,
@@ -45,6 +45,7 @@
         "source_reference": "Demo Benchmark Record (Dwarka Commercial Registration Reference)"
       }
     ],
+    "delhi_circle_category": "Category B",
     "fetch_status": "active",
     "error_message": null
   }

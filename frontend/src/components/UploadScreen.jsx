@@ -322,8 +322,8 @@ export default function UploadScreen({ onSubmit, error }) {
     <div className="analyze-screen">
       {/* Main Heading & Subtitle */}
       <div className="analyze-header">
-        <h1 className="analyze-title">Analyze a Property</h1>
-        <p className="analyze-subtitle">Assess the property using the evidence you have available.</p>
+        <h1 className="analyze-title">Pick your location</h1>
+        <p className="analyze-subtitle">Search or tap the map to choose the exact spot, then review the details below.</p>
       </div>
 
       {error && (
@@ -334,15 +334,58 @@ export default function UploadScreen({ onSubmit, error }) {
       )}
 
       <form onSubmit={handleSubmit}>
-        {/* Desktop 2-Column Layout / Mobile Stacked: Property Details & Location */}
-        <div className="inspection-grid">
-          {/* LEFT COLUMN — PROPERTY DETAILS */}
-          <div className="card property-details-card">
-            <div className="card-section-header">
-              <Building2 size={18} className="section-icon" />
-              <h3>Property Details</h3>
-            </div>
+        {/* A. MAP HERO SECTION (Full Width) */}
+        <div className="card location-hero-card">
+          <div className="card-section-header">
+            <MapPin size={18} className="section-icon" />
+            <h3>Property Location</h3>
+          </div>
 
+          <div className="location-hero-content">
+            <PropertyLocationPicker
+              latitude={latitude}
+              longitude={longitude}
+              onLocationChange={handleLocationChange}
+              mapHeight={500}
+            />
+
+            <div className="location-attribution-line">
+              <span>OpenStreetMap Nominatim GIS Pinpoint</span>
+            </div>
+          </div>
+        </div>
+
+        {/* B. SELECTED LOCATION DETAILS PANEL */}
+        <div className="card selected-location-panel">
+          {address.trim() ? (
+            <div className="selected-location-row">
+              <div className="selected-location-info">
+                <span className="selected-location-label">Selected Location</span>
+                <span className="selected-location-name">{address}</span>
+                <span className="selected-location-subcity">Interactive GIS Coordinates</span>
+              </div>
+              <div className="selected-location-badge-wrap">
+                <span className="location-coords-badge">
+                  {latitude.toFixed(4)}° N, {longitude.toFixed(4)}° E
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="selected-location-empty">
+              <Compass size={18} className="empty-icon" />
+              <span>No location selected yet. Search or tap the map to begin.</span>
+            </div>
+          )}
+        </div>
+
+        {/* C. PROPERTY DETAILS (Full Width Card, 2-Column Grid on Desktop) */}
+        <div className="card property-details-card">
+          <div className="card-section-header">
+            <Building2 size={18} className="section-icon" />
+            <h3>Property Details</h3>
+          </div>
+
+          <div className="property-details-fields-grid">
             <div className="form-group">
               <label htmlFor="address">Property Address / Locality *</label>
               <input
@@ -353,9 +396,10 @@ export default function UploadScreen({ onSubmit, error }) {
                 onChange={(e) => setAddress(e.target.value)}
                 required
               />
+              <span className="field-hint">Enter the full address or locality</span>
             </div>
 
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className="form-group">
               <label htmlFor="propertyType">
                 <Sliders size={14} style={{ display: 'inline', marginRight: 6 }} />
                 Property Type *
@@ -370,43 +414,12 @@ export default function UploadScreen({ onSubmit, error }) {
                 <option value="Villa">Villa / Builder Floor</option>
                 <option value="Commercial Space">Commercial Space</option>
               </select>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN — LOCATION */}
-          <div className="card property-location-card">
-            <div className="card-section-header">
-              <MapPin size={18} className="section-icon" />
-              <h3>Property Location</h3>
-            </div>
-
-            <div className="location-verified-content">
-              <div className="location-meta-row">
-                <div>
-                  <span className="location-name">{address.trim() || 'Selected Location'}</span>
-                  <span className="location-subcity">Interactive GIS Coordinates</span>
-                </div>
-                <span className="location-coords-badge">
-                  {latitude.toFixed(4)}° N, {longitude.toFixed(4)}° E
-                </span>
-              </div>
-
-              <PropertyLocationPicker
-                latitude={latitude}
-                longitude={longitude}
-                onLocationChange={handleLocationChange}
-                mapHeight={280}
-              />
-
-              <div className="location-footer-meta">
-                <span className="location-source-tag">OpenStreetMap Nominatim</span>
-                <span className="location-landmark">Click map or drag marker to reposition</span>
-              </div>
+              <span className="field-hint">Select the architectural category of the structure</span>
             </div>
           </div>
         </div>
 
-        {/* BELOW — PROPERTY EVIDENCE */}
+        {/* D. PROPERTY EVIDENCE */}
         <div className="card property-evidence-card">
           <div className="card-section-header">
             <Camera size={18} className="section-icon" />

@@ -96,11 +96,12 @@ pre,
 }
 
 .header-brand::after {
-  content: 'PROPERTY ASSESSMENT';
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  content: 'a place you will love';
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: 0.02em;
   color: var(--text-muted);
   border-left: 2px solid var(--border-strong);
   padding-left: 1.1rem;
@@ -2754,8 +2755,9 @@ pre,
    ========================================================================== */
 
 .analyze-screen {
-  max-width: 1040px;
+  max-width: 1140px;
   margin: 0 auto;
+  padding-bottom: 4rem;
 }
 
 .analyze-header {
@@ -2763,70 +2765,120 @@ pre,
 }
 
 .analyze-title {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--text-main);
   letter-spacing: -0.025em;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .analyze-subtitle {
   font-size: 0.95rem;
   color: var(--text-muted);
-  margin-top: 0.35rem;
+  margin-top: 0.4rem;
   line-height: 1.5;
 }
 
-/* ── 2-Column Inspection Grid (Desktop) ─────────────────────────────────── */
-.inspection-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-  align-items: stretch;
+/* ── Single-Column Map-First Layout ─────────────────────────────────────── */
+.location-hero-card {
+  margin-bottom: 2rem;
 }
 
-@media (max-width: 768px) {
-  .inspection-grid {
+.location-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.location-attribution-line {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  text-align: right;
+  font-style: italic;
+  padding-top: 0.25rem;
+}
+
+/* ── Selected Location Details Panel (Horizontal card directly under map) ── */
+.selected-location-panel {
+  margin-bottom: 2rem;
+  padding: 1.25rem 1.75rem;
+}
+
+.selected-location-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.selected-location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.selected-location-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+.selected-location-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.selected-location-subcity {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.selected-location-badge-wrap {
+  flex-shrink: 0;
+}
+
+.selected-location-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.selected-location-empty .empty-icon {
+  color: var(--accent);
+  opacity: 0.75;
+}
+
+/* ── Property Details Card (Full-width, 2-column fields on desktop) ──────── */
+.property-details-card {
+  margin-bottom: 2rem;
+}
+
+.property-details-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.75rem;
+}
+
+.property-details-fields-grid .form-group {
+  margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .property-details-fields-grid {
     grid-template-columns: 1fr;
     gap: 1.25rem;
   }
-}
-
-.card-section-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 1.35rem;
-  border-bottom: 1px dashed rgba(30, 58, 95, 0.2);
-  padding-bottom: 0.85rem;
-}
-
-.card-section-header h3 {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text-main);
-  letter-spacing: -0.01em;
-}
-
-.card-section-header .section-subtitle {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  font-weight: 400;
-  margin-top: 0.2rem;
-}
-
-.section-icon {
-  color: var(--text-main);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-/* ── Left Column: Property Details ─────────────────────────────────────── */
-.property-details-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
 }
 
 .preset-container {
@@ -2868,7 +2920,6 @@ pre,
   color: var(--success);
 }
 
-/* Verified Localities Chip Active: Muted Forest Green #3C5A48 (Confirmed Location) */
 .preset-chip.active {
   background-color: var(--success-bg);
   border: 1.5px solid var(--success);
@@ -2877,97 +2928,35 @@ pre,
   box-shadow: 1px 1px 0px rgba(90, 155, 111, 0.2);
 }
 
-/* ── Right Column: Property Location ────────────────────────────────────── */
-.property-location-card {
-  display: flex;
-  flex-direction: column;
-}
-
-.location-verified-content,
-.location-pending-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  flex-grow: 1;
-}
-
-.location-meta-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.location-name {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-main);
-  display: block;
-}
-
-.location-subcity {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  display: block;
-  margin-top: 0.15rem;
-}
-
 .location-coords-badge {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  padding: 0.25rem 0.65rem;
-  background-color: var(--ink-blueprint-subtle);
-  border: 1px solid var(--success); background-color: var(--success-bg);
-  border-radius: var(--radius-badge);
+  padding: 0.35rem 0.75rem;
+  background-color: var(--success-bg);
+  border: 1px solid var(--success);
+  border-radius: 6px;
   color: var(--success);
   white-space: nowrap;
   letter-spacing: 0.02em;
-}
-
-.location-pending-badge {
-  background-color: var(--warning-bg);
-  border-color: var(--warning-border);
-  color: var(--warning);
+  display: inline-block;
 }
 
 .location-map-wrapper {
   width: 100%;
-  height: 280px;
-  border-radius: var(--radius-card);
+  height: 520px;
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid rgba(30, 58, 95, 0.15);
   background-color: var(--bg-subtle);
   position: relative;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 1px 4px rgba(30, 58, 95, 0.06);
 }
 
-.location-map-wrapper::before,
-.compare-location-map-card::before {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: -1px;
-  width: 7px;
-  height: 7px;
-  border-top: 2px solid var(--ink-deep);
-  border-left: 2px solid var(--ink-deep);
-  pointer-events: none;
-  z-index: 5;
-}
-
-.location-map-wrapper::after,
-.compare-location-map-card::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  right: -1px;
-  width: 7px;
-  height: 7px;
-  border-bottom: 2px solid var(--ink-deep);
-  border-right: 2px solid var(--ink-deep);
-  pointer-events: none;
-  z-index: 5;
+@media (max-width: 900px) {
+  .location-map-wrapper {
+    height: 360px !important;
+  }
 }
 
 .location-map-frame {
@@ -2981,7 +2970,7 @@ pre,
 .location-picker-root {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.85rem;
   width: 100%;
 }
 
@@ -2995,9 +2984,10 @@ pre,
   position: relative;
   background-color: var(--bg-paper);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-card);
-  padding: 0.25rem 0.35rem 0.25rem 0.65rem;
+  border-radius: 8px;
+  padding: 0.25rem 0.35rem 0.25rem 0.85rem;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  height: 46px;
 }
 
 .location-search-input-wrapper:focus-within {
@@ -3007,17 +2997,18 @@ pre,
 
 .location-search-icon {
   color: var(--text-muted);
-  margin-right: 0.45rem;
+  margin-right: 0.65rem;
   flex-shrink: 0;
 }
 
 .location-search-input {
   border: none !important;
   background: transparent !important;
-  padding: 0.35rem 0 !important;
-  font-size: 0.82rem !important;
+  padding: 0 !important;
+  font-size: 0.9rem !important;
   color: var(--text-main) !important;
   width: 100%;
+  height: 100% !important;
   outline: none !important;
   box-shadow: none !important;
 }
@@ -3026,13 +3017,15 @@ pre,
   background-color: var(--ink-deep);
   color: #FFFFFF;
   border: none;
-  border-radius: calc(var(--radius-card) - 2px);
-  padding: 0.35rem 0.75rem;
-  font-size: 0.75rem;
+  border-radius: 6px;
+  height: 38px;
+  padding: 0 1.25rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   transition: background-color 0.15s ease, opacity 0.15s ease;
   white-space: nowrap;
@@ -3051,9 +3044,9 @@ pre,
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.75rem;
-  padding: 0.4rem 0.65rem;
-  border-radius: var(--radius-card);
+  font-size: 0.78rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
   line-height: 1.35;
 }
 
@@ -3092,11 +3085,11 @@ pre,
 }
 
 .location-picker-help {
-  font-size: 0.73rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   text-align: center;
   font-style: italic;
-  margin-top: -0.15rem;
+  margin-top: 0.15rem;
 }
 
 .spin-icon {
@@ -3108,72 +3101,16 @@ pre,
   to { transform: rotate(360deg); }
 }
 
-.location-pending-box {
-  min-height: 180px;
-  border-radius: var(--radius-card);
-  border: 1.5px dashed var(--border-color);
-  background-color: var(--bg-subtle);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 1.25rem;
-}
-
-.pending-icon {
-  color: var(--text-muted);
-  opacity: 0.6;
-  margin-bottom: 0.4rem;
-}
-
-.pending-title {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 0.25rem;
-}
-
-.pending-desc {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  line-height: 1.45;
-  max-width: 320px;
-}
-
-.location-footer-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  border-top: 1px dashed rgba(30, 58, 95, 0.2);
-  padding-top: 0.65rem;
-  margin-top: auto;
-}
-
-.location-source-tag {
-  font-weight: 600;
-}
-
-.location-landmark {
-  font-style: italic;
-  max-width: 240px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* ── Below: Property Evidence ───────────────────────────────────────────── */
 .property-evidence-card {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .upload-dropzone {
   border: 1.5px dashed #DCDCD7;
-  border-radius: var(--radius-card);
+  border-radius: 8px;
   background-color: var(--bg-page);
-  padding: 2.25rem 1.5rem;
+  padding: 1.75rem 1.5rem;
   text-align: center;
   transition: border-color 0.18s ease, background-color 0.18s ease;
 }
@@ -3205,32 +3142,45 @@ pre,
 .upload-hint {
   font-size: 0.84rem;
   color: var(--text-muted);
-  max-width: 440px;
-  margin-bottom: 1rem;
+  max-width: 480px;
+  margin-bottom: 0.75rem;
+  line-height: 1.45;
 }
 
 .upload-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  gap: 1rem;
   justify-content: center;
+  width: 100%;
+  max-width: 440px;
+  margin: 0.25rem auto 0;
 }
 
 .btn-upload-choice {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 1.15rem;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 180px;
+  height: 42px;
+  padding: 0 1rem;
   background-color: #FFFFFF;
   border: 1px solid #DCDCD7;
-  border-radius: var(--radius-card);
+  border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-main);
   cursor: pointer;
   transition: all 0.15s ease;
   font-family: inherit;
+}
+
+.btn-upload-choice:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 2px 6px rgba(46, 125, 107, 0.12);
 }
 
 .btn-upload-choice:hover {
@@ -3723,72 +3673,69 @@ pre,
 
 /* ── Below Upload: Thermal Scan (Optional) ──────────────────────────────── */
 .thermal-scan-card {
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .thermal-card-inner {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 2rem;
-}
-
-@media (max-width: 768px) {
-  .thermal-card-inner {
-    flex-direction: column;
-    gap: 1.25rem;
-  }
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
 }
 
 .thermal-info {
-  max-width: 380px;
+  width: 100%;
 }
 
 .thermal-title-row {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.65rem;
+  white-space: nowrap;
 }
 
 .thermal-title {
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-main);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 .badge-optional {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   background-color: var(--bg-subtle);
   border: 1px solid var(--border-color);
   color: var(--text-muted);
   padding: 0.2rem 0.55rem;
-  border-radius: 5px;
+  border-radius: 4px;
 }
 
 .thermal-subtitle {
-  font-size: 0.84rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
-  margin-top: 0.35rem;
+  margin-top: 0.45rem;
+  line-height: 1.5;
 }
 
 .thermal-status-panel {
-  flex-grow: 1;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 1rem;
   background: #FAF9F6;
   border: 1px solid rgba(30, 58, 95, 0.15);
-  border-radius: var(--radius-card);
-  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
 }
 
 .thermal-status-row {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.75rem;
 }
 
 .thermal-status-label {
@@ -3804,7 +3751,7 @@ pre,
   align-items: center;
   font-size: 0.76rem;
   font-weight: 700;
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 4px;
   letter-spacing: 0.02em;
 }
@@ -3828,13 +3775,13 @@ pre,
   background: #FFFEFB;
   border: 1px solid rgba(46, 125, 107, 0.3);
   border-radius: 6px;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1.15rem;
 }
 
 .thermal-preview-thumb-wrap {
   position: relative;
-  width: 60px;
-  height: 50px;
+  width: 68px;
+  height: 54px;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid rgba(30, 58, 95, 0.15);
@@ -3867,7 +3814,7 @@ pre,
 }
 
 .thermal-preview-name {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: #1E3A5F;
   display: block;
@@ -3877,44 +3824,45 @@ pre,
 }
 
 .thermal-preview-desc {
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   color: #2E7D6B;
   display: block;
-  margin-top: 0.15rem;
+  margin-top: 0.2rem;
   font-weight: 500;
 }
 
 .thermal-upload-box {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .thermal-upload-note {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: #4A4A4A;
-  line-height: 1.45;
+  line-height: 1.5;
   margin: 0;
 }
 
 .thermal-action-row {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
   flex-wrap: wrap;
+  margin-top: 0.25rem;
 }
 
 .btn-thermal-upload {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   background: #FFFEFB;
   color: #1E3A5F;
   border: 1px solid rgba(30, 58, 95, 0.25);
   font-weight: 600;
-  font-size: 0.8rem;
-  padding: 0.4rem 0.85rem;
-  border-radius: 4px;
+  font-size: 0.82rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
   font-family: inherit;
@@ -3927,7 +3875,7 @@ pre,
 }
 
 .thermal-unavail-note {
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   color: #6B6459;
 }
 
@@ -3937,23 +3885,43 @@ pre,
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 0.85rem;
-  margin-bottom: 2.5rem;
+  gap: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 3.5rem;
+  padding: 0 1rem;
 }
 
 .btn-analyze-large {
-  max-width: 360px;
+  max-width: 400px;
   width: 100%;
-  padding: 0.95rem 2rem;
-  font-size: 1.02rem;
-  border-radius: 11px;
+  height: 54px;
+  padding: 0 2rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  box-shadow: 0 2px 8px rgba(46, 125, 107, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-analyze-large:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(46, 125, 107, 0.35);
+}
+
+.btn-analyze-large:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .analyze-disclaimer {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
-  max-width: 540px;
-  line-height: 1.45;
+  max-width: 560px;
+  line-height: 1.5;
+  margin-top: 0.25rem;
 }
 
 /* ── Compare Screen Dual Maps Styling ────────────────────────────────────── */

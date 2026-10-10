@@ -41,6 +41,8 @@ export default function ResultsScreen({ result, onViewReport }) {
     aqi,
     aqi_status,
     price,
+    price_status,
+    price_error,
     cv,
     thermal,
     overall_score,
@@ -368,11 +370,19 @@ export default function ResultsScreen({ result, onViewReport }) {
         </div>
 
         {/* PRICE CARD */}
-        <div className={`card assessment-module-card ${priceScore === null || priceScore === undefined ? 'card-unavailable' : ''}`}>
+        <div className={`card assessment-module-card ${priceScore === null || priceScore === undefined ? (price_status === 'fetch_failed' ? 'card-warning' : 'card-unavailable') : ''}`}>
           <div className="module-card-top">
             <span className="module-card-label">PRICE</span>
-            <span className="module-card-status">
-              {priceScore !== null && priceScore !== undefined ? 'Available' : 'Unavailable'}
+            <span className={`module-card-status ${price_status === 'fetch_failed' ? 'status-warning' : ''}`}>
+              {priceScore !== null && priceScore !== undefined
+                ? 'Available'
+                : price_status === 'provider_not_configured'
+                ? 'Provider Not Configured'
+                : price_status === 'fetch_failed'
+                ? 'Fetch Failed'
+                : price_status === 'data_unavailable'
+                ? 'Data Unavailable'
+                : 'Unavailable'}
             </span>
           </div>
           <div className="module-card-score">
@@ -381,6 +391,10 @@ export default function ResultsScreen({ result, onViewReport }) {
                 <span className="module-score-num">{Math.round(priceScore * 10) / 10}</span>
                 <span className="module-score-denom">/ 100</span>
               </>
+            ) : price_status === 'provider_not_configured' ? (
+              <span className="module-unavailable-text" style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Config Missing</span>
+            ) : price_status === 'fetch_failed' ? (
+              <span className="module-unavailable-text" style={{ color: '#B45309' }}>API Error</span>
             ) : (
               <span className="module-unavailable-text">Unavailable</span>
             )}
@@ -388,6 +402,12 @@ export default function ResultsScreen({ result, onViewReport }) {
           <p className="module-card-explanation">
             {priceScore !== null && priceScore !== undefined
               ? (price.delhi_circle_category ? `Price alignment (${price.delhi_circle_category})` : 'Price alignment')
+              : price_status === 'provider_not_configured'
+              ? (price_error || 'Propstack API key required for live valuation outside cached demo zones')
+              : price_status === 'fetch_failed'
+              ? (price_error || 'Propstack valuation API connection failed')
+              : price_status === 'data_unavailable'
+              ? (price_error || 'No benchmark data available for this locality')
               : 'Price data unavailable'}
           </p>
         </div>
@@ -791,6 +811,12 @@ export default function ResultsScreen({ result, onViewReport }) {
               <div className="module-score-badge" style={{ backgroundColor: `${getScoreColor(price.fairness_score)}18`, color: getScoreColor(price.fairness_score) }}>
                 {Math.round(price.fairness_score)} / 100
               </div>
+            ) : price_status === 'provider_not_configured' ? (
+              <span className="status-badge status-null">Provider not configured</span>
+            ) : price_status === 'fetch_failed' ? (
+              <span className="status-badge status-warning">Fetch Failed</span>
+            ) : price_status === 'data_unavailable' ? (
+              <span className="status-badge status-null">Data unavailable</span>
             ) : (
               <span className="status-badge status-null">Not assessed</span>
             )}
@@ -805,6 +831,12 @@ export default function ResultsScreen({ result, onViewReport }) {
                     ₹{price.estimated_price_per_sqft?.toLocaleString() || 'N/A'}
                   </span>
                 </div>
+                {price.delhi_circle_category && (
+                  <div className="info-row">
+                    <span className="info-lbl">Circle Rate Category:</span>
+                    <span className="info-val">{price.delhi_circle_category}</span>
+                  </div>
+                )}
                 <div className="info-row">
                   <span className="info-lbl">Data Source:</span>
                   <span className="info-val" style={{ fontSize: '0.8rem', maxWidth: '60%', textAlign: 'right' }}>
@@ -830,7 +862,15 @@ export default function ResultsScreen({ result, onViewReport }) {
                 )}
               </>
             ) : (
-              <p className="disconnected-msg">Price benchmark data unavailable or area cache missing.</p>
+              <p className="disconnected-msg">
+                {price_status === 'provider_not_configured'
+                  ? (price_error || 'Live property valuation requires PROPSTACK_API_KEY in backend environment. Local circle rate benchmarks are active for Dwarka, Rohini, and Lajpat Nagar.')
+                  : price_status === 'fetch_failed'
+                  ? (price_error || 'Propstack valuation API connection failed or timed out.')
+                  : price_status === 'data_unavailable'
+                  ? (price_error || 'No price listings or benchmark data available for this locality.')
+                  : 'Price valuation module not assessed.'}
+              </p>
             )}
           </div>
         </div>

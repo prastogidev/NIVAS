@@ -1,0 +1,52 @@
+{
+  "timestamp": 1791620314.4610481,
+  "data": {
+    "estimated_price_per_sqft": 9200.0,
+    "fairness_score": 85.0,
+    "source": "Cached Demo Benchmark Dataset (Delhi Circle Rate & Market Survey Reference)",
+    "fetched_at": "2026-09-11T00:00:00Z",
+    "expiry": "2026-09-12T00:00:00Z",
+    "sample_count": 4,
+    "actual_listings": [
+      {
+        "listing_id": "ROH-APT-101",
+        "address": "Sector 9, Rohini, New Delhi",
+        "property_type": "Apartment",
+        "price_per_sqft": 7200.0,
+        "area_sqft": 1200.0,
+        "total_price_inr": 8640000.0,
+        "source_reference": "Demo Benchmark Record (Rohini Sub-Registrar / Market Survey Reference)"
+      },
+      {
+        "listing_id": "ROH-APT-102",
+        "address": "Sector 13, Rohini, New Delhi",
+        "property_type": "Apartment",
+        "price_per_sqft": 7800.0,
+        "area_sqft": 1350.0,
+        "total_price_inr": 10530000.0,
+        "source_reference": "Demo Benchmark Record (Rohini Sub-Registrar / Market Survey Reference)"
+      },
+      {
+        "listing_id": "ROH-HSE-201",
+        "address": "Sector 11, Rohini, New Delhi",
+        "property_type": "Independent House",
+        "price_per_sqft": 9200.0,
+        "area_sqft": 1800.0,
+        "total_price_inr": 16560000.0,
+        "source_reference": "Demo Benchmark Record (Rohini DDA Allotment / Market Reference)"
+      },
+      {
+        "listing_id": "ROH-COM-301",
+        "address": "Sector 8 Commercial Complex, Rohini, New Delhi",
+        "property_type": "Commercial Space",
+        "price_per_sqft": 16000.0,
+        "area_sqft": 600.0,
+        "total_price_inr": 9600000.0,
+        "source_reference": "Demo Benchmark Record (Rohini Commercial Registration Reference)"
+      }
+    ],
+    "delhi_circle_category": "Category B/C",
+    "fetch_status": "active",
+    "error_message": null
+  }
+}

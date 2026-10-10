@@ -128,7 +128,10 @@ export default function PropertyLocationPicker({
 
   // Handle explicit search submission (press Enter or click Search)
   const handleSearchSubmit = async (e) => {
-    if (e) e.preventDefault();
+    if (e) {
+      if (typeof e.preventDefault === 'function') e.preventDefault();
+      if (typeof e.stopPropagation === 'function') e.stopPropagation();
+    }
     const query = searchQuery.trim();
     if (!query) return;
 
@@ -228,10 +231,26 @@ export default function PropertyLocationPicker({
       setTimeout(() => {
         map.invalidateSize();
       }, 200);
+
+      // Add ResizeObserver to guarantee crisp map tiles when container resizes
+      let resizeObserver;
+      if (window.ResizeObserver && mapContainerRef.current) {
+        resizeObserver = new ResizeObserver(() => {
+          map.invalidateSize();
+        });
+        resizeObserver.observe(mapContainerRef.current);
+      }
+
+      mapInstanceRef.current = map;
+      markerInstanceRef.current = marker;
+      mapInstanceRef.current._resizeObserver = resizeObserver;
     }
 
     return () => {
       if (mapInstanceRef.current) {
+        if (mapInstanceRef.current._resizeObserver) {
+          mapInstanceRef.current._resizeObserver.disconnect();
+        }
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
         markerInstanceRef.current = null;
@@ -259,26 +278,38 @@ export default function PropertyLocationPicker({
 
   return (
     <div className="location-picker-root">
-      {/* Search Input Bar */}
-      <form onSubmit={handleSearchSubmit} className="location-search-form">
+      {/* Search Input Bar (div container to prevent invalid nested form and page refresh) */}
+      <div className="location-search-form" role="search">
         <div className="location-search-input-wrapper">
-          <Search size={14} className="location-search-icon" />
+          <Search size={15} className="location-search-icon" />
           <input
             type="text"
             className="location-search-input"
             placeholder="Search address or locality (e.g. Indirapuram, Ghaziabad)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSearchSubmit(e);
+              }
+            }}
           />
           <button
-            type="submit"
+            type="button"
             className="location-search-btn"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSearchSubmit(e);
+            }}
             disabled={isSearching || !searchQuery.trim()}
           >
             {isSearching ? <Loader2 size={13} className="spin-icon" /> : 'Search'}
           </button>
         </div>
-      </form>
+      </div>
 
       {/* Search Error Notice */}
       {searchError && (
