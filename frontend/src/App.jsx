@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import StepHeader from './components/StepHeader';
 import UploadScreen from './components/UploadScreen';
 import ProcessingScreen from './components/ProcessingScreen';
 import ResultsScreen from './components/ResultsScreen';
@@ -7,10 +6,11 @@ import ReportScreen from './components/ReportScreen';
 import CompareForm from './components/CompareForm';
 import CompareResultsView from './components/CompareResultsView';
 import { submitPropertyScore, compareProperties } from './services/api';
-import { Building2, RefreshCw, Scale, Search } from 'lucide-react';
+import { Building2, RefreshCw, Scale, Search, Compass, ShieldCheck } from 'lucide-react';
 import nivasLogo from './assets/nivas_logo.png';
 
 export default function App() {
+  const [appSection, setAppSection] = useState('inspection'); // 'inspection' | 'livability'
   const [mode, setMode] = useState('single'); // 'single' | 'compare'
   const [currentScreen, setCurrentScreen] = useState('upload'); // 'upload' | 'processing' | 'results' | 'report'
 
@@ -104,26 +104,26 @@ export default function App() {
         </div>
 
         <div className="header-controls">
-          {/* Mode Switcher */}
+          {/* Change 1: Top-Right Section Switcher: Livability vs Property Inspection */}
           <div className="mode-switcher">
             <button
-              className={`mode-btn ${mode === 'single' ? 'active' : ''}`}
-              onClick={() => switchMode('single')}
+              className={`mode-btn ${appSection === 'livability' ? 'active' : ''}`}
+              onClick={() => setAppSection('livability')}
             >
-              <Search size={14} />
-              <span>Single Inspection</span>
+              <Compass size={14} />
+              <span>Livability</span>
             </button>
 
             <button
-              className={`mode-btn ${mode === 'compare' ? 'active' : ''}`}
-              onClick={() => switchMode('compare')}
+              className={`mode-btn ${appSection === 'inspection' ? 'active' : ''}`}
+              onClick={() => setAppSection('inspection')}
             >
-              <Scale size={14} />
-              <span>Property Compare</span>
+              <ShieldCheck size={14} />
+              <span>Property Inspection</span>
             </button>
           </div>
 
-          {hasData && (
+          {appSection === 'inspection' && hasData && (
             <button className="btn-secondary-sm" onClick={handleReset}>
               <RefreshCw size={14} />
               <span>Reset</span>
@@ -132,12 +132,55 @@ export default function App() {
         </div>
       </header>
 
-      {/* 4-Step Wizard Header */}
-      <StepHeader
-        currentScreen={currentScreen}
-        onSelectScreen={setCurrentScreen}
-        hasResult={hasData}
-      />
+      {/* Main Content Area */}
+      {appSection === 'livability' ? (
+        /* Minimal Placeholder View for Livability */
+        <main className="screen-content">
+          <div className="livability-placeholder-card">
+            <div className="livability-icon-wrap">
+              <Compass size={32} />
+            </div>
+            <h2 className="livability-title">Livability Intelligence</h2>
+            <p className="livability-desc">
+              Hyper-local community livability metrics, walkability indices, environmental health, and neighbourhood accessibility analysis are coming soon.
+            </p>
+          </div>
+        </main>
+      ) : (
+        /* Property Inspection Experience */
+        <>
+          {/* Change 2: Replaced the pipeline box with Single Inspection & Property Compare Mode Switcher */}
+          <div className="pipeline-mode-container">
+            <div className="pipeline-mode-title-wrap">
+              <Building2 size={20} style={{ color: 'var(--ink-deep)' }} />
+              <div>
+                <span className="pipeline-mode-title">Inspection Workflow Mode</span>
+                <span className="pipeline-mode-subtitle" style={{ display: 'block' }}>
+                  {mode === 'single'
+                    ? 'Analyze a single property across location, valuation, defect, and thermal evidence'
+                    : 'Side-by-side comparative evaluation of two real property locations'}
+                </span>
+              </div>
+            </div>
+
+            <div className="pipeline-mode-switcher">
+              <button
+                className={`pipeline-mode-btn ${mode === 'single' ? 'active' : ''}`}
+                onClick={() => switchMode('single')}
+              >
+                <Search size={14} />
+                <span>Single Inspection</span>
+              </button>
+
+              <button
+                className={`pipeline-mode-btn ${mode === 'compare' ? 'active' : ''}`}
+                onClick={() => switchMode('compare')}
+              >
+                <Scale size={14} />
+                <span>Property Compare</span>
+              </button>
+            </div>
+          </div>
 
       {/* Screen Router */}
       <main className="screen-content">
@@ -195,6 +238,8 @@ export default function App() {
           )
         )}
       </main>
+    </>
+  )}
     </div>
   );
 }

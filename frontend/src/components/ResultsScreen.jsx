@@ -982,21 +982,65 @@ export default function ResultsScreen({ result, onViewReport }) {
               <>
                 <div className="info-row">
                   <span className="info-lbl">AQI Index:</span>
-                  <span className="info-val">{aqi.aqi_value} ({aqi.category || 'Standard'})</span>
+                  <span className="info-val">
+                    {aqi.aqi_value} ({aqi.category || 'Standard'})
+                    {aqi.scale && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 6 }}>[{aqi.scale}]</span>}
+                  </span>
                 </div>
                 <div className="info-row">
-                  <span className="info-lbl">Station:</span>
-                  <span className="info-val">{aqi.station_name || 'Nearest Regional Station'}</span>
+                  <span className="info-lbl">Source:</span>
+                  <span className="info-val" style={{ fontSize: '0.8rem', maxWidth: '65%', textAlign: 'right' }}>
+                    {aqi.source || aqi.station_name || 'Air Quality Provider'}
+                  </span>
                 </div>
+                {aqi.components && Object.keys(aqi.components).length > 0 && (
+                  <div style={{ marginTop: '0.6rem', borderTop: '1px solid #E8E8E4', paddingTop: '0.4rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem', fontWeight: 600 }}>
+                      Pollutant Concentrations (µg/m³):
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '0.4rem' }}>
+                      {aqi.components.pm2_5 !== undefined && (
+                        <div style={{ background: 'var(--bg-subtle)', padding: '0.25rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem' }}>
+                          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.7rem' }}>PM2.5</span>
+                          <strong>{aqi.components.pm2_5.toFixed(1)}</strong>
+                        </div>
+                      )}
+                      {aqi.components.pm10 !== undefined && (
+                        <div style={{ background: 'var(--bg-subtle)', padding: '0.25rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem' }}>
+                          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.7rem' }}>PM10</span>
+                          <strong>{aqi.components.pm10.toFixed(1)}</strong>
+                        </div>
+                      )}
+                      {aqi.components.no2 !== undefined && (
+                        <div style={{ background: 'var(--bg-subtle)', padding: '0.25rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem' }}>
+                          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.7rem' }}>NO2</span>
+                          <strong>{aqi.components.no2.toFixed(1)}</strong>
+                        </div>
+                      )}
+                      {aqi.components.o3 !== undefined && (
+                        <div style={{ background: 'var(--bg-subtle)', padding: '0.25rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem' }}>
+                          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.7rem' }}>O3</span>
+                          <strong>{aqi.components.o3.toFixed(1)}</strong>
+                        </div>
+                      )}
+                      {aqi.components.so2 !== undefined && (
+                        <div style={{ background: 'var(--bg-subtle)', padding: '0.25rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem' }}>
+                          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.7rem' }}>SO2</span>
+                          <strong>{aqi.components.so2.toFixed(1)}</strong>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <p className="disconnected-msg">
                 {aqi_status === 'provider_not_configured'
-                  ? 'Air quality provider not configured: AQICN API token is missing from environment.'
+                  ? 'Air quality provider not configured: OPENWEATHER_API_KEY / AQICN_TOKEN missing from backend environment.'
                   : aqi_status === 'fetch_failed'
-                  ? 'Air quality data fetch failed: Unable to retrieve monitoring station data from API.'
-                  : aqi_status === 'station_unavailable' || aqi_status === 'unavailable'
-                  ? 'AQI unavailable: no verified AQICN station was found within 50 km of this property.'
+                  ? 'Air quality data fetch failed: Unable to retrieve air pollution readings from provider.'
+                  : aqi_status === 'data_unavailable' || aqi_status === 'station_unavailable' || aqi_status === 'unavailable'
+                  ? 'Air pollution data unavailable for this location.'
                   : 'Property address coordinates could not be resolved for air quality assessment.'}
               </p>
             )}

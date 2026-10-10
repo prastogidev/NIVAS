@@ -15,6 +15,7 @@ import {
   Trash2,
   Image as ImageIcon,
 } from 'lucide-react';
+import PropertyLocationPicker from './PropertyLocationPicker';
 
 const formatFileSize = (bytes) => {
   if (!bytes || bytes === 0) return '';
@@ -24,60 +25,11 @@ const formatFileSize = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const PRESETS = [
-  {
-    id: 'dwarka',
-    label: 'Dwarka Sec 12',
-    val: 'Dwarka Sector 12, New Delhi',
-    type: 'Apartment',
-    locality: 'Dwarka Sector 12',
-    city: 'New Delhi',
-    lat: 28.5921,
-    lon: 77.0460,
-    subcity: 'South West Delhi',
-    landmark: 'DDA Sports Complex / Metro Blue Line',
-  },
-  {
-    id: 'rohini',
-    label: 'Rohini Sec 8',
-    val: 'Rohini Sector 8, New Delhi',
-    type: 'Apartment',
-    locality: 'Rohini Sector 8',
-    city: 'New Delhi',
-    lat: 28.7041,
-    lon: 77.1172,
-    subcity: 'North West Delhi',
-    landmark: 'Rajiv Gandhi Cancer Institute / Metro Red Line',
-  },
-  {
-    id: 'lajpat',
-    label: 'Lajpat Nagar 2',
-    val: 'Lajpat Nagar 2, New Delhi',
-    type: 'Commercial Space',
-    locality: 'Lajpat Nagar 2',
-    city: 'New Delhi',
-    lat: 28.5677,
-    lon: 77.2433,
-    subcity: 'South Delhi',
-    landmark: 'Central Market / Metro Violet & Pink Lines',
-  },
-  {
-    id: 'cp',
-    label: 'Connaught Place',
-    val: 'Connaught Place, New Delhi',
-    type: 'Commercial Space',
-    locality: 'Connaught Place',
-    city: 'New Delhi',
-    lat: 28.6315,
-    lon: 77.2167,
-    subcity: 'Central Delhi',
-    landmark: 'Rajiv Chowk / Radial Financial Corridor',
-  },
-];
-
 export default function UploadScreen({ onSubmit, error }) {
   const [address, setAddress] = useState('Dwarka Sector 12, New Delhi');
   const [propertyType, setPropertyType] = useState('Apartment');
+  const [latitude, setLatitude] = useState(28.5921);
+  const [longitude, setLongitude] = useState(77.0460);
   const [imageUrl, setImageUrl] = useState('');
   const [images, setImages] = useState([]);
   const [imageError, setImageError] = useState('');
@@ -105,11 +57,13 @@ export default function UploadScreen({ onSubmit, error }) {
   const videoInputRef = useRef(null);
   const thermalInputRef = useRef(null);
 
-  // Match address to a verified preset for real coordinates & map
-  const activePreset = PRESETS.find((p) =>
-    address.trim().toLowerCase().includes(p.locality.toLowerCase()) ||
-    address.trim().toLowerCase() === p.val.toLowerCase()
-  );
+  const handleLocationChange = ({ latitude: newLat, longitude: newLon, address: newAddr, reverseGeocoded }) => {
+    setLatitude(newLat);
+    setLongitude(newLon);
+    if (reverseGeocoded && newAddr) {
+      setAddress(newAddr);
+    }
+  };
 
   const handleImageFileChange = async (event) => {
     const files = Array.from(event.target.files || []);
@@ -394,29 +348,11 @@ export default function UploadScreen({ onSubmit, error }) {
               <input
                 id="address"
                 type="text"
-                placeholder="Dwarka Sector 12, New Delhi"
+                placeholder="Enter address or select on map"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 required
               />
-              <div className="preset-container">
-                <span className="preset-label">Verified Localities:</span>
-                <div className="preset-chips">
-                  {PRESETS.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      className={`preset-chip ${activePreset?.id === p.id ? 'active' : ''}`}
-                      onClick={() => {
-                        setAddress(p.val);
-                        setPropertyType(p.type);
-                      }}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -444,58 +380,29 @@ export default function UploadScreen({ onSubmit, error }) {
               <h3>Property Location</h3>
             </div>
 
-            {activePreset ? (
-              <div className="location-verified-content">
-                <div className="location-meta-row">
-                  <div>
-                    <span className="location-name">{activePreset.locality}</span>
-                    <span className="location-subcity">{activePreset.subcity}, {activePreset.city}</span>
-                  </div>
-                  <span className="location-coords-badge">
-                    {activePreset.lat.toFixed(4)}° N, {activePreset.lon.toFixed(4)}° E
-                  </span>
+            <div className="location-verified-content">
+              <div className="location-meta-row">
+                <div>
+                  <span className="location-name">{address.trim() || 'Selected Location'}</span>
+                  <span className="location-subcity">Interactive GIS Coordinates</span>
                 </div>
-
-                <div className="location-map-wrapper">
-                  <iframe
-                    title={`OpenStreetMap - ${activePreset.locality}`}
-                    className="location-map-frame"
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${activePreset.lon - 0.009}%2C${activePreset.lat - 0.006}%2C${activePreset.lon + 0.009}%2C${activePreset.lat + 0.006}&layer=mapnik&marker=${activePreset.lat}%2C${activePreset.lon}`}
-                    loading="lazy"
-                  />
-                </div>
-
-                <div className="location-footer-meta">
-                  <span className="location-source-tag">OpenStreetMap Nominatim</span>
-                  <span className="location-landmark">{activePreset.landmark}</span>
-                </div>
+                <span className="location-coords-badge">
+                  {latitude.toFixed(4)}° N, {longitude.toFixed(4)}° E
+                </span>
               </div>
-            ) : (
-              <div className="location-pending-content">
-                <div className="location-meta-row">
-                  <div>
-                    <span className="location-name">{address.trim() || 'Custom Address'}</span>
-                    <span className="location-subcity">Dynamic GIS Resolution</span>
-                  </div>
-                  <span className="location-coords-badge location-pending-badge">
-                    Pending Analysis
-                  </span>
-                </div>
 
-                <div className="location-pending-box">
-                  <Compass size={28} className="pending-icon" />
-                  <p className="pending-title">Live Geocoding Pipeline</p>
-                  <p className="pending-desc">
-                    OpenStreetMap Nominatim will geocode coordinates and query Overpass API for schools, transit, and emergency infrastructure during analysis.
-                  </p>
-                </div>
+              <PropertyLocationPicker
+                latitude={latitude}
+                longitude={longitude}
+                onLocationChange={handleLocationChange}
+                mapHeight={280}
+              />
 
-                <div className="location-footer-meta">
-                  <span className="location-source-tag">Nominatim & Overpass API</span>
-                  <span className="location-landmark">Real-time resolution</span>
-                </div>
+              <div className="location-footer-meta">
+                <span className="location-source-tag">OpenStreetMap Nominatim</span>
+                <span className="location-landmark">Click map or drag marker to reposition</span>
               </div>
-            )}
+            </div>
           </div>
         </div>
 

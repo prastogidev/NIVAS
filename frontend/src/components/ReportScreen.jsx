@@ -174,8 +174,8 @@ export default function ReportScreen({ result, onReset }) {
                     <span className="status-badge status-null">Provider not configured</span>
                   ) : result.aqi_status === 'fetch_failed' ? (
                     <span className="status-badge status-warning">Fetch Failed</span>
-                  ) : result.aqi_status === 'station_unavailable' || result.aqi_status === 'unavailable' ? (
-                    <span className="status-badge status-null">Station unavailable</span>
+                  ) : result.aqi_status === 'data_unavailable' || result.aqi_status === 'station_unavailable' || result.aqi_status === 'unavailable' ? (
+                    <span className="status-badge status-null">Data unavailable</span>
                   ) : (
                     <span className="status-badge status-null">Not assessed</span>
                   )}

@@ -1,5 +1,5 @@
 {
-  "timestamp": 1789108123.5338528,
+  "timestamp": 1791615150.361957,
   "data": {
     "estimated_price_per_sqft": 8500.0,
     "fairness_score": 85.0,
@@ -44,6 +44,8 @@
         "total_price_inr": 15725000.0,
         "source_reference": "Demo Benchmark Record (Dwarka Commercial Registration Reference)"
       }
-    ]
+    ],
+    "fetch_status": "active",
+    "error_message": null
   }
 }

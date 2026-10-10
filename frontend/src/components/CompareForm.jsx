@@ -1,68 +1,36 @@
 import React, { useState } from 'react';
 import { Building2, MapPin, Scale, AlertTriangle, Info, Sliders, Compass } from 'lucide-react';
 
-const PRESETS = [
-  {
-    id: 'dwarka',
-    label: 'Dwarka Sec 12',
-    val: 'Dwarka Sector 12, New Delhi',
-    type: 'Apartment',
-    locality: 'Dwarka Sector 12',
-    city: 'New Delhi',
-    lat: 28.5921,
-    lon: 77.0460,
-    subcity: 'South West Delhi',
-    landmark: 'DDA Sports Complex / Metro Blue Line',
-  },
-  {
-    id: 'rohini',
-    label: 'Rohini Sec 8',
-    val: 'Rohini Sector 8, New Delhi',
-    type: 'Apartment',
-    locality: 'Rohini Sector 8',
-    city: 'New Delhi',
-    lat: 28.7041,
-    lon: 77.1172,
-    subcity: 'North West Delhi',
-    landmark: 'Rajiv Gandhi Cancer Institute / Metro Red Line',
-  },
-  {
-    id: 'lajpat',
-    label: 'Lajpat Nagar 2',
-    val: 'Lajpat Nagar 2, New Delhi',
-    type: 'Commercial Space',
-    locality: 'Lajpat Nagar 2',
-    city: 'New Delhi',
-    lat: 28.5677,
-    lon: 77.2433,
-    subcity: 'South Delhi',
-    landmark: 'Central Market / Metro Violet & Pink Lines',
-  },
-  {
-    id: 'cp',
-    label: 'Connaught Place',
-    val: 'Connaught Place, New Delhi',
-    type: 'Commercial Space',
-    locality: 'Connaught Place',
-    city: 'New Delhi',
-    lat: 28.6315,
-    lon: 77.2167,
-    subcity: 'Central Delhi',
-    landmark: 'Rajiv Chowk / Radial Financial Corridor',
-  },
-];
+import PropertyLocationPicker from './PropertyLocationPicker';
 
 export default function CompareForm({ onSubmit, error }) {
   // Property A State
   const [addressA, setAddressA] = useState('Dwarka Sector 12, New Delhi');
   const [typeA, setTypeA] = useState('Apartment');
+  const [latA, setLatA] = useState(28.5921);
+  const [lonA, setLonA] = useState(77.0460);
 
   // Property B State
   const [addressB, setAddressB] = useState('Connaught Place, New Delhi');
   const [typeB, setTypeB] = useState('Commercial Space');
+  const [latB, setLatB] = useState(28.6315);
+  const [lonB, setLonB] = useState(77.2167);
 
-  const presetA = PRESETS.find((p) => p.val.toLowerCase() === addressA.trim().toLowerCase());
-  const presetB = PRESETS.find((p) => p.val.toLowerCase() === addressB.trim().toLowerCase());
+  const handleLocationChangeA = ({ latitude, longitude, address, reverseGeocoded }) => {
+    setLatA(latitude);
+    setLonA(longitude);
+    if (reverseGeocoded && address) {
+      setAddressA(address);
+    }
+  };
+
+  const handleLocationChangeB = ({ latitude, longitude, address, reverseGeocoded }) => {
+    setLatB(latitude);
+    setLonB(longitude);
+    if (reverseGeocoded && address) {
+      setAddressB(address);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -98,47 +66,6 @@ export default function CompareForm({ onSubmit, error }) {
           <span>{error}</span>
         </div>
       )}
-
-      {/* Preset Pair Selectors */}
-      <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Quick Compare Presets:</span>
-        <button
-          type="button"
-          className="btn-secondary-sm"
-          onClick={() => {
-            setAddressA('Dwarka Sector 12, New Delhi');
-            setTypeA('Apartment');
-            setAddressB('Lajpat Nagar 2, New Delhi');
-            setTypeB('Commercial Space');
-          }}
-        >
-          Dwarka vs Lajpat Nagar
-        </button>
-        <button
-          type="button"
-          className="btn-secondary-sm"
-          onClick={() => {
-            setAddressA('Rohini Sector 8, New Delhi');
-            setTypeA('Apartment');
-            setAddressB('Lajpat Nagar 2, New Delhi');
-            setTypeB('Commercial Space');
-          }}
-        >
-          Rohini vs Lajpat Nagar
-        </button>
-        <button
-          type="button"
-          className="btn-secondary-sm"
-          onClick={() => {
-            setAddressA('Dwarka Sector 12, New Delhi');
-            setTypeA('Apartment');
-            setAddressB('Rohini Sector 8, New Delhi');
-            setTypeB('Apartment');
-          }}
-        >
-          Dwarka vs Rohini
-        </button>
-      </div>
 
       <form onSubmit={handleSubmit}>
         <div className="compare-grid">
@@ -183,28 +110,18 @@ export default function CompareForm({ onSubmit, error }) {
                 <MapPin size={14} style={{ color: 'var(--ink-deep)' }} />
                 <span>Property A Location Map</span>
               </div>
-              {presetA ? (
-                <div className="compare-map-container">
-                  <iframe
-                    title={`OpenStreetMap - ${presetA.locality}`}
-                    className="location-map-frame"
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${presetA.lon - 0.009}%2C${presetA.lat - 0.006}%2C${presetA.lon + 0.009}%2C${presetA.lat + 0.006}&layer=mapnik&marker=${presetA.lat}%2C${presetA.lon}`}
-                    loading="lazy"
-                  />
-                  <div className="compare-map-footer">
-                    <span>{presetA.locality}, {presetA.city}</span>
-                    <span className="compare-coords-tag">{presetA.lat.toFixed(3)}°N, {presetA.lon.toFixed(3)}°E</span>
-                  </div>
+              <div className="compare-map-container" style={{ padding: '0.65rem' }}>
+                <PropertyLocationPicker
+                  latitude={latA}
+                  longitude={lonA}
+                  onLocationChange={handleLocationChangeA}
+                  mapHeight={240}
+                />
+                <div className="compare-map-footer" style={{ marginTop: '0.5rem' }}>
+                  <span className="compare-location-tag">{addressA.trim() || 'Selected Location A'}</span>
+                  <span className="compare-coords-tag">{latA.toFixed(4)}°N, {lonA.toFixed(4)}°E</span>
                 </div>
-              ) : (
-                <div className="compare-map-pending">
-                  <Compass size={22} className="pending-icon" />
-                  <p className="compare-pending-text">
-                    <strong>{addressA.trim() || 'Address A'}</strong>
-                  </p>
-                  <span className="compare-pending-subtext">Coordinates resolved via Nominatim GIS</span>
-                </div>
-              )}
+              </div>
             </div>
           </div>
 
@@ -249,28 +166,18 @@ export default function CompareForm({ onSubmit, error }) {
                 <MapPin size={14} style={{ color: '#2D2D2D' }} />
                 <span>Property B Location Map</span>
               </div>
-              {presetB ? (
-                <div className="compare-map-container">
-                  <iframe
-                    title={`OpenStreetMap - ${presetB.locality}`}
-                    className="location-map-frame"
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${presetB.lon - 0.009}%2C${presetB.lat - 0.006}%2C${presetB.lon + 0.009}%2C${presetB.lat + 0.006}&layer=mapnik&marker=${presetB.lat}%2C${presetB.lon}`}
-                    loading="lazy"
-                  />
-                  <div className="compare-map-footer">
-                    <span>{presetB.locality}, {presetB.city}</span>
-                    <span className="compare-coords-tag">{presetB.lat.toFixed(3)}°N, {presetB.lon.toFixed(3)}°E</span>
-                  </div>
+              <div className="compare-map-container" style={{ padding: '0.65rem' }}>
+                <PropertyLocationPicker
+                  latitude={latB}
+                  longitude={lonB}
+                  onLocationChange={handleLocationChangeB}
+                  mapHeight={240}
+                />
+                <div className="compare-map-footer" style={{ marginTop: '0.5rem' }}>
+                  <span className="compare-location-tag">{addressB.trim() || 'Selected Location B'}</span>
+                  <span className="compare-coords-tag">{latB.toFixed(4)}°N, {lonB.toFixed(4)}°E</span>
                 </div>
-              ) : (
-                <div className="compare-map-pending">
-                  <Compass size={22} className="pending-icon" />
-                  <p className="compare-pending-text">
-                    <strong>{addressB.trim() || 'Address B'}</strong>
-                  </p>
-                  <span className="compare-pending-subtext">Coordinates resolved via Nominatim GIS</span>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
