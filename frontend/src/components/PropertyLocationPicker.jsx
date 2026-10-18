@@ -576,6 +576,7 @@ export default function PropertyLocationPicker({
             type="text"
             className="location-search-input"
             placeholder={searchPlaceholder}
+            aria-label="Search locality or landmark in Delhi"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -589,6 +590,7 @@ export default function PropertyLocationPicker({
           <button
             type="button"
             className="location-search-btn"
+            aria-label="Search location"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -603,7 +605,7 @@ export default function PropertyLocationPicker({
 
       {/* Search Error Notice */}
       {searchError && (
-        <div className="location-picker-notice notice-error">
+        <div className="location-picker-notice notice-error" role="alert">
           <AlertCircle size={13} />
           <span>{searchError}</span>
         </div>
@@ -611,7 +613,7 @@ export default function PropertyLocationPicker({
 
       {/* Reverse Geocode Warning / Status Notice */}
       {reverseError && (
-        <div className="location-picker-notice notice-warning">
+        <div className="location-picker-notice notice-warning" role="status">
           <AlertCircle size={13} />
           <span>{reverseError}</span>
         </div>
@@ -622,6 +624,8 @@ export default function PropertyLocationPicker({
         ref={mapContainerRef}
         className="location-map-wrapper interactive-location-map"
         style={{ height: mapHeight }}
+        role="region"
+        aria-label="Interactive locality map"
       />
 
       <div className="location-picker-help">

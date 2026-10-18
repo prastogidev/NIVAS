@@ -423,6 +423,7 @@ export default function DisasterWorkspace({
                 <input
                   type="text"
                   className="compare-candidate-input"
+                  aria-label="Enter candidate locality address"
                   value={candidateLocation.address}
                   onChange={(e) => setCandidateLocation((prev) => ({ ...prev, address: e.target.value }))}
                   placeholder="Enter candidate locality (e.g. Mayur Vihar, Delhi)"
