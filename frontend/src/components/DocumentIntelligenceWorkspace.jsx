@@ -279,7 +279,7 @@ export default function DocumentIntelligenceWorkspace() {
               }}
             >
               {loadingSamples ? <RefreshCw size={14} className="spin" /> : <FileCode size={14} />}
-              Load Pre-Baked Delhi Sample Bundle
+              Load Pre-Baked Delhi Sample Bundle (Synthetic Demo)
             </button>
           </div>
 
