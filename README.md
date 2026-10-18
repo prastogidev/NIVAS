@@ -248,8 +248,8 @@ NIVAS/
 
 ### Step 1: Clone Repository & Submodules
 ```bash
-git clone --recurse-submodules https://github.com/prastogidev/SIH_NIVAS.git
-cd SIH_NIVAS
+git clone --recurse-submodules https://github.com/prastogidev/NIVAS.git
+cd NIVAS
 ```
 *(If already cloned without `--recurse-submodules`, initialize via `git submodule update --init --recursive`)*.
 

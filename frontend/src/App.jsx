@@ -130,7 +130,7 @@ export default function App() {
     } catch (err) {
       console.error('API submission error:', err);
       setResult(null); // Ensure no stale result is retained on failure
-      let errorMessage = 'Failed to connect to backend API at http://127.0.0.1:8000/api/score';
+      let errorMessage = 'Failed to connect to backend API (/api/score)';
       if (err.response?.data?.detail) {
         if (typeof err.response.data.detail === 'string') {
           errorMessage = err.response.data.detail;
@@ -159,7 +159,7 @@ export default function App() {
     } catch (err) {
       console.error('Compare API submission error:', err);
       setCompareResult(null); // Ensure no stale compare result is retained on failure
-      let errorMessage = 'Failed to connect to backend API at http://127.0.0.1:8000/api/score/compare';
+      let errorMessage = 'Failed to connect to backend API (/api/score/compare)';
       if (err.response?.data?.detail) {
         if (typeof err.response.data.detail === 'string') {
           errorMessage = err.response.data.detail;

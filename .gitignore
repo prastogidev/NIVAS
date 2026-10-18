@@ -34,3 +34,4 @@ data/processed/*
 .idea/
 .vscode/
 *.swp
+.vercel/

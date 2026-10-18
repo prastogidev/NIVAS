@@ -7,7 +7,7 @@ export default function ScoreResultView({ result }) {
       <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 320, textAlign: 'center', color: 'var(--text-muted)' }}>
         <Activity size={48} style={{ strokeWidth: 1.5, marginBottom: 12, opacity: 0.5, color: 'var(--color-primary, #8B1E2D)' }} />
         <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#2D2D2D', marginBottom: 6 }}>No API Data Loaded</h3>
-        <p style={{ fontSize: '0.9rem', maxWidth: 320 }}>Submit property address above to receive live inspection scoring response from POST http://127.0.0.1:8000/api/score</p>
+        <p style={{ fontSize: '0.9rem', maxWidth: 320 }}>Submit property address above to receive live inspection scoring response from POST /api/score</p>
       </div>
     );
   }
