@@ -1,17 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import UploadScreen from './components/UploadScreen';
 import ProcessingScreen from './components/ProcessingScreen';
 import ResultsScreen from './components/ResultsScreen';
 import ReportScreen from './components/ReportScreen';
 import CompareForm from './components/CompareForm';
 import CompareResultsView from './components/CompareResultsView';
+import LivabilityWorkspace from './components/LivabilityWorkspace';
 import { submitPropertyScore, compareProperties } from './services/api';
 import { Building2, RefreshCw, Scale, Search, Compass, ShieldCheck } from 'lucide-react';
 import nivasLogo from './assets/nivas_logo.png';
 
+const HEADER_TAGLINE = 'Find the place that feels like home.';
+
+const safeStorage = {
+  getItem: (key) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem(key);
+      }
+    } catch (e) {}
+    return null;
+  },
+  setItem: (key, val) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, val);
+      }
+    } catch (e) {}
+  },
+};
+
+const getInitialAppSection = () => {
+  try {
+    if (typeof window !== 'undefined' && window.location?.hash) {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      if (hash === 'livability' || hash === 'inspection') {
+        return hash;
+      }
+    }
+    const saved = safeStorage.getItem('nivas_app_section');
+    if (saved === 'livability' || saved === 'inspection') {
+      return saved;
+    }
+  } catch (e) {
+    // Ignore storage/window errors in restricted environments
+  }
+  return 'livability';
+};
+
 export default function App() {
-  const [appSection, setAppSection] = useState('inspection'); // 'inspection' | 'livability'
-  const [mode, setMode] = useState('single'); // 'single' | 'compare'
+  const [appSection, setAppSection] = useState(getInitialAppSection); // 'livability' by default, persisted across reloads
+  const [mode, setMode] = useState(() => {
+    const saved = safeStorage.getItem('nivas_inspection_mode');
+    if (saved === 'single' || saved === 'compare') return saved;
+    return 'single';
+  });
   const [currentScreen, setCurrentScreen] = useState('upload'); // 'upload' | 'processing' | 'results' | 'report'
 
   // Single Property State
@@ -21,6 +64,55 @@ export default function App() {
   // Compare Mode State
   const [comparePayload, setComparePayload] = useState(null);
   const [compareResult, setCompareResult] = useState(null);
+
+  // Livability Workspace Independent State (completely decoupled from inspection)
+  const [livabilityLocation, setLivabilityLocation] = useState(() => {
+    const saved = safeStorage.getItem('nivas_livability_location');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.latitude === 'number' && typeof parsed.longitude === 'number' && parsed.address) {
+          return parsed;
+        }
+      } catch (e) {}
+    }
+    return {
+      latitude: 28.5921,
+      longitude: 77.0460,
+      address: 'Dwarka Sector 12, South West Delhi, Delhi',
+    };
+  });
+  const [livabilitySearchQuery, setLivabilitySearchQuery] = useState('');
+
+  // Persist active section across reloads and sync with URL hash
+  useEffect(() => {
+    safeStorage.setItem('nivas_app_section', appSection);
+    if (typeof window !== 'undefined' && window.location && window.location.hash !== `#${appSection}`) {
+      window.history.replaceState(null, '', `#${appSection}`);
+    }
+  }, [appSection]);
+
+  // Listen to browser forward/back navigation hash changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      if (hash === 'livability' || hash === 'inspection') {
+        setAppSection(hash);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Persist mode and location
+  useEffect(() => {
+    safeStorage.setItem('nivas_inspection_mode', mode);
+  }, [mode]);
+
+  useEffect(() => {
+    safeStorage.setItem('nivas_livability_location', JSON.stringify(livabilityLocation));
+  }, [livabilityLocation]);
 
   const [error, setError] = useState(null);
 
@@ -101,6 +193,11 @@ export default function App() {
       <header className="header">
         <div className="header-brand">
           <img src={nivasLogo} alt="NIVAS" className="header-logo-img" />
+          <div className="header-tagline-divider" aria-hidden="true" />
+          <span className="header-tagline">
+            <span className="header-tagline-dot" aria-hidden="true" />
+            {HEADER_TAGLINE}
+          </span>
         </div>
 
         <div className="header-controls">
@@ -134,17 +231,13 @@ export default function App() {
 
       {/* Main Content Area */}
       {appSection === 'livability' ? (
-        /* Minimal Placeholder View for Livability */
         <main className="screen-content">
-          <div className="livability-placeholder-card">
-            <div className="livability-icon-wrap">
-              <Compass size={32} />
-            </div>
-            <h2 className="livability-title">Livability Intelligence</h2>
-            <p className="livability-desc">
-              Hyper-local community livability metrics, walkability indices, environmental health, and neighbourhood accessibility analysis are coming soon.
-            </p>
-          </div>
+          <LivabilityWorkspace
+            location={livabilityLocation}
+            onLocationChange={setLivabilityLocation}
+            searchQuery={livabilitySearchQuery}
+            onSearchQueryChange={setLivabilitySearchQuery}
+          />
         </main>
       ) : (
         /* Property Inspection Experience */

@@ -1,0 +1,4 @@
+[submodule "backend"]
+	path = backend
+	url = https://github.com/prastogidev/SIH_NIVAS.git
+	branch = backend

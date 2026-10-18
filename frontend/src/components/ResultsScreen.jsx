@@ -18,7 +18,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
-  Sparkles,
   CheckCircle2,
   ShieldAlert,
   ClipboardCheck,

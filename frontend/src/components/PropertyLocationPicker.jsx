@@ -26,6 +26,35 @@ const createNivasMarkerIcon = () => {
   });
 };
 
+// Facility category visual styles matching accessible color contrasts
+const FACILITY_VISUALS = {
+  school: { color: '#2563EB', icon: '🏫', border: '#1D4ED8' },
+  hospital: { color: '#DC2626', icon: '🏥', border: '#B91C1C' },
+  clinic: { color: '#DC2626', icon: '⚕️', border: '#B91C1C' },
+  pharmacy: { color: '#DC2626', icon: '💊', border: '#B91C1C' },
+  transit: { color: '#059669', icon: '🚏', border: '#047857' },
+  railway: { color: '#059669', icon: '🚆', border: '#047857' },
+  police: { color: '#D97706', icon: '🛡️', border: '#B45309' },
+  fire: { color: '#D97706', icon: '🚒', border: '#B45309' },
+  road: { color: '#475569', icon: '🛣️', border: '#334155' },
+};
+
+const createFacilityMarkerIcon = (category) => {
+  const vis = FACILITY_VISUALS[category] || { color: '#1E3A5F', icon: '📍', border: '#0F172A' };
+  const html = `
+    <div class="facility-map-pin facility-${category || 'general'}" style="background-color: ${vis.color};">
+      <span class="facility-map-icon">${vis.icon}</span>
+    </div>
+  `;
+  return L.divIcon({
+    className: 'facility-marker-wrapper',
+    html: html,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+    popupAnchor: [0, -14],
+  });
+};
+
 /**
  * Clean up Nominatim display_name into a user-friendly Indian address
  */
@@ -67,17 +96,44 @@ export default function PropertyLocationPicker({
   onLocationChange,
   mapHeight = 280,
   initialZoom = 15,
+  searchQuery: propSearchQuery,
+  onSearchQueryChange,
+  searchPlaceholder = 'Search address or locality (e.g. Indirapuram, Ghaziabad)...',
+  onSearchStatusChange,
+  overlayMarkers = [],
+  selectedFacilityId = null,
+  onFacilitySelect = null,
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerInstanceRef = useRef(null);
+  const overlayLayerRef = useRef(null);
+  const facilityMarkersMapRef = useRef(new Map());
   const isInternalUpdateRef = useRef(false);
 
-  // Search input state
-  const [searchQuery, setSearchQuery] = useState('');
+  // Search input state (supports both uncontrolled and controlled modes)
+  const [internalSearchQuery, setInternalSearchQuery] = useState('');
+  const isControlledSearch = propSearchQuery !== undefined;
+  const searchQuery = isControlledSearch ? propSearchQuery : internalSearchQuery;
+  const setSearchQuery = (newVal) => {
+    if (!isControlledSearch) {
+      setInternalSearchQuery(newVal);
+    }
+    if (typeof onSearchQueryChange === 'function') {
+      onSearchQueryChange(newVal);
+    }
+  };
+
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [reverseError, setReverseError] = useState('');
+
+  // Notify parent of search status changes if requested
+  useEffect(() => {
+    if (typeof onSearchStatusChange === 'function') {
+      onSearchStatusChange({ isSearching, searchError, reverseError });
+    }
+  }, [isSearching, searchError, reverseError, onSearchStatusChange]);
 
   // Default Delhi center fallback if coordinates invalid
   const validLat = typeof latitude === 'number' && !isNaN(latitude) ? latitude : 28.5921;
@@ -209,6 +265,12 @@ export default function PropertyLocationPicker({
         autoPan: true,
       }).addTo(map);
 
+      // Create separate overlay layer group for facility POI markers
+      const overlayLayer = typeof L.layerGroup === 'function'
+        ? L.layerGroup().addTo(map)
+        : { clearLayers: () => {}, addLayer: () => {} };
+      overlayLayerRef.current = overlayLayer;
+
       // Marker dragend event
       marker.on('dragend', () => {
         const pos = marker.getLatLng();
@@ -247,6 +309,10 @@ export default function PropertyLocationPicker({
     }
 
     return () => {
+      if (overlayLayerRef.current) {
+        overlayLayerRef.current.clearLayers();
+        overlayLayerRef.current = null;
+      }
       if (mapInstanceRef.current) {
         if (mapInstanceRef.current._resizeObserver) {
           mapInstanceRef.current._resizeObserver.disconnect();
@@ -257,6 +323,75 @@ export default function PropertyLocationPicker({
       }
     };
   }, []); // Run once on mount
+
+  const onFacilitySelectRef = useRef(onFacilitySelect);
+  useEffect(() => {
+    onFacilitySelectRef.current = onFacilitySelect;
+  }, [onFacilitySelect]);
+
+  // Synchronize overlay markers whenever overlayMarkers changes
+  useEffect(() => {
+    if (!overlayLayerRef.current || !mapInstanceRef.current) return;
+
+    overlayLayerRef.current.clearLayers();
+    facilityMarkersMapRef.current.clear();
+
+    if (!Array.isArray(overlayMarkers) || overlayMarkers.length === 0) {
+      return;
+    }
+
+    overlayMarkers.forEach((item) => {
+      if (typeof item.latitude !== 'number' || typeof item.longitude !== 'number') {
+        return;
+      }
+
+      const facMarker = L.marker([item.latitude, item.longitude], {
+        icon: createFacilityMarkerIcon(item.category),
+        riseOnHover: true,
+      });
+
+      const popupHtml = `
+        <div class="facility-popup-card">
+          <span class="facility-popup-badge facility-${item.category || 'general'}">${item.category_label || item.category || 'Facility'}</span>
+          <h4 class="facility-popup-title">${item.name || 'Local Facility'}</h4>
+          <div class="facility-popup-coords">Coordinates: ${item.latitude.toFixed(5)}° N, ${item.longitude.toFixed(5)}° E</div>
+          <div class="facility-popup-source">Verified Provider: ${item.source || 'OpenStreetMap'}</div>
+        </div>
+      `;
+
+      facMarker.bindPopup(popupHtml, {
+        closeButton: true,
+        offset: [0, -8],
+      });
+
+      // Prevent facility marker clicks from moving the active exploration location pin
+      facMarker.on('click', (e) => {
+        if (e && e.originalEvent && L.DomEvent && typeof L.DomEvent.stopPropagation === 'function') {
+          L.DomEvent.stopPropagation(e.originalEvent);
+        }
+        if (typeof onFacilitySelectRef.current === 'function') {
+          onFacilitySelectRef.current(item);
+        }
+      });
+
+      if (item.id) {
+        facilityMarkersMapRef.current.set(String(item.id), facMarker);
+      }
+
+      if (typeof facMarker.addTo === 'function' && overlayLayerRef.current) {
+        facMarker.addTo(overlayLayerRef.current);
+      }
+    });
+  }, [overlayMarkers]);
+
+  // Open marker popup when selectedFacilityId changes without moving the exploration pin
+  useEffect(() => {
+    if (!selectedFacilityId || !facilityMarkersMapRef.current) return;
+    const marker = facilityMarkersMapRef.current.get(String(selectedFacilityId));
+    if (marker && typeof marker.openPopup === 'function') {
+      marker.openPopup();
+    }
+  }, [selectedFacilityId]);
 
   // Sync external coordinate changes (e.g. if parent changes lat/lon)
   useEffect(() => {
@@ -285,7 +420,7 @@ export default function PropertyLocationPicker({
           <input
             type="text"
             className="location-search-input"
-            placeholder="Search address or locality (e.g. Indirapuram, Ghaziabad)..."
+            placeholder={searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {
