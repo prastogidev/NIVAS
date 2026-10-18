@@ -113,14 +113,14 @@ async def run_thermal_analysis(image_info=None) -> Optional[ThermalModuleResult]
                     img_bytes = base64.b64decode(b64_data)
                     if len(img_bytes) > 0:
                         img = Image.open(BytesIO(img_bytes)).convert("L").resize((32, 24))
-                        sensor_status = "Thermal Image (Upload) — Pixel-Normalized to °C"
+                        sensor_status = "Thermal Image (Upload) — Relative Pixel Gradient Estimation (Not Calibrated Physical Sensor)"
                 elif thermal_url and str(thermal_url).strip():
                     import httpx
                     async with httpx.AsyncClient(timeout=5.0) as client:
                         resp = await client.get(str(thermal_url).strip())
                     if resp.status_code == 200:
                         img = Image.open(BytesIO(resp.content)).convert("L").resize((32, 24))
-                        sensor_status = "Thermal Image (URL) — Pixel-Normalized to °C"
+                        sensor_status = "Thermal Image (URL) — Relative Pixel Gradient Estimation (Not Calibrated Physical Sensor)"
 
                 if img is not None:
                     raw = np.array(img, dtype=np.float32)

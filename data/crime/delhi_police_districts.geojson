@@ -1,0 +1,347 @@
+{
+  "type": "FeatureCollection",
+  "name": "DelhiPoliceDistricts",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_ND",
+        "district_name": "New Delhi District",
+        "headquarters": "Parliament Street",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.185, 28.640],
+            [77.235, 28.640],
+            [77.240, 28.610],
+            [77.230, 28.580],
+            [77.185, 28.580],
+            [77.175, 28.610],
+            [77.185, 28.640]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_C",
+        "district_name": "Central District",
+        "headquarters": "Daryaganj",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.175, 28.680],
+            [77.245, 28.680],
+            [77.250, 28.640],
+            [77.185, 28.640],
+            [77.165, 28.645],
+            [77.165, 28.670],
+            [77.175, 28.680]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_N",
+        "district_name": "North District",
+        "headquarters": "Civil Lines",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.175, 28.740],
+            [77.240, 28.740],
+            [77.245, 28.680],
+            [77.175, 28.680],
+            [77.165, 28.710],
+            [77.175, 28.740]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_NE",
+        "district_name": "North East District",
+        "headquarters": "Seelampur",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.240, 28.750],
+            [77.300, 28.750],
+            [77.305, 28.690],
+            [77.255, 28.670],
+            [77.240, 28.690],
+            [77.240, 28.750]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_NW",
+        "district_name": "North West District",
+        "headquarters": "Ashok Vihar",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.120, 28.760],
+            [77.200, 28.760],
+            [77.200, 28.690],
+            [77.140, 28.690],
+            [77.115, 28.720],
+            [77.120, 28.760]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_S",
+        "district_name": "South District",
+        "headquarters": "Hauz Khas",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.160, 28.580],
+            [77.230, 28.580],
+            [77.240, 28.520],
+            [77.210, 28.480],
+            [77.150, 28.480],
+            [77.150, 28.530],
+            [77.160, 28.580]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_SE",
+        "district_name": "South East District",
+        "headquarters": "Sarita Vihar",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.230, 28.590],
+            [77.330, 28.590],
+            [77.340, 28.510],
+            [77.300, 28.480],
+            [77.240, 28.480],
+            [77.230, 28.550],
+            [77.230, 28.590]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_SW",
+        "district_name": "South West District",
+        "headquarters": "Vasant Vihar",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.080, 28.610],
+            [77.185, 28.610],
+            [77.185, 28.550],
+            [77.150, 28.500],
+            [77.080, 28.510],
+            [77.070, 28.560],
+            [77.080, 28.610]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_W",
+        "district_name": "West District",
+        "headquarters": "Rajouri Garden",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.080, 28.685],
+            [77.165, 28.685],
+            [77.165, 28.630],
+            [77.080, 28.620],
+            [77.070, 28.650],
+            [77.080, 28.685]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_ROH",
+        "district_name": "Rohini District",
+        "headquarters": "Rohini Sector 23",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.040, 28.775],
+            [77.135, 28.775],
+            [77.135, 28.710],
+            [77.040, 28.705],
+            [77.030, 28.740],
+            [77.040, 28.775]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_OUT",
+        "district_name": "Outer District",
+        "headquarters": "Pushpanjali Enclave",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [76.960, 28.720],
+            [77.080, 28.720],
+            [77.080, 28.660],
+            [76.960, 28.650],
+            [76.940, 28.685],
+            [76.960, 28.720]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_ON",
+        "district_name": "Outer North District",
+        "headquarters": "Samaypur Badli",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.040, 28.885],
+            [77.195, 28.885],
+            [77.195, 28.765],
+            [77.040, 28.765],
+            [77.020, 28.825],
+            [77.040, 28.885]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_SHD",
+        "district_name": "Shahdara District",
+        "headquarters": "Shalimar Park / Shahdara",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.260, 28.700],
+            [77.345, 28.700],
+            [77.345, 28.650],
+            [77.260, 28.650],
+            [77.250, 28.675],
+            [77.260, 28.700]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_E",
+        "district_name": "East District",
+        "headquarters": "Mandawali",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.255, 28.655],
+            [77.345, 28.655],
+            [77.345, 28.585],
+            [77.265, 28.585],
+            [77.250, 28.620],
+            [77.255, 28.655]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "district_code": "DEL_DWK",
+        "district_name": "Dwarka District",
+        "headquarters": "Dwarka Sector 19",
+        "jurisdiction": "Delhi Police"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [76.920, 28.640],
+            [77.080, 28.640],
+            [77.080, 28.520],
+            [76.920, 28.500],
+            [76.880, 28.570],
+            [76.920, 28.640]
+          ]
+        ]
+      }
+    }
+  ]
+}

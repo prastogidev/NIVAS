@@ -238,3 +238,193 @@ def test_livability_facility_markers_use_actual_coordinates():
         assert facilities[1]["longitude"] == 77.042233
         assert facilities[1]["category"] == "hospital"
 
+
+def test_livability_data_dynamic_radius_parameters():
+    """Verify radius parameter propagation and boundary validation in GET and POST requests."""
+    mock_infra = InfrastructureSummary(
+        schools_count=2,
+        facilities=[],
+    )
+    mock_aqi = (None, "provider_not_configured", "Not configured")
+
+    with patch("backend.api.livability.fetch_overpass_infrastructure", new=AsyncMock(return_value=mock_infra)) as mock_fetch, \
+         patch("backend.api.livability.fetch_real_aqi_with_status", new=AsyncMock(return_value=mock_aqi)):
+
+        # GET request with custom radius 2500m
+        res1 = client.get(
+            "/api/livability/location-data",
+            params={"latitude": 28.5921, "longitude": 77.0460, "radius": 2500},
+        )
+        assert res1.status_code == 200
+        assert res1.json()["infrastructure"]["search_radius_meters"] == 2500
+        assert res1.json()["infrastructure"]["railway_search_radius_meters"] == 3300
+        mock_fetch.assert_called_with(28.5921, 77.0460, radius=2500)
+
+        # POST request with custom radius 500m
+        res2 = client.post(
+            "/api/livability/location-data",
+            json={"latitude": 28.5921, "longitude": 77.0460, "radius": 500},
+        )
+        assert res2.status_code == 200
+        assert res2.json()["infrastructure"]["search_radius_meters"] == 500
+        assert res2.json()["infrastructure"]["railway_search_radius_meters"] == 1300
+        mock_fetch.assert_called_with(28.5921, 77.0460, radius=500)
+
+        # Radius at 10000m boundary
+        res3 = client.get(
+            "/api/livability/location-data",
+            params={"latitude": 28.5921, "longitude": 77.0460, "radius": 10000},
+        )
+        assert res3.status_code == 200
+        assert res3.json()["infrastructure"]["search_radius_meters"] == 10000
+        assert res3.json()["infrastructure"]["railway_search_radius_meters"] == 10000
+        mock_fetch.assert_called_with(28.5921, 77.0460, radius=10000)
+
+        # Radius out of bounds (below 0m)
+        res_neg = client.get(
+            "/api/livability/location-data",
+            params={"latitude": 28.5921, "longitude": 77.0460, "radius": -1},
+        )
+        assert res_neg.status_code in (400, 422)
+
+        # Radius out of bounds (above 10000m)
+        res_over = client.get(
+            "/api/livability/location-data",
+            params={"latitude": 28.5921, "longitude": 77.0460, "radius": 10001},
+        )
+        assert res_over.status_code in (400, 422)
+
+
+def test_livability_data_zero_radius_bypasses_overpass():
+    """Verify that a radius of 0m returns a clean empty state without calling Overpass API."""
+    mock_aqi = (None, "provider_not_configured", "Not configured")
+
+    with patch("backend.api.livability.fetch_overpass_infrastructure", new=AsyncMock()) as mock_fetch, \
+         patch("backend.api.livability.fetch_real_aqi_with_status", new=AsyncMock(return_value=mock_aqi)):
+
+        res = client.get(
+            "/api/livability/location-data",
+            params={"latitude": 28.5921, "longitude": 77.0460, "radius": 0},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["infrastructure"]["search_radius_meters"] == 0
+        assert data["infrastructure"]["railway_search_radius_meters"] == 0
+        assert data["infrastructure"]["total_facilities"] == 0
+        assert data["infrastructure"]["facilities"] == []
+        assert data["infrastructure"]["status"] == "empty"
+        mock_fetch.assert_not_called()
+
+
+def test_parse_overpass_road_ways_with_center_coordinates():
+    """Verify Overpass road ways with center.lat and center.lon are parsed and categorized as 'road'."""
+    from backend.services.location import _parse_overpass_infrastructure
+
+    raw_elements = [
+        {
+            "type": "way",
+            "id": 28190350,
+            "center": {"lat": 28.644567, "lon": 77.169835},
+            "tags": {"highway": "secondary", "name": "Patel Road", "oneway": "yes"},
+        },
+        {
+            "type": "way",
+            "id": 77852890,
+            "center": {"lat": 28.657218, "lon": 77.148876},
+            "tags": {"highway": "primary", "name": "Pusa Road"},
+        },
+        {
+            "type": "way",
+            "id": 88991122,
+            "center": {"lat": 28.660100, "lon": 77.150200},
+            "tags": {"highway": "trunk", "ref": "NH-48"},
+        },
+    ]
+
+    result = _parse_overpass_infrastructure(raw_elements)
+
+    assert result.major_roads_count == 3
+    assert len(result.facilities) == 3
+    roads = [f for f in result.facilities if f["category"] == "road"]
+    assert len(roads) == 3
+
+    assert roads[0]["name"] == "Patel Road"
+    assert roads[0]["category"] == "road"
+    assert roads[0]["category_label"] == "Major Road (Secondary)"
+    assert roads[0]["latitude"] == 28.644567
+    assert roads[0]["longitude"] == 77.169835
+
+    assert roads[1]["name"] == "Pusa Road"
+    assert roads[1]["category"] == "road"
+    assert roads[1]["category_label"] == "Major Road (Primary)"
+
+    # Road using ref fallback when name tag is omitted
+    assert roads[2]["name"] == "NH-48"
+    assert roads[2]["category_label"] == "Major Road (Trunk)"
+
+
+def test_parse_overpass_road_ways_invalid_coordinates():
+    """Verify invalid, out-of-range, and missing center coordinates are handled gracefully."""
+    from backend.services.location import _parse_overpass_infrastructure
+
+    raw_elements = [
+        # Missing center completely
+        {
+            "type": "way",
+            "id": 1001,
+            "tags": {"highway": "primary", "name": "No Center Road"},
+        },
+        # Center lat is string that cannot be parsed
+        {
+            "type": "way",
+            "id": 1002,
+            "center": {"lat": "invalid_lat", "lon": 77.1500},
+            "tags": {"highway": "secondary", "name": "Bad Lat Road"},
+        },
+        # Center lat out of bounds (> 90.0)
+        {
+            "type": "way",
+            "id": 1003,
+            "center": {"lat": 125.0, "lon": 77.1500},
+            "tags": {"highway": "motorway", "name": "Out Of Bounds Road"},
+        },
+        # Valid road way for comparison
+        {
+            "type": "way",
+            "id": 1004,
+            "center": {"lat": 28.6500, "lon": 77.1500},
+            "tags": {"highway": "primary", "name": "Valid Road"},
+        },
+    ]
+
+    result = _parse_overpass_infrastructure(raw_elements)
+
+    # Only the road with valid coordinates is in facilities
+    assert len(result.facilities) == 1
+    assert result.facilities[0]["id"] == "1004"
+    assert result.facilities[0]["name"] == "Valid Road"
+    assert result.facilities[0]["latitude"] == 28.6500
+    assert result.facilities[0]["longitude"] == 77.1500
+
+
+def test_parse_overpass_road_category_isolation():
+    """Ensure road counts and facility items stay completely separate from school, healthcare, and transit."""
+    from backend.services.location import _parse_overpass_infrastructure
+
+    raw_elements = [
+        {"type": "node", "id": 1, "lat": 28.651, "lon": 77.151, "tags": {"amenity": "school", "name": "Govt School"}},
+        {"type": "node", "id": 2, "lat": 28.652, "lon": 77.152, "tags": {"amenity": "hospital", "name": "City Clinic"}},
+        {"type": "node", "id": 3, "lat": 28.653, "lon": 77.153, "tags": {"railway": "station", "name": "Metro Station"}},
+        {"type": "way", "id": 4, "center": {"lat": 28.654, "lon": 77.154}, "tags": {"highway": "primary", "name": "Main Highway"}},
+    ]
+
+    result = _parse_overpass_infrastructure(raw_elements)
+
+    assert result.schools_count == 1
+    assert result.hospitals_count == 1
+    assert result.railway_stations_count == 1
+    assert result.major_roads_count == 1
+
+    cats = [f["category"] for f in result.facilities]
+    assert sorted(cats) == ["hospital", "railway", "road", "school"]
+

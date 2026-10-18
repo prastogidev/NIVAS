@@ -1,0 +1,94 @@
+{
+  "type": "FeatureCollection",
+  "name": "DelhiHazardZones",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "SEISMIC_ZONE_IV",
+        "hazard_type": "earthquake",
+        "title": "BIS Seismic Zone IV (High Damage Risk)",
+        "authority": "Bureau of Indian Standards (BIS IS 1893:2016) & National Center for Seismology (NCS)",
+        "severity": "high",
+        "category": "static",
+        "description": "Entire National Capital Territory of Delhi is categorized under Seismic Zone IV (Zone factor 0.24, MSK Intensity VIII). All structural construction requires adherence to earthquake-resistant ductile detailing (IS 13920).",
+        "mitigation": "Ensure building compliance with National Building Code (NBC 2016) and IS 1893 seismic retrofitting standards."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [76.840, 28.400],
+            [77.360, 28.400],
+            [77.360, 28.890],
+            [76.840, 28.890],
+            [76.840, 28.400]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "YAMUNA_FLOOD_CORRIDOR",
+        "hazard_type": "flood",
+        "title": "Yamuna River Floodplain & Inundation Corridor",
+        "authority": "Central Water Commission (CWC) & Delhi Irrigation and Flood Control Department",
+        "severity": "critical",
+        "category": "historical_and_zonal",
+        "warning_level_m": 204.50,
+        "danger_level_m": 205.33,
+        "historic_hfl_m": 208.66,
+        "historic_hfl_date": "2023-07-13",
+        "description": "Active floodplain and riverbed lowlands subject to periodic monsoon backflow when Hathnikund Barrage discharge exceeds 250,000 cusecs. Historically submerged areas include Yamuna Bazar, Monastery Market, Bela Road, Usmanpur lowlands, and Mayur Vihar lowlands.",
+        "mitigation": "Permanent residential construction prohibited under NGT orders. Elevate plinth levels and review municipal drainage outfall elevation."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.200, 28.780],
+            [77.250, 28.780],
+            [77.265, 28.700],
+            [77.310, 28.620],
+            [77.330, 28.520],
+            [77.290, 28.520],
+            [77.250, 28.610],
+            [77.220, 28.700],
+            [77.200, 28.780]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "WATERLOGGING_HOTSPOTS",
+        "hazard_type": "waterlogging",
+        "title": "Vulnerable Urban Drainage & Inundation Points",
+        "authority": "Delhi PWD & IIT Delhi Drainage Master Plan",
+        "severity": "moderate_to_high",
+        "category": "historical",
+        "description": "Chronic monsoon waterlogging depressions and road underpasses where natural drainage slope is impeded or stormwater pumping is required during intense precipitation (>50 mm/hr).",
+        "mitigation": "Avoid basement parking without automatic sump pumps during intense cloudbursts."
+      },
+      "geometry": {
+        "type": "MultiPoint",
+        "coordinates": [
+          [77.221, 28.632],
+          [77.295, 28.515],
+          [77.165, 28.665],
+          [77.240, 28.627],
+          [77.245, 28.630],
+          [77.208, 28.660]
+        ]
+      }
+    }
+  ]
+}

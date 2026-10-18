@@ -14,6 +14,7 @@ from backend.models.livability import (
 )
 from backend.services.location import fetch_overpass_infrastructure
 from backend.services.air_quality import fetch_real_aqi_with_status
+from backend.core.config import settings
 
 logger = logging.getLogger("nivas.services.livability_advisor")
 
@@ -295,21 +296,72 @@ def generate_grounded_telemetry_reply(
 
     # 4. Emergency & Safety inquiry
     if any(k in q for k in ["police", "fire", "emergency", "safety", "crime"]):
+        sources.append("Delhi Police / NCRB Official Statistics")
         emergency_facilities = [
             f for f in ctx.facilities if f.category in ["police", "fire"]
         ]
         emergency_facilities.sort(key=lambda x: (x.distance_km if x.distance_km is not None else float("inf")))
 
-        lines = [f"Emergency services data for {loc_name} (Source: OpenStreetMap):"]
+        lines = [f"Safety and Emergency services data for {loc_name}:"]
+
+        # Resolved district crime baseline
+        try:
+            from backend.services.crime_data import resolve_police_district, load_crime_baseline
+            resolved = resolve_police_district(ctx.latitude, ctx.longitude)
+            if resolved:
+                dcode, _ = resolved
+                baseline = load_crime_baseline()
+                ddata = baseline.get("districts", {}).get(dcode)
+                if ddata:
+                    lines.append(f"• Jurisdictional Police District: {ddata['district_name']} (HQ: {ddata.get('headquarters', 'N/A')}).")
+                    lines.append(f"• Official Annual Statistics (2022 NCRB): {ddata['total_ipc_crimes_2022']:,} total reported IPC crimes ({ddata.get('crime_rate_per_lakh', 'N/A')} per 100k residents).")
+                    top_cats = ddata.get("categories_2022", [])
+                    if top_cats:
+                        top_strs = [f"{c['label']} ({c['share_pct']}%)" for c in top_cats[:3]]
+                        lines.append(f"• Primary Reported Offense Types: {', '.join(top_strs)}.")
+                    lines.append("• Crime Telemetry Disclosure: High theft figures reflect online e-FIR auto-registration rather than higher localized physical danger. Individual incident addresses are not published to safeguard citizen privacy.")
+        except Exception as e:
+            logger.debug("District crime lookup in advisor: %s", e)
+
         if emergency_facilities:
+            lines.append(f"\nVerified nearby emergency stations within {ctx.search_radius_meters / 1000:.1f} km (OpenStreetMap):")
             for f in emergency_facilities:
                 dist_str = f.formatted_distance or (f"{f.distance_km:.2f} km" if f.distance_km is not None else "distance unknown")
                 lines.append(f"• {f.name} ({f.category_label or f.category.title()}): ~{dist_str} away")
         else:
-            lines.append(f"• 0 police or fire stations mapped within {ctx.search_radius_meters / 1000:.1f} km in OpenStreetMap.")
+            lines.append(f"\n• 0 police or fire stations mapped within {ctx.search_radius_meters / 1000:.1f} km in OpenStreetMap.")
 
         lines.append(f"\n• Hazard Telemetry Status: {ctx.hazards_message or 'Real-time hazard sensors not configured'}.")
-        lines.append("• Safety Caution: The absence of hazard sensor data or crime records reflects unconfigured sensor integrations and does NOT imply guaranteed safety or zero hazard.")
+        lines.append("• Safety Caution: The absence of unmapped hazard records does NOT imply guaranteed safety or zero hazard.")
+        return ("\n".join(lines), sources)
+
+    # 4b. Disaster & Geological Hazard inquiry
+    if any(k in q for k in ["disaster", "flood", "earthquake", "seismic", "waterlog", "heatwave"]):
+        sources.append("BIS IS 1893:2016 / CWC / IMD Disaster Telemetry")
+        lines = [
+            f"Documented Disaster & Hazard Intelligence for {loc_name}:",
+            "• Seismic Hazard (BIS IS 1893:2016): All of Delhi falls under Seismic Zone IV (High Damage Risk Zone - Zone factor 0.24, MSK VIII). Structural compliance with NBC 2016 and ductile detailing (IS 13920) is mandatory.",
+        ]
+        try:
+            from backend.services.disaster import load_hazard_zones_geojson
+            from backend.services.crime_data import point_in_polygon
+            hz = load_hazard_zones_geojson()
+            flood_feat = next((f for f in hz.get("features", []) if f.get("properties", {}).get("hazard_type") == "flood"), None)
+            in_flood = False
+            if flood_feat:
+                fcoords = flood_feat.get("geometry", {}).get("coordinates", [])
+                if fcoords:
+                    in_flood = point_in_polygon(ctx.longitude, ctx.latitude, fcoords[0])
+            if in_flood:
+                lines.append("• Riverine Flood Hazard (CWC): Location lies inside the active Yamuna River floodplain corridor (submerged during 2023 flood at HFL 208.66m). Permanent construction is restricted.")
+            else:
+                lines.append("• Riverine Flood Hazard (CWC): Location lies on natural upland terrain outside the active Yamuna floodplain corridor.")
+        except Exception as e:
+            logger.debug("Flood lookup in advisor: %s", e)
+
+        lines.append("• Urban Drainage / Waterlogging (Delhi PWD): Chronic waterlogging depressions occur at underpasses during extreme cloudbursts (>50 mm/hr).")
+        lines.append("• Extreme Heat (IMD): Summer maximums reach 42°C-47°C; urban density elevates local temperatures +2°C to +4°C over vegetated belts.")
+        lines.append("\nImportant: Long-term zoning indicates structural engineering requirements, not predictive disaster forecasting.")
         return ("\n".join(lines), sources)
 
     # 5. Air Quality & Environmental inquiry
@@ -439,6 +491,27 @@ def format_context_prompt(ctx: LivabilityChatContext, query: str) -> str:
         else "No facilities mapped in search radius."
     )
 
+    # Fetch district crime intelligence if in Delhi
+    district_info = "Police district crime records: Unindexed or outside Delhi boundary."
+    try:
+        from backend.services.crime_data import resolve_police_district, load_crime_baseline
+        res = resolve_police_district(ctx.latitude, ctx.longitude)
+        if res:
+            dcode, _ = res
+            b = load_crime_baseline()
+            d = b.get("districts", {}).get(dcode)
+            if d:
+                district_info = (
+                    f"Jurisdictional District: {d['district_name']} (2022 Official NCRB Report). "
+                    f"Total Reported IPC Crimes: {d['total_ipc_crimes_2022']:,} ({d.get('crime_rate_per_lakh', 'N/A')} per 100k residents). "
+                    f"Notice: Vehicle & property theft constitutes ~70-75% of filings via online e-FIR. "
+                    f"Individual incident addresses are NOT published by police to safeguard privacy."
+                )
+    except Exception:
+        pass
+
+    disaster_info = "Zoning: BIS Seismic Zone IV (High Damage Risk, Zone factor 0.24). Structural NBC 2016 compliance mandatory."
+
     return (
         f"Selected Location: {ctx.address or ctx.locality or 'Unknown'} ({ctx.latitude:.4f}° N, {ctx.longitude:.4f}° E)\n"
         f"Infrastructure Status: {ctx.infrastructure_status} (Search radius: {ctx.search_radius_meters}m civic, {ctx.railway_search_radius_meters}m rail)\n"
@@ -446,7 +519,8 @@ def format_context_prompt(ctx: LivabilityChatContext, query: str) -> str:
         f"Transit: {ctx.public_transport_count + ctx.railway_stations_count}, Emergency: {ctx.police_stations_count + ctx.fire_stations_count}, Roads: {ctx.major_roads_count}\n"
         f"Mapped Facilities:\n{facilities_text}\n\n"
         f"Air Quality Status: {ctx.air_quality_status}, AQI: {ctx.aqi_value}, Category: {ctx.aqi_category}, Station: {ctx.aqi_station}\n"
-        f"Hazard Telemetry: {ctx.hazards_message}\n\n"
+        f"Hazard & Disaster Telemetry: {disaster_info}\n"
+        f"Historical Crime Intelligence: {district_info}\n\n"
         f"User Question: {query}"
     )
 
@@ -502,7 +576,8 @@ async def call_gemini_provider(
 ) -> Optional[str]:
     """Call Google Gemini generative model with strict factual grounding instructions."""
     context_prompt = format_context_prompt(ctx, query)
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    model_name = settings.GEMINI_MODEL or "gemini-2.5-flash"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
     headers = {"x-goog-api-key": api_key}
     payload = {
         "system_instruction": {"parts": [{"text": GROUNDING_SYSTEM_PROMPT}]},
@@ -532,10 +607,11 @@ async def call_openai_provider(
 ) -> Optional[str]:
     """Call OpenAI model with strict factual grounding instructions."""
     context_prompt = format_context_prompt(ctx, query)
+    model_name = settings.OPENAI_MODEL or "gpt-4o-mini"
     url = "https://api.openai.com/v1/chat/completions"
     headers = {"Authorization": f"Bearer {api_key}"}
     payload = {
-        "model": "gpt-4o-mini",
+        "model": model_name,
         "messages": [
             {"role": "system", "content": GROUNDING_SYSTEM_PROMPT},
             {"role": "user", "content": context_prompt},

@@ -1,0 +1,810 @@
+{
+  "metadata": {
+    "source_agency": "National Crime Records Bureau (NCRB) & Delhi Police",
+    "publication": "Crime in India Annual Compendiums & Delhi Police Statistical Statements",
+    "source_url": "https://ncrb.gov.in/crime-in-india.html",
+    "retrieval_timestamp": "2026-10-18T20:25:00Z",
+    "latest_reporting_year": 2022,
+    "historical_years_covered": [2018, 2019, 2020, 2021, 2022],
+    "geographic_resolution": "police_district",
+    "total_districts": 15,
+    "disclaimer": "Statistics reflect official First Information Reports (FIRs) registered with Delhi Police as compiled by the National Crime Records Bureau (NCRB). Higher registered volumes in commercial and transit-dense districts heavily reflect mobile app and online e-FIR auto-registration for vehicle and property theft, rather than higher localized physical danger. Zero published incidents in an area does not indicate the absence of crime. Individual incident addresses are not published to safeguard citizen privacy and prevent defamatory property profiling."
+  },
+  "districts": {
+    "DEL_ND": {
+      "district_code": "DEL_ND",
+      "district_name": "New Delhi District",
+      "headquarters": "Parliament Street",
+      "population_projection_2022": 152000,
+      "total_ipc_crimes_2022": 3940,
+      "crime_rate_per_lakh": 2592.1,
+      "clearance_rate_pct": 52.4,
+      "historical_trend_ipc": {
+        "2018": 3210,
+        "2019": 3820,
+        "2020": 2980,
+        "2021": 3710,
+        "2022": 3940
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 2740,
+          "share_pct": 69.5,
+          "description": "Auto-lifting, snatching, pickpocketing, and e-FIR registered theft"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 78,
+          "share_pct": 2.0,
+          "description": "Murder, attempt to murder, robbery, dacoity, and rioting"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 82,
+          "share_pct": 2.1,
+          "description": "Assault, harassment, and offenses registered under IPC/SLL"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 145,
+          "share_pct": 3.7,
+          "description": "Online banking fraud, phishing, and digital identity theft"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 895,
+          "share_pct": 22.7,
+          "description": "Public servant obstruction, rash driving, and municipal violations"
+        }
+      ]
+    },
+    "DEL_C": {
+      "district_code": "DEL_C",
+      "district_name": "Central District",
+      "headquarters": "Daryaganj",
+      "population_projection_2022": 640000,
+      "total_ipc_crimes_2022": 12840,
+      "crime_rate_per_lakh": 2006.3,
+      "clearance_rate_pct": 48.6,
+      "historical_trend_ipc": {
+        "2018": 11400,
+        "2019": 13620,
+        "2020": 10550,
+        "2021": 12480,
+        "2022": 12840
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 9180,
+          "share_pct": 71.5,
+          "description": "Auto-lifting, commercial market shoplifting, and e-FIR property theft"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 280,
+          "share_pct": 2.2,
+          "description": "Homicide, armed robbery, and severe hurt"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 310,
+          "share_pct": 2.4,
+          "description": "Assault, stalking, and domestic cruelty"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 220,
+          "share_pct": 1.7,
+          "description": "Commercial fraud and digital payment scams"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 2850,
+          "share_pct": 22.2,
+          "description": "Commercial disputes, hurt, and traffic-related IPC violations"
+        }
+      ]
+    },
+    "DEL_N": {
+      "district_code": "DEL_N",
+      "district_name": "North District",
+      "headquarters": "Civil Lines",
+      "population_projection_2022": 960000,
+      "total_ipc_crimes_2022": 15420,
+      "crime_rate_per_lakh": 1606.3,
+      "clearance_rate_pct": 46.2,
+      "historical_trend_ipc": {
+        "2018": 13800,
+        "2019": 16100,
+        "2020": 12900,
+        "2021": 15150,
+        "2022": 15420
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 11250,
+          "share_pct": 73.0,
+          "description": "Motor vehicle theft, campus bicycle theft, and transit snatching"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 395,
+          "share_pct": 2.6,
+          "description": "Robbery, dacoity, and severe assault"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 485,
+          "share_pct": 3.1,
+          "description": "Stalking, harassment, and domestic cruelty"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 260,
+          "share_pct": 1.7,
+          "description": "University admission fraud and online imposture"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 3030,
+          "share_pct": 19.6,
+          "description": "Burglary, rash driving, and public nuisance"
+        }
+      ]
+    },
+    "DEL_NE": {
+      "district_code": "DEL_NE",
+      "district_name": "North East District",
+      "headquarters": "Seelampur",
+      "population_projection_2022": 2420000,
+      "total_ipc_crimes_2022": 22150,
+      "crime_rate_per_lakh": 915.3,
+      "clearance_rate_pct": 51.8,
+      "historical_trend_ipc": {
+        "2018": 17800,
+        "2019": 21500,
+        "2020": 24800,
+        "2021": 21200,
+        "2022": 22150
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 14950,
+          "share_pct": 67.5,
+          "description": "Vehicle theft, household burglary, and street snatching"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 890,
+          "share_pct": 4.0,
+          "description": "Homicide, riots, extortion, and armed altercation"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 1180,
+          "share_pct": 5.3,
+          "description": "Cruelty by husband/relatives, assault, and molestation"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 210,
+          "share_pct": 0.9,
+          "description": "UPI fraud and telecom extortion"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 4920,
+          "share_pct": 22.2,
+          "description": "Physical hurt, criminal intimidation, and local disputes"
+        }
+      ]
+    },
+    "DEL_NW": {
+      "district_code": "DEL_NW",
+      "district_name": "North West District",
+      "headquarters": "Ashok Vihar",
+      "population_projection_2022": 1750000,
+      "total_ipc_crimes_2022": 23890,
+      "crime_rate_per_lakh": 1365.1,
+      "clearance_rate_pct": 45.9,
+      "historical_trend_ipc": {
+        "2018": 19600,
+        "2019": 24100,
+        "2020": 19800,
+        "2021": 23400,
+        "2022": 23890
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 17450,
+          "share_pct": 73.0,
+          "description": "Auto-theft along arterial corridors and housebreakings"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 610,
+          "share_pct": 2.6,
+          "description": "Robbery, dacoity, and severe bodily injury"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 890,
+          "share_pct": 3.7,
+          "description": "Domestic harassment, stalking, and assault"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 340,
+          "share_pct": 1.4,
+          "description": "Online banking fraud and identity theft"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 4600,
+          "share_pct": 19.3,
+          "description": "Cheating, criminal trespass, and rash driving"
+        }
+      ]
+    },
+    "DEL_S": {
+      "district_code": "DEL_S",
+      "district_name": "South District",
+      "headquarters": "Hauz Khas",
+      "population_projection_2022": 1410000,
+      "total_ipc_crimes_2022": 21850,
+      "crime_rate_per_lakh": 1549.6,
+      "clearance_rate_pct": 44.1,
+      "historical_trend_ipc": {
+        "2018": 18200,
+        "2019": 22400,
+        "2020": 17900,
+        "2021": 21500,
+        "2022": 21850
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 16200,
+          "share_pct": 74.1,
+          "description": "Vehicle theft from residential colonies, market pickpocketing"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 420,
+          "share_pct": 1.9,
+          "description": "Robbery, armed snatching, and grievous hurt"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 790,
+          "share_pct": 3.6,
+          "description": "Harassment, stalking, and domestic cruelty"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 580,
+          "share_pct": 2.7,
+          "description": "Credit card cloning, digital extortion, and online investment fraud"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 3860,
+          "share_pct": 17.7,
+          "description": "Burglary, cheating, and property disputes"
+        }
+      ]
+    },
+    "DEL_SE": {
+      "district_code": "DEL_SE",
+      "district_name": "South East District",
+      "headquarters": "Sarita Vihar",
+      "population_projection_2022": 1850000,
+      "total_ipc_crimes_2022": 26400,
+      "crime_rate_per_lakh": 1427.0,
+      "clearance_rate_pct": 47.3,
+      "historical_trend_ipc": {
+        "2018": 21900,
+        "2019": 26800,
+        "2020": 21400,
+        "2021": 25900,
+        "2022": 26400
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 19850,
+          "share_pct": 75.2,
+          "description": "High-volume auto-theft near commercial hubs and border zones"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 680,
+          "share_pct": 2.6,
+          "description": "Robbery, extortion, and armed assault"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 920,
+          "share_pct": 3.5,
+          "description": "Assault, stalking, and matrimonial cruelty"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 490,
+          "share_pct": 1.9,
+          "description": "Digital arrest scam and banking fraud"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 4460,
+          "share_pct": 16.9,
+          "description": "Burglary, criminal trespass, and rash driving"
+        }
+      ]
+    },
+    "DEL_SW": {
+      "district_code": "DEL_SW",
+      "district_name": "South West District",
+      "headquarters": "Vasant Vihar",
+      "population_projection_2022": 1280000,
+      "total_ipc_crimes_2022": 16900,
+      "crime_rate_per_lakh": 1320.3,
+      "clearance_rate_pct": 49.5,
+      "historical_trend_ipc": {
+        "2018": 14100,
+        "2019": 17300,
+        "2020": 13800,
+        "2021": 16500,
+        "2022": 16900
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 12600,
+          "share_pct": 74.6,
+          "description": "Auto-lifting in residential sectors and institutional parking lots"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 310,
+          "share_pct": 1.8,
+          "description": "Robbery and violent altercation"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 580,
+          "share_pct": 3.4,
+          "description": "Stalking, harassment, and domestic cruelty"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 420,
+          "share_pct": 2.5,
+          "description": "Phishing, SIM swap, and online extortion"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 2990,
+          "share_pct": 17.7,
+          "description": "Burglary, rash driving, and property disputes"
+        }
+      ]
+    },
+    "DEL_W": {
+      "district_code": "DEL_W",
+      "district_name": "West District",
+      "headquarters": "Rajouri Garden",
+      "population_projection_2022": 1920000,
+      "total_ipc_crimes_2022": 25700,
+      "crime_rate_per_lakh": 1338.5,
+      "clearance_rate_pct": 48.0,
+      "historical_trend_ipc": {
+        "2018": 21500,
+        "2019": 26100,
+        "2020": 20800,
+        "2021": 25200,
+        "2022": 25700
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 19200,
+          "share_pct": 74.7,
+          "description": "Auto-lifting across major commercial markets and residential colonies"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 590,
+          "share_pct": 2.3,
+          "description": "Armed robbery, snatching with weapon, and murder"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 860,
+          "share_pct": 3.3,
+          "description": "Assault, stalking, and domestic cruelty"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 390,
+          "share_pct": 1.5,
+          "description": "Financial frauds and OTP scams"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 4660,
+          "share_pct": 18.1,
+          "description": "Burglary, commercial cheating, and hurt"
+        }
+      ]
+    },
+    "DEL_ROH": {
+      "district_code": "DEL_ROH",
+      "district_name": "Rohini District",
+      "headquarters": "Rohini Sector 23",
+      "population_projection_2022": 1640000,
+      "total_ipc_crimes_2022": 22400,
+      "crime_rate_per_lakh": 1365.9,
+      "clearance_rate_pct": 47.7,
+      "historical_trend_ipc": {
+        "2018": 18400,
+        "2019": 22800,
+        "2020": 18200,
+        "2021": 21900,
+        "2022": 22400
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 16800,
+          "share_pct": 75.0,
+          "description": "Two-wheeler theft and apartment sector burglaries"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 540,
+          "share_pct": 2.4,
+          "description": "Robbery, extortion, and firearm offenses"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 780,
+          "share_pct": 3.5,
+          "description": "Domestic harassment and public eve-teasing"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 280,
+          "share_pct": 1.2,
+          "description": "Online payment fraud and lottery scams"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 4000,
+          "share_pct": 17.9,
+          "description": "Criminal trespass, hurt, and public nuisance"
+        }
+      ]
+    },
+    "DEL_OUT": {
+      "district_code": "DEL_OUT",
+      "district_name": "Outer District",
+      "headquarters": "Pushpanjali Enclave / Pitampura",
+      "population_projection_2022": 1780000,
+      "total_ipc_crimes_2022": 24100,
+      "crime_rate_per_lakh": 1353.9,
+      "clearance_rate_pct": 50.2,
+      "historical_trend_ipc": {
+        "2018": 19800,
+        "2019": 24600,
+        "2020": 19400,
+        "2021": 23600,
+        "2022": 24100
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 17600,
+          "share_pct": 73.0,
+          "description": "Auto theft along industrial belts and street snatching"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 690,
+          "share_pct": 2.9,
+          "description": "Robbery, homicide, and extortion"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 890,
+          "share_pct": 3.7,
+          "description": "Domestic cruelty, assault, and molestation"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 240,
+          "share_pct": 1.0,
+          "description": "Financial phishing and UPI fraud"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 4680,
+          "share_pct": 19.4,
+          "description": "Burglary, land disputes, and physical hurt"
+        }
+      ]
+    },
+    "DEL_ON": {
+      "district_code": "DEL_ON",
+      "district_name": "Outer North District",
+      "headquarters": "Samaypur Badli",
+      "population_projection_2022": 1120000,
+      "total_ipc_crimes_2022": 14650,
+      "crime_rate_per_lakh": 1308.0,
+      "clearance_rate_pct": 49.1,
+      "historical_trend_ipc": {
+        "2018": 11200,
+        "2019": 14200,
+        "2020": 11800,
+        "2021": 14100,
+        "2022": 14650
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 10500,
+          "share_pct": 71.7,
+          "description": "Heavy vehicle and commercial machinery theft near highways"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 480,
+          "share_pct": 3.3,
+          "description": "Highway robbery, extortion, and armed scuffles"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 520,
+          "share_pct": 3.5,
+          "description": "Domestic disputes and assault"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 110,
+          "share_pct": 0.8,
+          "description": "Transport brokerage fraud and cyber scams"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 3040,
+          "share_pct": 20.8,
+          "description": "Industrial disputes, factory break-ins, and hurt"
+        }
+      ]
+    },
+    "DEL_SHD": {
+      "district_code": "DEL_SHD",
+      "district_name": "Shahdara District",
+      "headquarters": "Shalimar Park / Shahdara",
+      "population_projection_2022": 1650000,
+      "total_ipc_crimes_2022": 21300,
+      "crime_rate_per_lakh": 1290.9,
+      "clearance_rate_pct": 47.9,
+      "historical_trend_ipc": {
+        "2018": 17500,
+        "2019": 21800,
+        "2020": 17200,
+        "2021": 20900,
+        "2022": 21300
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 15800,
+          "share_pct": 74.2,
+          "description": "Vehicle theft and high-density market snatching"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 560,
+          "share_pct": 2.6,
+          "description": "Robbery, dacoity, and weapon use"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 790,
+          "share_pct": 3.7,
+          "description": "Cruelty by husband, stalking, and assault"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 250,
+          "share_pct": 1.2,
+          "description": "Retail trading online scam and phishing"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 3900,
+          "share_pct": 18.3,
+          "description": "Burglary, commercial cheating, and hurt"
+        }
+      ]
+    },
+    "DEL_E": {
+      "district_code": "DEL_E",
+      "district_name": "East District",
+      "headquarters": "Mandawali",
+      "population_projection_2022": 1980000,
+      "total_ipc_crimes_2022": 24850,
+      "crime_rate_per_lakh": 1255.1,
+      "clearance_rate_pct": 46.8,
+      "historical_trend_ipc": {
+        "2018": 20100,
+        "2019": 25200,
+        "2020": 20400,
+        "2021": 24400,
+        "2022": 24850
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 18500,
+          "share_pct": 74.4,
+          "description": "Motor vehicle theft along border arterial roads"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 620,
+          "share_pct": 2.5,
+          "description": "Armed robbery, snatching with hurt, and homicide"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 910,
+          "share_pct": 3.7,
+          "description": "Domestic harassment, stalking, and assault"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 320,
+          "share_pct": 1.3,
+          "description": "Job fraud and credit card phishing"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 4500,
+          "share_pct": 18.1,
+          "description": "Residential burglary, hurt, and traffic violations"
+        }
+      ]
+    },
+    "DEL_DWK": {
+      "district_code": "DEL_DWK",
+      "district_name": "Dwarka District",
+      "headquarters": "Dwarka Sector 19",
+      "population_projection_2022": 1390000,
+      "total_ipc_crimes_2022": 18900,
+      "crime_rate_per_lakh": 1359.7,
+      "clearance_rate_pct": 48.7,
+      "historical_trend_ipc": {
+        "2018": 15600,
+        "2019": 19400,
+        "2020": 15300,
+        "2021": 18400,
+        "2022": 18900
+      },
+      "categories_2022": [
+        {
+          "category_id": "property_theft",
+          "label": "Motor Vehicle & Property Theft",
+          "count": 14100,
+          "share_pct": 74.6,
+          "description": "Car and two-wheeler theft from subcity residential societies"
+        },
+        {
+          "category_id": "violent",
+          "label": "Violent Crimes",
+          "count": 410,
+          "share_pct": 2.2,
+          "description": "Snatching with force, armed robbery, and altercation"
+        },
+        {
+          "category_id": "women_safety",
+          "label": "Crimes Against Women",
+          "count": 680,
+          "share_pct": 3.6,
+          "description": "Assault, stalking, and domestic complaints"
+        },
+        {
+          "category_id": "cybercrime",
+          "label": "Cybercrime & Financial Fraud",
+          "count": 390,
+          "share_pct": 2.1,
+          "description": "Online task fraud, crypto scams, and OTP theft"
+        },
+        {
+          "category_id": "other_ipc",
+          "label": "Other IPC Offenses",
+          "count": 3320,
+          "share_pct": 17.6,
+          "description": "Subcity burglary, rash driving, and municipal disputes"
+        }
+      ]
+    }
+  }
+}

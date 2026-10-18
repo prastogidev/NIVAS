@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from backend.api.score import router as score_router
 from backend.api.livability import router as livability_router
+from backend.api.disaster import router as disaster_router
 
 app = FastAPI(
     title="NIVAS Property Inspection & Scoring API",
@@ -43,6 +44,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Register API routes
 app.include_router(score_router)
 app.include_router(livability_router)
+app.include_router(disaster_router)
 
 
 @app.get("/health", tags=["system"])

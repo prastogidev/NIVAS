@@ -8,6 +8,7 @@ class LivabilityDataRequest(BaseOptimizedModel):
     latitude: float = Field(..., description="Latitude coordinate between -90 and 90")
     longitude: float = Field(..., description="Longitude coordinate between -180 and 180")
     address: Optional[str] = Field(None, description="Optional address or locality name")
+    radius: Optional[int] = Field(1200, ge=0, le=10000, description="Search radius in meters (0m to 10000m)")
 
     @field_validator("latitude")
     @classmethod

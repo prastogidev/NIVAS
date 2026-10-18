@@ -17,10 +17,15 @@ class Settings:
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
     # External API Keys (evaluated safely from environment)
+    GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or None
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY") or None
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     OPENWEATHER_API_KEY: str | None = os.getenv("OPENWEATHER_API_KEY") or None
     GOOGLE_MAPS_API_KEY: str | None = os.getenv("GOOGLE_MAPS_API_KEY") or None
     AQICN_TOKEN: str | None = os.getenv("AQICN_TOKEN") or os.getenv("AQICN_API_KEY") or None
     PROPSTACK_API_KEY: str | None = os.getenv("PROPSTACK_API_KEY") or None
+    DATA_GOV_IN_API_KEY: str | None = os.getenv("DATA_GOV_IN_API_KEY") or None
 
 
     # Local Paths

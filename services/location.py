@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import math
 from typing import Optional, List, Dict, Any
 import httpx
 from backend.models.score import LocationResult, InfrastructureSummary
@@ -160,26 +161,43 @@ def _parse_overpass_infrastructure(elements: List[Dict[str, Any]]) -> Infrastruc
 
         if railway == "station":
             railway_stations += 1
-            category = "railway"
-            category_label = "Metro / Railway Station"
+            if not category:
+                category = "railway"
+                category_label = "Metro / Railway Station"
+
         if highway in ("primary", "secondary", "trunk", "motorway"):
             major_roads += 1
             if not category:
                 category = "road"
                 category_label = f"Major Road ({highway.title()})"
 
-        # Real coordinates extraction
+        # Real coordinates extraction - supports nodes (lat/lon) and ways (center.lat/center.lon)
         lat_coord = elem.get("lat")
         lon_coord = elem.get("lon")
-        if lat_coord is None and "center" in elem:
+        if (lat_coord is None or lon_coord is None) and "center" in elem:
             center_obj = elem.get("center") or {}
-            lat_coord = center_obj.get("lat")
-            lon_coord = center_obj.get("lon")
+            if isinstance(center_obj, dict):
+                lat_coord = center_obj.get("lat")
+                lon_coord = center_obj.get("lon")
 
-        if lat_coord is not None and lon_coord is not None and category:
+        # Validate coordinate validity and ranges (-90 to 90, -180 to 180)
+        valid_lat = None
+        valid_lon = None
+        if lat_coord is not None and lon_coord is not None:
+            try:
+                plat = float(lat_coord)
+                plon = float(lon_coord)
+                if -90.0 <= plat <= 90.0 and -180.0 <= plon <= 180.0 and not (math.isnan(plat) or math.isnan(plon)):
+                    valid_lat = plat
+                    valid_lon = plon
+            except (ValueError, TypeError):
+                valid_lat = None
+                valid_lon = None
+
+        if valid_lat is not None and valid_lon is not None and category:
             fac_name = name or tags.get("ref") or f"Local {category_label}"
-            fac_id = str(elem.get("id") or f"{lat_coord}_{lon_coord}")
-            coord_key = (round(float(lat_coord), 5), round(float(lon_coord), 5), category)
+            fac_id = str(elem.get("id") or f"{valid_lat}_{valid_lon}")
+            coord_key = (round(valid_lat, 5), round(valid_lon, 5), category)
             if coord_key not in seen_keys:
                 seen_keys.add(coord_key)
                 facilities.append({
@@ -187,10 +205,15 @@ def _parse_overpass_infrastructure(elements: List[Dict[str, Any]]) -> Infrastruc
                     "name": fac_name,
                     "category": category,
                     "category_label": category_label,
-                    "latitude": float(lat_coord),
-                    "longitude": float(lon_coord),
+                    "latitude": valid_lat,
+                    "longitude": valid_lon,
                     "source": "OpenStreetMap",
                 })
+
+    # When verified road facilities with coordinates exist, align major_roads_count
+    road_facs_count = len([f for f in facilities if f["category"] == "road"])
+    if road_facs_count > 0:
+        major_roads = road_facs_count
 
     return InfrastructureSummary(
         schools_count=schools,
@@ -247,14 +270,20 @@ async def fetch_overpass_infrastructure(
     """
     if lat is None or lon is None:
         return None
+    if radius <= 0:
+        return _parse_overpass_infrastructure([])
 
+    rail_radius = min(10000, radius + 800)
+    amenity_limit = 120 if radius > 3000 else (80 if radius > 1200 else 50)
+    road_limit = 60 if radius > 3000 else (40 if radius > 1200 else 25)
     query = (
         f"""[out:json][timeout:12];"""
         f"""("""
         f"""node["amenity"~"school|hospital|clinic|pharmacy|police|fire_station|bus_station"](around:{radius},{lat},{lon});"""
-        f"""node["railway"~"station|subway_entrance"](around:{radius + 800},{lat},{lon});"""
+        f"""node["railway"~"station|subway_entrance"](around:{rail_radius},{lat},{lon});"""
+        f""");out center {amenity_limit};"""
         f"""way["highway"~"primary|secondary|trunk|motorway"](around:{radius},{lat},{lon});"""
-        f""");out center 50;"""
+        f"""out center {road_limit};"""
     )
 
     headers = {

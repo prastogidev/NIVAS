@@ -14,9 +14,12 @@ from backend.models.livability import (
     LivabilityChatRequest,
     LivabilityChatResponse,
 )
+from backend.models.score import InfrastructureSummary
 from backend.services.location import fetch_overpass_infrastructure
 from backend.services.air_quality import fetch_real_aqi_with_status
 from backend.services.livability_advisor import generate_advisor_response
+from backend.models.safety import LocalitySafetyResponse
+from backend.services.crime_data import get_locality_safety_data
 
 logger = logging.getLogger("nivas.api.livability")
 
@@ -27,6 +30,7 @@ async def retrieve_livability_data(
     latitude: float,
     longitude: float,
     address: Optional[str] = None,
+    radius: int = 1200,
 ) -> LivabilityLocationDataResponse:
     """
     Fetch verifiable, structured location and environmental data for the given coordinates.
@@ -43,16 +47,38 @@ async def retrieve_livability_data(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid longitude {longitude}. Must be between -180.0 and 180.0.",
         )
+    if radius < 0 or radius > 10000:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid radius {radius}. Must be between 0 and 10000 meters.",
+        )
 
     locality = address.split(",")[0].strip() if address else None
 
-    # Fetch infrastructure and air quality concurrently
-    infra_task = fetch_overpass_infrastructure(latitude, longitude)
-    aqi_task = fetch_real_aqi_with_status(latitude, longitude)
+    # When radius is 0, pinpoint-only exploration: return empty infrastructure immediately without querying Overpass
+    if radius == 0:
+        infra_result = InfrastructureSummary(
+            schools_count=0,
+            hospitals_count=0,
+            clinics_count=0,
+            pharmacies_count=0,
+            police_stations_count=0,
+            fire_stations_count=0,
+            public_transport_count=0,
+            railway_stations_count=0,
+            major_roads_count=0,
+            nearby_places=[],
+            facilities=[],
+        )
+        aqi_result = await fetch_real_aqi_with_status(latitude, longitude)
+    else:
+        # Fetch infrastructure and air quality concurrently
+        infra_task = fetch_overpass_infrastructure(latitude, longitude, radius=radius)
+        aqi_task = fetch_real_aqi_with_status(latitude, longitude)
 
-    infra_result, aqi_result = await asyncio.gather(
-        infra_task, aqi_task, return_exceptions=True
-    )
+        infra_result, aqi_result = await asyncio.gather(
+            infra_task, aqi_task, return_exceptions=True
+        )
 
     # 1. Process Infrastructure Summary
     if isinstance(infra_result, Exception):
@@ -102,6 +128,8 @@ async def retrieve_livability_data(
             nearby_places=infra_result.nearby_places or [],
             facilities=parsed_facilities,
             total_facilities=total,
+            search_radius_meters=radius,
+            railway_search_radius_meters=min(10000, radius + 800) if radius > 0 else 0,
             error_message=None,
         )
 
@@ -156,18 +184,20 @@ async def get_livability_location_data(
     latitude: float = Query(..., ge=-90.0, le=90.0, description="Latitude coordinate"),
     longitude: float = Query(..., ge=-180.0, le=180.0, description="Longitude coordinate"),
     address: Optional[str] = Query(None, description="Optional address or locality name"),
+    radius: int = Query(1200, ge=0, le=10000, description="Search radius in meters (0m to 10000m)"),
 ):
     """Retrieve structured civic infrastructure, air quality, and environmental data for Livability workspace."""
     return await retrieve_livability_data(
-        latitude=latitude, longitude=longitude, address=address
+        latitude=latitude, longitude=longitude, address=address, radius=radius
     )
 
 
 @router.post("/location-data", response_model=LivabilityLocationDataResponse)
 async def post_livability_location_data(request: LivabilityDataRequest):
     """POST endpoint alternative for retrieving Livability location data."""
+    radius_val = request.radius if request.radius is not None else 1200
     return await retrieve_livability_data(
-        latitude=request.latitude, longitude=request.longitude, address=request.address
+        latitude=request.latitude, longitude=request.longitude, address=request.address, radius=radius_val
     )
 
 
@@ -188,3 +218,20 @@ async def post_livability_chat(request: LivabilityChatRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unable to generate neighborhood advisor response at this time. Telemetry and map remain active.",
         )
+
+
+@router.get("/safety-data", response_model=LocalitySafetyResponse)
+async def get_safety_data(
+    latitude: float = Query(..., ge=-90.0, le=90.0, description="Latitude coordinate"),
+    longitude: float = Query(..., ge=-180.0, le=180.0, description="Longitude coordinate"),
+    address: Optional[str] = Query(None, description="Optional address or locality name"),
+    radius: int = Query(1200, ge=0, le=10000, description="Radius in meters to filter real police stations"),
+):
+    """
+    Retrieve official police district historical crime statistics, rates per lakh,
+    multi-year trends, and real verified OpenStreetMap police stations within radius.
+    Never fabricates street-level incident coordinates or artificial composite ratings.
+    """
+    return await get_locality_safety_data(
+        latitude=latitude, longitude=longitude, address=address, radius=radius
+    )
