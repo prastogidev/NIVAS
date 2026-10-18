@@ -76,6 +76,24 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
         2022: 7850,
       },
       data_source: 'National Crime Records Bureau (NCRB) & Delhi Police',
+      boundary_type: 'spatial_approximation_reference',
+      boundary_disclaimer:
+        'Approximated Police District Jurisdictional Zone. Macro reference geometry for locality mapping; not an official cadastral boundary published by Delhi Police or Survey of India.',
+      is_derived_estimate: true,
+      state_ut_benchmark: {
+        '2018': { total_ipc_cases: 236476, crime_rate_per_lakh: 1215.7, source_table: 'NCRB Crime in India 2018, Table 1A.1' },
+        '2019': { total_ipc_cases: 299475, crime_rate_per_lakh: 1518.0, source_table: 'NCRB Crime in India 2019, Table 1A.1' },
+        '2020': { total_ipc_cases: 245844, crime_rate_per_lakh: 1228.6, source_table: 'NCRB Crime in India 2020, Table 1A.1' },
+        '2021': { total_ipc_cases: 287563, crime_rate_per_lakh: 1410.8, source_table: 'NCRB Crime in India 2021, Table 1A.1' },
+        '2022': { total_ipc_cases: 298988, crime_rate_per_lakh: 1422.6, source_table: 'NCRB Crime in India 2022, Table 1A.1' },
+      },
+      provenance_details: {
+        source_agency: 'National Crime Records Bureau (NCRB) & Delhi Police',
+        official_table_state_ut: 'NCRB Crime in India Table 1A.1: Cognizable IPC Crimes in States/UTs',
+        official_portal_url: 'https://ncrb.gov.in/crime-in-india.html',
+        population_methodology:
+          'Census of India 2011 surveyed 9 Revenue Districts. Police district populations are derived projections used by Delhi Police.',
+      },
     },
     nearby_police_stations: [
       {
@@ -167,6 +185,47 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       ).toBeDefined();
     });
   });
+
+  it('toggles provenance and citations panel and displays legal methodology', async () => {
+    render(
+      <SafetyIntelligenceView
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        onLocationChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('toggle-provenance-btn')).toBeDefined();
+    });
+
+    // Panel is initially hidden
+    expect(screen.queryByTestId('provenance-panel')).toBeNull();
+
+    // Click toggle button
+    fireEvent.click(screen.getByTestId('toggle-provenance-btn'));
+
+    // Panel should now be visible
+    expect(screen.getByTestId('provenance-panel')).toBeDefined();
+    expect(screen.getByText(/NCRB Crime in India Table 1A.1/i)).toBeDefined();
+    expect(screen.getByText(/Approximated Police District Jurisdictional Zone/i)).toBeDefined();
+  });
+
+  it('allows selecting historical years and updates trend focus box', async () => {
+    render(
+      <SafetyIntelligenceView
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        onLocationChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('year-col-2021')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByTestId('year-col-2021'));
+    expect(screen.getByTestId('trend-year-focus')).toBeDefined();
+    expect(screen.getByText('7,450 IPC cases')).toBeDefined();
+  });
 });
 
 describe('Disaster Hazards Workspace Component', () => {
@@ -177,12 +236,17 @@ describe('Disaster Hazards Workspace Component', () => {
       longitude: 77.0460,
       address: 'Dwarka Sector 12, Delhi',
       locality_name: 'Dwarka Sector 12',
+      live_alerts_available: false,
+      live_alerts_status: 'unavailable',
       hazards: [
         {
           hazard_type: 'earthquake',
           title: 'Earthquake Hazard (Seismic Zone IV)',
           severity: 'high',
           category: 'static_zonal',
+          evidence_type: 'static_zonal',
+          data_freshness: 'static_standard',
+          geographic_resolution: 'regional_statutory_standard',
           description:
             'Entire NCT of Delhi falls within Bureau of Indian Standards (BIS IS 1893:2016) Seismic Zone IV.',
           mitigation_notes: 'Ensure ductile detailing complying with IS 13920:2016.',
@@ -196,6 +260,9 @@ describe('Disaster Hazards Workspace Component', () => {
           title: 'Yamuna Floodplain Corridor',
           severity: 'low',
           category: 'historical_vulnerability',
+          evidence_type: 'historical_and_zonal',
+          data_freshness: 'historical_compendium',
+          geographic_resolution: 'macro_riverbed_corridor',
           description:
             'Location is outside the active riverbed and protected behind ring bunds and master drainage channels.',
           mitigation_notes: 'Maintain storm water culvert clearance.',
@@ -231,6 +298,10 @@ describe('Disaster Hazards Workspace Component', () => {
     expect(screen.getByText('LOW EXPOSURE')).toBeDefined();
     expect(screen.getByText('Locality Hazard Evidence')).toBeDefined();
     expect(screen.getByText('Relocation Candidate Compare')).toBeDefined();
+
+    // Verify live alerts banner and evidence badges
+    expect(screen.getByTestId('disaster-live-alerts-banner')).toBeDefined();
+    expect(screen.getByTestId('hazard-evidence-earthquake')).toBeDefined();
   });
 
   it('opens and executes relocation comparison between two localities', async () => {
@@ -246,6 +317,7 @@ describe('Disaster Hazards Workspace Component', () => {
         latitude: 28.7041,
         longitude: 77.2300,
       },
+      comparison_verdict: 'Side-by-side contrast complete across statutory seismic standards and floodplain proximity.',
       comparative_analysis: [
         {
           title: 'Yamuna Floodplain Corridor',
@@ -270,6 +342,42 @@ describe('Disaster Hazards Workspace Component', () => {
     await waitFor(() => {
       expect(screen.getByText('Side-by-Side Hazard Exposure Evidence')).toBeDefined();
       expect(screen.getByText('Inside Active Floodplain / Yamuna Lowland')).toBeDefined();
+      expect(screen.getByTestId('compare-verdict-card')).toBeDefined();
+    });
+  });
+
+  it('renders alert when comparison has partial evidence', async () => {
+    vi.spyOn(api, 'compareDisasterLocations').mockResolvedValue({
+      status: 'partial_evidence',
+      location_a: {
+        locality_name: 'Dwarka Sector 12',
+        latitude: 28.5921,
+        longitude: 77.0460,
+      },
+      location_b: {
+        locality_name: 'Mumbai, Maharashtra',
+        latitude: 19.0760,
+        longitude: 72.8777,
+      },
+      comparative_analysis: [],
+      comparison_verdict:
+        'Partial comparison only. Grounded hazard telemetry is available for Dwarka Sector 12, but Mumbai lacks valid coverage. Missing data cannot be ranked as safer.',
+      disclaimers: ['Candidate location has no verified hazard coverage.'],
+    });
+
+    render(
+      <DisasterWorkspace
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+      />
+    );
+
+    const compareTab = screen.getByTestId('tab-disaster-compare');
+    fireEvent.click(compareTab);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('compare-status-alert')).toBeDefined();
+      expect(screen.getByText(/Partial Evidence Available/i)).toBeDefined();
+      expect(screen.getByText(/Missing data cannot be ranked as safer/i)).toBeDefined();
     });
   });
 });

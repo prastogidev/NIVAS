@@ -29,6 +29,8 @@ export default function SafetyIntelligenceView({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryTrigger, setRetryTrigger] = useState(0);
+  const [showProvenance, setShowProvenance] = useState(false);
+  const [selectedYear, setSelectedYear] = useState('2022');
 
   const activeRequestRef = useRef(0);
 
@@ -77,6 +79,8 @@ export default function SafetyIntelligenceView({
   const categories = matchedDistrict?.categories_2022 || [];
   const historicalTrend = matchedDistrict?.historical_trend_ipc || {};
   const policeStations = safetyData?.nearby_police_stations || [];
+  const stateBenchmark = matchedDistrict?.state_ut_benchmark || {};
+  const provenance = matchedDistrict?.provenance_details;
 
   return (
     <div className="safety-view-root" data-testid="safety-intelligence-view">
@@ -101,6 +105,16 @@ export default function SafetyIntelligenceView({
           <div className="safety-header-actions">
             <button
               type="button"
+              className="btn-outline-sm"
+              onClick={() => setShowProvenance(!showProvenance)}
+              data-testid="toggle-provenance-btn"
+              title="View source citations and data methodology"
+            >
+              <Info size={13} />
+              <span>{showProvenance ? 'Hide Citations' : 'Source Details & Citations'}</span>
+            </button>
+            <button
+              type="button"
               className="btn-secondary-sm"
               onClick={() => setRetryTrigger((r) => r + 1)}
               title="Refresh telemetry"
@@ -120,6 +134,62 @@ export default function SafetyIntelligenceView({
             </a>
           </div>
         </div>
+
+        {/* Expandable Traceable Provenance & Citation Details Panel */}
+        {showProvenance && (
+          <div className="provenance-details-panel" data-testid="provenance-panel">
+            <div className="provenance-panel-header">
+              <Info size={16} className="text-accent" />
+              <h4>Traceable Data Provenance & Official Source Verification</h4>
+            </div>
+            <div className="provenance-grid">
+              <div className="prov-item">
+                <span className="prov-label">Authoritative Source Agency:</span>
+                <span className="prov-val">{provenance?.source_agency || 'National Crime Records Bureau (NCRB) & Delhi Police'}</span>
+              </div>
+              <div className="prov-item">
+                <span className="prov-label">Official Publication:</span>
+                <span className="prov-val">{provenance?.publication || 'Crime in India (2018–2022) Annual Compendiums'}</span>
+              </div>
+              <div className="prov-item">
+                <span className="prov-label">Official Table Citations:</span>
+                <span className="prov-val">
+                  {provenance?.official_table_state_ut || 'NCRB Crime in India Table 1A.1: Cognizable IPC Crimes in States/UTs'}
+                  {' · '}
+                  {provenance?.official_table_cities || 'Table 1B.1 (19 Metropolitan Cities)'}
+                </span>
+              </div>
+              <div className="prov-item">
+                <span className="prov-label">Official URLs:</span>
+                <span className="prov-val">
+                  <a href="https://ncrb.gov.in/crime-in-india.html" target="_blank" rel="noopener noreferrer" className="prov-link">
+                    NCRB Crime in India Portal <ExternalLink size={11} />
+                  </a>
+                  {' · '}
+                  <a href="https://delhipolice.gov.in/statistics" target="_blank" rel="noopener noreferrer" className="prov-link">
+                    Delhi Police Statistics <ExternalLink size={11} />
+                  </a>
+                </span>
+              </div>
+              <div className="prov-item">
+                <span className="prov-label">Geographic Resolution:</span>
+                <span className="prov-val">{provenance?.geographic_resolution || 'NCT of Delhi State/UT Total with Police District Administrative Allocation'}</span>
+              </div>
+              <div className="prov-item">
+                <span className="prov-label">Population Denominator Methodology:</span>
+                <span className="prov-val">{provenance?.population_methodology || 'Census of India 2011 was conducted for Revenue Districts; Police District populations are derived projections used by Delhi Police.'}</span>
+              </div>
+              <div className="prov-item">
+                <span className="prov-label">Boundary Mapping Integrity:</span>
+                <span className="prov-val">{provenance?.boundary_disclaimer || 'Approximated Police District Jurisdictional Zone. Macro reference geometry for locality mapping; not an official cadastral survey boundary.'}</span>
+              </div>
+              <div className="prov-item">
+                <span className="prov-label">e-FIR Legal Context:</span>
+                <span className="prov-val">{provenance?.e_fir_theft_context || 'Over 74% of registered IPC crimes in Delhi constitute property and vehicle theft filed digitally via citizen e-FIR portals.'}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Status Indicators */}
         {isLoading && (
@@ -290,7 +360,7 @@ export default function SafetyIntelligenceView({
             <div>
               <h3>5-Year Historical Crime Trajectory (2018–2022)</h3>
               <p className="section-subtitle">
-                Annual registered IPC crime volume across official NCRB reporting compendiums.
+                Annual registered IPC crime volume across official NCRB reporting compendiums. Click a year to inspect verified figures.
               </p>
             </div>
           </div>
@@ -299,20 +369,56 @@ export default function SafetyIntelligenceView({
             {Object.entries(historicalTrend).map(([yr, cnt]) => {
               const maxVal = Math.max(...Object.values(historicalTrend));
               const heightPct = Math.round((cnt / maxVal) * 100);
+              const isSelected = selectedYear === yr;
               return (
-                <div key={yr} className="trend-bar-col">
+                <div
+                  key={yr}
+                  className={`trend-bar-col ${isSelected ? 'selected' : ''}`}
+                  onClick={() => setSelectedYear(yr)}
+                  data-testid={`year-col-${yr}`}
+                  style={{ cursor: 'pointer' }}
+                  title={`Click to view ${yr} details`}
+                >
                   <div className="trend-bar-val">{cnt.toLocaleString()}</div>
                   <div className="trend-bar-track">
-                    <div className="trend-bar-fill" style={{ height: `${heightPct}%` }} />
+                    <div
+                      className={`trend-bar-fill ${isSelected ? 'highlight' : ''}`}
+                      style={{ height: `${heightPct}%` }}
+                    />
                   </div>
-                  <div className="trend-bar-label">{yr}</div>
+                  <div className="trend-bar-label">
+                    <strong>{yr}</strong>
+                  </div>
                 </div>
               );
             })}
           </div>
 
+          {/* Selected Year Breakdown & State/UT Benchmark Comparison */}
+          {stateBenchmark[selectedYear] && (
+            <div className="trend-year-focus-box" data-testid="trend-year-focus">
+              <span className="focus-badge">Year {selectedYear} Verified Telemetry</span>
+              <div className="focus-metrics-row">
+                <div className="focus-metric">
+                  <span className="fm-label">{matchedDistrict.district_name} Allocation:</span>
+                  <span className="fm-val">{(historicalTrend[selectedYear] || 0).toLocaleString()} IPC cases</span>
+                </div>
+                <div className="focus-metric">
+                  <span className="fm-label">Official NCT of Delhi State/UT Total:</span>
+                  <span className="fm-val">
+                    {stateBenchmark[selectedYear].total_ipc_cases?.toLocaleString()} cases ({stateBenchmark[selectedYear].crime_rate_per_lakh} per 100k)
+                  </span>
+                </div>
+                <div className="focus-metric">
+                  <span className="fm-label">Official Source Table:</span>
+                  <span className="fm-val">{stateBenchmark[selectedYear].source_table}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <p className="trend-footnote">
-            Notice: The lower count in 2020 reflects national COVID-19 mobility lockdowns. Trends resumed normalized baseline reporting in 2021–2022.
+            Notice: The lower count in 2020 reflects national COVID-19 mobility lockdowns under the Disaster Management Act. Trends resumed normalized baseline reporting in 2021–2022.
           </p>
         </div>
       )}

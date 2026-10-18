@@ -6788,3 +6788,327 @@ label:has(span.required)::after {
   line-height: 1.5;
 }
 
+/* ── Safety Provenance & Year Focus Styles ────────────────────────── */
+.prov-toggle-row {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.btn-toggle-provenance {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(30, 58, 95, 0.05);
+  border: 1px solid rgba(30, 58, 95, 0.15);
+  border-radius: 6px;
+  color: var(--ink-deep);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-toggle-provenance:hover {
+  background: rgba(30, 58, 95, 0.1);
+  border-color: var(--ink-deep);
+}
+
+.provenance-details-panel {
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.provenance-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #E2E8F0;
+  padding-bottom: 0.5rem;
+}
+
+.provenance-panel-header h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink-deep);
+  margin: 0;
+}
+
+.official-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #E0E7FF;
+  color: #3730A3;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.provenance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.prov-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+}
+
+.prov-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.prov-val {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink-deep);
+  word-break: break-word;
+}
+
+.prov-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  color: #92400E;
+  line-height: 1.45;
+  margin-bottom: 0.75rem;
+}
+
+.prov-list {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0 0 0;
+  font-size: 0.8rem;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.trend-year-focus-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.trend-year-focus-box h4 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink-deep);
+  margin: 0 0 0.75rem 0;
+}
+
+.focus-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.focus-metric {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 0.6rem;
+  text-align: center;
+}
+
+.focus-val {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--brand-navy, #1E3A5F);
+}
+
+.focus-lbl {
+  display: block;
+  font-size: 0.7rem;
+  color: #64748B;
+  margin-top: 0.2rem;
+}
+
+/* ── Disaster Live Alerts & Evidence Badges ──────────────────────── */
+.disaster-live-status-card {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-left: 4px solid #64748B;
+  border-radius: 8px;
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.live-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.live-status-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.live-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.live-status-dot.online {
+  background: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.live-status-dot.offline {
+  background: #F59E0B;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+.live-status-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink-deep);
+}
+
+.live-status-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #E2E8F0;
+  color: #475569;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.live-status-detail {
+  font-size: 0.78rem;
+  color: #475569;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.hazard-meta-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.hazard-badge-evidence {
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.hazard-badge-freshness {
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.hazard-badge-resolution {
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: #F8FAFC;
+  color: #64748B;
+  border: 1px solid #E2E8F0;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.compare-status-banner {
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.compare-status-banner.status-incomparable {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-left: 4px solid #DC2626;
+  color: #991B1B;
+}
+
+.compare-status-banner.status-partial_evidence {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-left: 4px solid #D97706;
+  color: #92400E;
+}
+
+.compare-status-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.compare-status-header h4 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.compare-verdict-card {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-left: 4px solid #16A34A;
+  border-radius: 8px;
+  padding: 0.85rem 1.15rem;
+  margin-bottom: 1.25rem;
+}
+
+.verdict-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.verdict-header h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #166534;
+  margin: 0;
+}
+
+.compare-verdict-text {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+

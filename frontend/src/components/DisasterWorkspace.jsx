@@ -284,6 +284,22 @@ export default function DisasterWorkspace({
               </div>
             </div>
 
+            {/* Live Alerts Availability Banner */}
+            <div className="card disaster-live-status-card" data-testid="disaster-live-alerts-banner">
+              <div className="live-status-header">
+                <div className="live-status-left">
+                  <span className={`live-status-dot ${hazardData?.live_alerts_available ? 'online' : 'offline'}`} />
+                  <span className="live-status-title">
+                    Live Hazard Feeds: {hazardData?.live_alerts_available ? 'Online' : 'Offline / Unavailable'}
+                  </span>
+                </div>
+                <span className="live-status-pill">Baseline Spatial GIS</span>
+              </div>
+              <p className="live-status-detail">
+                Dynamic reservoir discharge, real-time Doppler radar feeds, and municipal emergency broadcast APIs are not integrated. All evaluations below represent authoritative statutory standards (BIS IS 1893:2016) and historical hydrological compendiums (CWC, PWD).
+              </p>
+            </div>
+
             {isLoading && (
               <div className="card loading-card">
                 <Loader2 size={24} className="spin-icon" />
@@ -322,6 +338,24 @@ export default function DisasterWorkspace({
                       <span className={`severity-badge sev-${hz.severity || 'info'}`}>
                         {(hz.severity || 'info').toUpperCase()} EXPOSURE
                       </span>
+                    </div>
+
+                    <div className="hazard-meta-badges">
+                      {hz.evidence_type && (
+                        <span className="hazard-badge-evidence" data-testid={`hazard-evidence-${hz.hazard_type}`}>
+                          {hz.evidence_type.replace(/_/g, ' ')}
+                        </span>
+                      )}
+                      {hz.data_freshness && (
+                        <span className="hazard-badge-freshness">
+                          Freshness: {hz.data_freshness.replace(/_/g, ' ')}
+                        </span>
+                      )}
+                      {hz.geographic_resolution && (
+                        <span className="hazard-badge-resolution">
+                          Resolution: {hz.geographic_resolution.replace(/_/g, ' ')}
+                        </span>
+                      )}
                     </div>
 
                     <p className="hazard-desc">{hz.description}</p>
@@ -456,46 +490,72 @@ export default function DisasterWorkspace({
 
           {compareResult && (
             <div className="disaster-compare-results-section">
-              <div className="card disaster-compare-table-card">
-                <div className="card-section-header">
-                  <Activity size={18} className="section-icon" />
-                  <div>
-                    <h3>Side-by-Side Hazard Exposure Evidence</h3>
-                    <p className="section-subtitle">
-                      Contrasting documented evidence from official BIS, CWC, and PWD datasets.
-                    </p>
+              {compareResult.status && compareResult.status !== 'active' && (
+                <div className={`card compare-status-banner status-${compareResult.status}`} data-testid="compare-status-alert">
+                  <div className="compare-status-header">
+                    <AlertTriangle size={18} className="compare-status-icon" />
+                    <h4>
+                      {compareResult.status === 'incomparable'
+                        ? 'Locations Incomparable — Missing Valid Coordinates'
+                        : 'Partial Evidence Available'}
+                    </h4>
+                  </div>
+                  <p className="compare-verdict-text">{compareResult.comparison_verdict}</p>
+                </div>
+              )}
+
+              {compareResult.comparison_verdict && compareResult.status === 'active' && (
+                <div className="card compare-verdict-card" data-testid="compare-verdict-card">
+                  <div className="verdict-header">
+                    <CheckCircle2 size={18} style={{ color: 'var(--brand-forest)' }} />
+                    <h4>Comparison Evaluation</h4>
+                  </div>
+                  <p className="compare-verdict-text">{compareResult.comparison_verdict}</p>
+                </div>
+              )}
+
+              {compareResult.comparative_analysis && compareResult.comparative_analysis.length > 0 && (
+                <div className="card disaster-compare-table-card">
+                  <div className="card-section-header">
+                    <Activity size={18} className="section-icon" />
+                    <div>
+                      <h3>Side-by-Side Hazard Exposure Evidence</h3>
+                      <p className="section-subtitle">
+                        Contrasting documented evidence from official BIS, CWC, and PWD datasets.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="compare-table-responsive">
+                    <table className="disaster-compare-table">
+                      <thead>
+                        <tr>
+                          <th>Hazard Exposure</th>
+                          <th>{compareResult.location_a?.locality_name || 'Location A'}</th>
+                          <th>{compareResult.location_b?.locality_name || 'Location B'}</th>
+                          <th>Comparative Analysis</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {compareResult.comparative_analysis.map((row, idx) => (
+                          <tr key={idx}>
+                            <td className="hazard-title-cell">
+                              <strong>{row.title}</strong>
+                            </td>
+                            <td>
+                              <span className="verdict-tag">{row.location_a_verdict}</span>
+                            </td>
+                            <td>
+                              <span className="verdict-tag">{row.location_b_verdict}</span>
+                            </td>
+                            <td className="summary-cell">{row.summary}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-
-                <div className="compare-table-responsive">
-                  <table className="disaster-compare-table">
-                    <thead>
-                      <tr>
-                        <th>Hazard Exposure</th>
-                        <th>{compareResult.location_a.locality_name || 'Location A'}</th>
-                        <th>{compareResult.location_b.locality_name || 'Location B'}</th>
-                        <th>Comparative Analysis</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {compareResult.comparative_analysis.map((row, idx) => (
-                        <tr key={idx}>
-                          <td className="hazard-title-cell">
-                            <strong>{row.title}</strong>
-                          </td>
-                          <td>
-                            <span className="verdict-tag">{row.location_a_verdict}</span>
-                          </td>
-                          <td>
-                            <span className="verdict-tag">{row.location_b_verdict}</span>
-                          </td>
-                          <td className="summary-cell">{row.summary}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              )}
 
               <div className="card safety-disclosures-card">
                 <div className="disclosures-header">
