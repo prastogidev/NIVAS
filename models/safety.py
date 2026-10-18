@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from pydantic import Field, field_validator
 from backend.models.score import BaseOptimizedModel
 
@@ -29,6 +29,26 @@ class DistrictCrimeProfile(BaseOptimizedModel):
     historical_trend_ipc: Dict[str, int] = Field(default_factory=dict, description="Multi-year trend (e.g. 2018-2022)")
     categories_2022: List[CrimeCategoryStat] = Field(default_factory=list, description="Categorical offense breakdown")
     jurisdiction_polygon: Optional[List[List[float]]] = Field(None, description="District boundary polygon [[lon, lat], ...]")
+    boundary_type: str = Field(
+        "spatial_approximation_reference",
+        description="Type of polygon: 'spatial_approximation_reference' (macro reference zone, not cadastral)",
+    )
+    boundary_disclaimer: str = Field(
+        "Approximated Police District Jurisdictional Zone. Macro reference geometry for locality mapping; not an official cadastral boundary published by Delhi Police or Survey of India.",
+        description="Boundary precision disclaimer",
+    )
+    is_derived_estimate: bool = Field(
+        True,
+        description="Whether sub-district crime distribution is derived from regional operational allocations rather than direct census-tract publications.",
+    )
+    state_ut_benchmark: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Official State/UT level totals for NCT of Delhi directly verifiable from NCRB Crime in India Table 1A.1.",
+    )
+    provenance_details: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Traceable metadata: agency, official table, reporting year, publication URL, population methodology, and comparability notes.",
+    )
     jurisdictional_disclaimer: str = Field(
         "District-level aggregate telemetry. Individual incidents are not geocoded to protect citizen privacy and reflect official reporting boundaries."
     )

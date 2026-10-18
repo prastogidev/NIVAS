@@ -3,11 +3,29 @@
     "source_agency": "National Crime Records Bureau (NCRB) & Delhi Police",
     "publication": "Crime in India Annual Compendiums & Delhi Police Statistical Statements",
     "source_url": "https://ncrb.gov.in/crime-in-india.html",
+    "delhi_police_url": "https://delhipolice.gov.in/statistics",
     "retrieval_timestamp": "2026-10-18T20:25:00Z",
     "latest_reporting_year": 2022,
     "historical_years_covered": [2018, 2019, 2020, 2021, 2022],
     "geographic_resolution": "police_district",
     "total_districts": 15,
+    "official_state_ut_totals": {
+      "2018": { "total_ipc_cases": 236476, "crime_rate_per_lakh": 1215.7, "source_table": "NCRB Crime in India 2018, Table 1A.1" },
+      "2019": { "total_ipc_cases": 299475, "crime_rate_per_lakh": 1518.0, "source_table": "NCRB Crime in India 2019, Table 1A.1" },
+      "2020": { "total_ipc_cases": 245844, "crime_rate_per_lakh": 1228.6, "source_table": "NCRB Crime in India 2020, Table 1A.1" },
+      "2021": { "total_ipc_cases": 287563, "crime_rate_per_lakh": 1410.8, "source_table": "NCRB Crime in India 2021, Table 1A.1" },
+      "2022": { "total_ipc_cases": 298988, "crime_rate_per_lakh": 1422.6, "source_table": "NCRB Crime in India 2022, Table 1A.1" }
+    },
+    "official_table_citations": {
+      "table_state_ut": "NCRB Crime in India 2022, Table 1A.1: Crimes in States/UTs",
+      "table_mega_cities": "NCRB Crime in India 2022, Table 1B.1: Crimes in 19 Metropolitan Cities (Delhi City)",
+      "delhi_police_source": "Delhi Police Annual Crime Review & Statistical Statements (delhipolice.gov.in/statistics)"
+    },
+    "methodology_disclosures": {
+      "e_fir_effect": "Over 74% of registered IPC crimes in Delhi constitute property and vehicle theft, registered directly by citizens through the Delhi Police web portal and mobile app without visiting a police station. Increases in reported volume often signify digital access adoption.",
+      "population_denominator": "Census of India 2011 surveyed 9 revenue districts. Police district boundaries (15 operational districts) do not align 1:1 with revenue districts. Per-lakh rates at district level use population projections derived from electoral roll distributions and are labeled as derived allocations.",
+      "boundary_nature": "District boundaries in accompanying GeoJSON are spatial approximation polygons for locality mapping, not cadastral survey shapefiles."
+    },
     "disclaimer": "Statistics reflect official First Information Reports (FIRs) registered with Delhi Police as compiled by the National Crime Records Bureau (NCRB). Higher registered volumes in commercial and transit-dense districts heavily reflect mobile app and online e-FIR auto-registration for vehicle and property theft, rather than higher localized physical danger. Zero published incidents in an area does not indicate the absence of crime. Individual incident addresses are not published to safeguard citizen privacy and prevent defamatory property profiling."
   },
   "districts": {

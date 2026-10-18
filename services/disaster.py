@@ -55,7 +55,19 @@ async def get_disaster_hazards(
             latitude=latitude,
             longitude=longitude,
             address=address,
+            locality_name=address or f"{latitude:.4f}° N, {longitude:.4f}° E",
             error_message="Invalid coordinates provided for disaster hazard query.",
+        )
+
+    # Validate spatial dataset coverage for Delhi National Capital Territory
+    if not (28.0 <= latitude <= 29.3 and 76.6 <= longitude <= 77.6):
+        return DisasterLocationResponse(
+            status="out_of_coverage",
+            latitude=latitude,
+            longitude=longitude,
+            address=address,
+            locality_name=address or f"{latitude:.4f}° N, {longitude:.4f}° E",
+            error_message="Location coordinates fall outside supported Delhi National Capital Territory hazard dataset coverage.",
         )
 
     geojson = load_hazard_zones_geojson()
@@ -71,6 +83,9 @@ async def get_disaster_hazards(
             title="BIS Seismic Zone IV (High Damage Risk)",
             severity="high",
             category="static_zonal",
+            evidence_type="static_zonal",
+            data_freshness="static_standard",
+            geographic_resolution="regional_statutory_standard",
             source_agency="Bureau of Indian Standards (BIS IS 1893:2016) & National Center for Seismology (NCS)",
             source_url="https://seismo.gov.in/",
             description="All coordinates across the National Capital Territory of Delhi fall within Seismic Zone IV (Zone Factor 0.24, MSK Intensity VIII). Buildings require earthquake-resistant structural ductile detailing under IS 13920.",
@@ -109,6 +124,9 @@ async def get_disaster_hazards(
                 title="Yamuna River Active Floodplain Corridor",
                 severity="critical",
                 category="historical_vulnerability",
+                evidence_type="historical_and_zonal",
+                data_freshness="historical_compendium",
+                geographic_resolution="macro_riverbed_corridor",
                 source_agency="Central Water Commission (CWC) & Delhi Irrigation and Flood Control Department",
                 source_url="https://cwc.gov.in/",
                 description="Selected location lies within the Yamuna River active floodplain and drainage basin. Historically submerged during major Hathnikund releases (Warning Level: 204.50m, Danger Level: 205.33m, Historic HFL: 208.66m recorded July 2023).",
@@ -129,6 +147,9 @@ async def get_disaster_hazards(
                 title="Yamuna River Buffer Zone (Marginal Risk)",
                 severity="moderate",
                 category="historical_vulnerability",
+                evidence_type="historical_and_zonal",
+                data_freshness="historical_compendium",
+                geographic_resolution="macro_riverbed_corridor",
                 source_agency="Central Water Commission (CWC)",
                 source_url="https://cwc.gov.in/",
                 description=f"Located approximately {dist_to_flood_km:.1f} km from the Yamuna floodplain corridor. Subject to localized storm sewer backpressure during high river stages.",
@@ -147,6 +168,9 @@ async def get_disaster_hazards(
                 title="Riverine Inundation Risk: Low (Upland Terrain)",
                 severity="low",
                 category="historical_vulnerability",
+                evidence_type="historical_and_zonal",
+                data_freshness="historical_compendium",
+                geographic_resolution="macro_riverbed_corridor",
                 source_agency="Central Water Commission (CWC)",
                 source_url="https://cwc.gov.in/",
                 description=f"Located {dist_to_flood_km:.1f} km from the Yamuna floodplain corridor on natural upland terrain. Direct riverine inundation is historically not documented.",
@@ -177,6 +201,9 @@ async def get_disaster_hazards(
                 title="Chronic Monsoon Waterlogging Exposure",
                 severity="high",
                 category="historical_vulnerability",
+                evidence_type="historical_monsoon_vulnerability",
+                data_freshness="historical_compendium",
+                geographic_resolution="point_infrastructure",
                 source_agency="Delhi PWD & IIT Delhi Drainage Master Plan",
                 source_url="https://pwd.delhigovt.nic.in/",
                 description=f"Location is within {nearest_hotspot_km:.2f} km of a chronic PWD waterlogging depression/underpass. Surface runoff accumulation common during precipitation exceeding 40 mm/hr.",
@@ -192,6 +219,9 @@ async def get_disaster_hazards(
                 title="Monsoon Waterlogging: Low Direct Exposure",
                 severity="low",
                 category="historical_vulnerability",
+                evidence_type="historical_monsoon_vulnerability",
+                data_freshness="historical_compendium",
+                geographic_resolution="point_infrastructure",
                 source_agency="Delhi PWD & Drainage Master Plan",
                 source_url="https://pwd.delhigovt.nic.in/",
                 description=f"No chronic PWD flood hotspots recorded within 1.2 km (nearest recorded hotspot: ~{nearest_hotspot_km:.1f} km).",
@@ -208,6 +238,9 @@ async def get_disaster_hazards(
             title="IMD Extreme Heat & Summer Heatwave Exposure",
             severity="moderate",
             category="static_zonal",
+            evidence_type="static_zonal",
+            data_freshness="static_standard",
+            geographic_resolution="regional_statutory_standard",
             source_agency="India Meteorological Department (IMD) & NDMA Heat Action Plan",
             source_url="https://mausam.imd.gov.in/",
             description="Delhi experiences peak summer temperatures of 42°C to 47°C during May–June. High-density concrete corridors exhibit +2°C to +4°C Urban Heat Island (UHI) elevation relative to vegetated ridge belts.",
@@ -227,6 +260,9 @@ async def get_disaster_hazards(
             title="IMD Severe Monsoon Rainfall Thresholds",
             severity="info",
             category="static_zonal",
+            evidence_type="static_zonal",
+            data_freshness="static_standard",
+            geographic_resolution="regional_statutory_standard",
             source_agency="India Meteorological Department (IMD)",
             source_url="https://mausam.imd.gov.in/",
             description="IMD monsoon classification criteria: Heavy Rain (64.5 - 115.5 mm/day), Very Heavy Rain (115.6 - 204.4 mm/day), Extremely Heavy Rain (>204.4 mm/day).",
@@ -251,6 +287,25 @@ async def get_disaster_hazards(
         hazards=hazards,
         active_alerts_count=sum(1 for h in hazards if h.severity in ("critical", "high")),
         spatial_layers=spatial_layers,
+        live_alerts_available=False,
+        live_alerts_status="unavailable: Live emergency meteorological radar/alert push feeds require integration with IMD Nowcast or state disaster push feeds. Grounded static and historical zoning baseline is active.",
+        provenance_summary={
+            "seismic": {
+                "source": "Bureau of Indian Standards (BIS IS 1893:2016)",
+                "scope": "Uniform statutory standard for NCT of Delhi (Zone IV)",
+                "type": "static_standard",
+            },
+            "flood": {
+                "source": "Central Water Commission (CWC) & Delhi I&FC Department",
+                "scope": "Yamuna River Old Railway Bridge gauge & active floodplain lowlands",
+                "type": "historical_and_zonal",
+            },
+            "waterlogging": {
+                "source": "Delhi Public Works Department (PWD) Chronic Waterlogging Inventory",
+                "scope": "Underpasses and arterial road drainage depressions",
+                "type": "historical_monsoon_vulnerability",
+            },
+        },
     )
 
 
@@ -261,21 +316,85 @@ async def compare_disaster_hazards(
     Compare disaster hazard exposures between Location A and Location B side-by-side.
     Does not invent a synthetic comparative grade; provides evidence-by-evidence contrasts.
     """
-    loc_a_data = request.location_a
-    loc_b_data = request.location_b
+    def _safe_float(val):
+        if val is None:
+            return None
+        try:
+            f = float(val)
+            if math.isnan(f) or math.isinf(f):
+                return None
+            return f
+        except (ValueError, TypeError):
+            return None
 
-    lat_a = float(loc_a_data.get("latitude", 28.5921))
-    lon_a = float(loc_a_data.get("longitude", 77.0460))
-    addr_a = loc_a_data.get("address", "Location A")
+    loc_a_data = request.location_a or {}
+    loc_b_data = request.location_b or {}
 
-    lat_b = float(loc_b_data.get("latitude", 28.6517))
-    lon_b = float(loc_b_data.get("longitude", 77.1583))
-    addr_b = loc_b_data.get("address", "Location B")
+    lat_a = _safe_float(loc_a_data.get("latitude"))
+    lon_a = _safe_float(loc_a_data.get("longitude"))
+    addr_a = loc_a_data.get("address") or "Location A"
 
-    resp_a = await get_disaster_hazards(lat_a, lon_a, addr_a)
-    resp_b = await get_disaster_hazards(lat_b, lon_b, addr_b)
+    lat_b = _safe_float(loc_b_data.get("latitude"))
+    lon_b = _safe_float(loc_b_data.get("longitude"))
+    addr_b = loc_b_data.get("address") or "Location B"
 
-    # Build side-by-side comparative points
+    if lat_a is None or lon_a is None:
+        resp_a = DisasterLocationResponse(
+            status="data_unavailable",
+            latitude=0.0,
+            longitude=0.0,
+            address=addr_a,
+            locality_name=addr_a,
+            error_message="Location A missing valid latitude and longitude coordinates.",
+        )
+    else:
+        resp_a = await get_disaster_hazards(lat_a, lon_a, addr_a)
+
+    if lat_b is None or lon_b is None:
+        resp_b = DisasterLocationResponse(
+            status="data_unavailable",
+            latitude=0.0,
+            longitude=0.0,
+            address=addr_b,
+            locality_name=addr_b,
+            error_message="Location B missing valid latitude and longitude coordinates.",
+        )
+    else:
+        resp_b = await get_disaster_hazards(lat_b, lon_b, addr_b)
+
+    # Validate comparability of both locations
+    status_a = resp_a.status
+    status_b = resp_b.status
+
+    if status_a != "active" and status_b != "active":
+        return DisasterCompareResponse(
+            status="incomparable",
+            location_a=resp_a,
+            location_b=resp_b,
+            comparative_analysis=[],
+            comparison_verdict="Both candidate locations lack valid hazard telemetry or fall outside supported spatial coverage. Comparison cannot be performed.",
+            disclaimers=[
+                "Neither candidate location provided valid coordinates within the National Capital Territory of Delhi hazard zoning dataset.",
+                "Missing data must not be interpreted as absence of hazard risk.",
+            ],
+        )
+
+    if status_a != "active" or status_b != "active":
+        active_name = resp_a.locality_name if status_a == "active" else resp_b.locality_name
+        missing_name = resp_b.locality_name if status_a == "active" else resp_a.locality_name
+        return DisasterCompareResponse(
+            status="partial_evidence",
+            location_a=resp_a,
+            location_b=resp_b,
+            comparative_analysis=[],
+            comparison_verdict=f"Partial comparison only. Grounded hazard telemetry is available for {active_name}, but {missing_name} lacks valid coverage or coordinates. Missing data cannot be ranked as safer.",
+            disclaimers=[
+                f"Candidate location '{missing_name}' has no verified hazard coverage. It must NOT be inferred as safer due to absence of data.",
+                "Relocation comparison requires verified spatial evidence for both candidate properties.",
+            ],
+        )
+
+    # Build side-by-side comparative points when both locations are active
     comparison_points = []
 
     # 1. Seismic Zone
@@ -288,8 +407,8 @@ async def compare_disaster_hazards(
     })
 
     # 2. Flood Risk
-    flood_a = next((h for h in resp_a.hazards if h.hazard_type == "flood"), None)
-    flood_b = next((h for h in resp_b.hazards if h.hazard_type == "flood"), None)
+    flood_a = next((h for h in (resp_a.hazards or []) if h.hazard_type == "flood"), None)
+    flood_b = next((h for h in (resp_b.hazards or []) if h.hazard_type == "flood"), None)
     flood_a_sev = flood_a.severity if flood_a else "low"
     flood_b_sev = flood_b.severity if flood_b else "low"
 
@@ -307,12 +426,15 @@ async def compare_disaster_hazards(
     })
 
     # 3. Waterlogging Risk
-    waterlog_a = next((h for h in resp_a.hazards if h.hazard_type == "waterlogging"), None)
-    waterlog_b = next((h for h in resp_b.hazards if h.hazard_type == "waterlogging"), None)
+    waterlog_a = next((h for h in (resp_a.hazards or []) if h.hazard_type == "waterlogging"), None)
+    waterlog_b = next((h for h in (resp_b.hazards or []) if h.hazard_type == "waterlogging"), None)
+    dist_a = waterlog_a.parameters.get("nearest_hotspot_km", "N/A") if waterlog_a else "N/A"
+    dist_b = waterlog_b.parameters.get("nearest_hotspot_km", "N/A") if waterlog_b else "N/A"
+
     comparison_points.append({
         "hazard_type": "waterlogging",
         "title": "Urban Monsoon Waterlogging",
-        "summary": f"Proximity to chronic PWD drainage depression: {resp_a.locality_name} (~{waterlog_a.parameters.get('nearest_hotspot_km', 'N/A')} km) vs {resp_b.locality_name} (~{waterlog_b.parameters.get('nearest_hotspot_km', 'N/A')} km).",
+        "summary": f"Proximity to chronic PWD drainage depression: {resp_a.locality_name} (~{dist_a} km) vs {resp_b.locality_name} (~{dist_b} km).",
         "location_a_verdict": waterlog_a.title if waterlog_a else "Low",
         "location_b_verdict": waterlog_b.title if waterlog_b else "Low",
     })
@@ -322,6 +444,7 @@ async def compare_disaster_hazards(
         location_a=resp_a,
         location_b=resp_b,
         comparative_analysis=comparison_points,
+        comparison_verdict="Side-by-side contrast complete across statutory seismic standards, CWC riverine floodplain proximity, and PWD chronic waterlogging hotspots.",
         disclaimers=[
             "Comparative analysis uses identical BIS, CWC, and PWD dataset definitions for both candidate locations.",
             "Differences in documented risk reflect spatial distance to river floodplains and surveyed municipal drainage bottlenecks.",

@@ -475,6 +475,8 @@ GROUNDING_SYSTEM_PROMPT = (
     "6. Never infer safety, clean air, or low flood risk from missing sensor data.\n"
     "7. Do NOT invent a composite livability score or safety grade.\n"
     "8. For simple conversational greetings (e.g. 'hi', 'hello', 'how are you'), reply briefly and politely introducing your assistance for the selected area. Do NOT dump the full telemetry report in greeting responses.\n"
+    "9. Crime figures represent district-level administrative allocations from official NCRB and Delhi Police annual compendiums; individual incident addresses are never published to safeguard citizen privacy.\n"
+    "10. Hazard zoning reflects static statutory standards (BIS IS 1893:2016) and river gauge baselines (CWC), NOT a real-time meteorological warning or radar forecast. Clearly disclose that live emergency alert feeds are unavailable.\n"
 )
 
 

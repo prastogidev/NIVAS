@@ -90,3 +90,46 @@ def test_api_disaster_compare_endpoint(client):
     data = resp.json()
     assert data["status"] == "active"
     assert "comparative_analysis" in data
+
+
+@pytest.mark.asyncio
+async def test_disaster_hazards_evidence_metadata_and_live_status():
+    """Verify hazards include evidence_type, data_freshness, and live alerts offline status."""
+    res = await get_disaster_hazards(latitude=28.5921, longitude=77.0460, address="Dwarka Sector 12")
+    assert res.status == "active"
+    assert res.live_alerts_available is False
+    assert "unavailable" in res.live_alerts_status.lower()
+    assert res.provenance_summary is not None
+    assert "BIS IS 1893:2016" in res.provenance_summary["seismic"]["source"]
+
+    for hz in res.hazards:
+        assert hz.evidence_type in ("static_zonal", "historical_and_zonal", "historical_survey", "historical_monsoon_vulnerability")
+        assert hz.data_freshness is not None
+        assert hz.geographic_resolution is not None
+
+
+@pytest.mark.asyncio
+async def test_compare_disaster_hazards_partial_evidence():
+    """Verify comparing a valid Delhi location with an out-of-coverage location yields partial_evidence."""
+    req = DisasterCompareRequest(
+        location_a={"latitude": 28.5921, "longitude": 77.0460, "address": "Dwarka Sector 12, Delhi"},
+        location_b={"latitude": 19.0760, "longitude": 72.8777, "address": "Mumbai, Maharashtra"},
+    )
+    res = await compare_disaster_hazards(req)
+    assert res.status == "partial_evidence"
+    assert res.comparative_analysis == []
+    assert "cannot be ranked as safer" in res.comparison_verdict
+
+
+@pytest.mark.asyncio
+async def test_compare_disaster_hazards_incomparable():
+    """Verify comparing two locations without valid coordinates yields incomparable status."""
+    req = DisasterCompareRequest(
+        location_a={"latitude": None, "longitude": None, "address": "Unknown A"},
+        location_b={"latitude": None, "longitude": None, "address": "Unknown B"},
+    )
+    res = await compare_disaster_hazards(req)
+    assert res.status == "incomparable"
+    assert res.comparative_analysis == []
+    assert "cannot be performed" in res.comparison_verdict
+

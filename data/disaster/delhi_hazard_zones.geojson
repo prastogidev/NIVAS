@@ -18,17 +18,36 @@
         "severity": "high",
         "category": "static",
         "description": "Entire National Capital Territory of Delhi is categorized under Seismic Zone IV (Zone factor 0.24, MSK Intensity VIII). All structural construction requires adherence to earthquake-resistant ductile detailing (IS 13920).",
-        "mitigation": "Ensure building compliance with National Building Code (NBC 2016) and IS 1893 seismic retrofitting standards."
+        "mitigation": "Ensure building compliance with National Building Code (NBC 2016) and IS 1893 seismic retrofitting standards.",
+        "evidence_type": "static_zonal_standard",
+        "data_freshness": "static_standard",
+        "resolution": "regional_statutory_standard",
+        "scope_disclaimer": "Uniform statutory standard for NCT of Delhi (Zone Factor 0.24, MSK VIII). Mandatory ductile detailing (IS 13920:2016). Does not measure site-specific soil liquefaction or structural build quality of individual properties."
       },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
           [
-            [76.840, 28.400],
-            [77.360, 28.400],
-            [77.360, 28.890],
-            [76.840, 28.890],
-            [76.840, 28.400]
+            [
+              76.84,
+              28.4
+            ],
+            [
+              77.36,
+              28.4
+            ],
+            [
+              77.36,
+              28.89
+            ],
+            [
+              76.84,
+              28.89
+            ],
+            [
+              76.84,
+              28.4
+            ]
           ]
         ]
       }
@@ -42,26 +61,58 @@
         "authority": "Central Water Commission (CWC) & Delhi Irrigation and Flood Control Department",
         "severity": "critical",
         "category": "historical_and_zonal",
-        "warning_level_m": 204.50,
+        "warning_level_m": 204.5,
         "danger_level_m": 205.33,
         "historic_hfl_m": 208.66,
         "historic_hfl_date": "2023-07-13",
         "description": "Active floodplain and riverbed lowlands subject to periodic monsoon backflow when Hathnikund Barrage discharge exceeds 250,000 cusecs. Historically submerged areas include Yamuna Bazar, Monastery Market, Bela Road, Usmanpur lowlands, and Mayur Vihar lowlands.",
-        "mitigation": "Permanent residential construction prohibited under NGT orders. Elevate plinth levels and review municipal drainage outfall elevation."
+        "mitigation": "Permanent residential construction prohibited under NGT orders. Elevate plinth levels and review municipal drainage outfall elevation.",
+        "evidence_type": "historical_and_zonal",
+        "data_freshness": "historical_compendium",
+        "resolution": "macro_riverbed_corridor",
+        "gauge_station": "Old Railway Bridge (ORB) Gauge, Delhi",
+        "scope_disclaimer": "Riverine floodplain corridor based on CWC gauge thresholds (Warning 204.5m, Danger 205.33m, Peak 208.66m on 13 July 2023). Does not substitute for site-level municipal drainage elevation survey."
       },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
           [
-            [77.200, 28.780],
-            [77.250, 28.780],
-            [77.265, 28.700],
-            [77.310, 28.620],
-            [77.330, 28.520],
-            [77.290, 28.520],
-            [77.250, 28.610],
-            [77.220, 28.700],
-            [77.200, 28.780]
+            [
+              77.2,
+              28.78
+            ],
+            [
+              77.25,
+              28.78
+            ],
+            [
+              77.265,
+              28.7
+            ],
+            [
+              77.31,
+              28.62
+            ],
+            [
+              77.33,
+              28.52
+            ],
+            [
+              77.29,
+              28.52
+            ],
+            [
+              77.25,
+              28.61
+            ],
+            [
+              77.22,
+              28.7
+            ],
+            [
+              77.2,
+              28.78
+            ]
           ]
         ]
       }
@@ -76,19 +127,42 @@
         "severity": "moderate_to_high",
         "category": "historical",
         "description": "Chronic monsoon waterlogging depressions and road underpasses where natural drainage slope is impeded or stormwater pumping is required during intense precipitation (>50 mm/hr).",
-        "mitigation": "Avoid basement parking without automatic sump pumps during intense cloudbursts."
+        "mitigation": "Avoid basement parking without automatic sump pumps during intense cloudbursts.",
+        "evidence_type": "historical_monsoon_vulnerability",
+        "data_freshness": "historical_compendium",
+        "resolution": "point_underpass_infrastructure",
+        "scope_disclaimer": "Documented chronic underpass and arterial road drainage bottlenecks during intense monsoon cloudbursts (>50 mm/hr)."
       },
       "geometry": {
         "type": "MultiPoint",
         "coordinates": [
-          [77.221, 28.632],
-          [77.295, 28.515],
-          [77.165, 28.665],
-          [77.240, 28.627],
-          [77.245, 28.630],
-          [77.208, 28.660]
+          [
+            77.221,
+            28.632
+          ],
+          [
+            77.295,
+            28.515
+          ],
+          [
+            77.165,
+            28.665
+          ],
+          [
+            77.24,
+            28.627
+          ],
+          [
+            77.245,
+            28.63
+          ],
+          [
+            77.208,
+            28.66
+          ]
         ]
       }
     }
-  ]
+  ],
+  "description": "Grounded geological and environmental hazard spatial layers for the National Capital Territory of Delhi, sourced from statutory standards (BIS IS 1893:2016), river gauge monitoring (Central Water Commission), and municipal drainage assessments (Delhi PWD)."
 }

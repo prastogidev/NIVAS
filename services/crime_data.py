@@ -204,6 +204,24 @@ async def get_locality_safety_data(
         for c in raw_district.get("categories_2022", [])
     ]
 
+    meta = baseline.get("metadata", {})
+    state_ut_totals = meta.get("official_state_ut_totals", {})
+
+    provenance_details = {
+        "source_agency": "National Crime Records Bureau (NCRB), Ministry of Home Affairs & Delhi Police",
+        "publication": "Crime in India (2018–2022) Annual Compendiums & Delhi Police Crime Review",
+        "official_table_state_ut": "NCRB Crime in India Table 1A.1: Cognizable IPC Crimes in States/UTs",
+        "official_table_cities": "NCRB Crime in India Table 1B.1: Cognizable IPC Crimes in 19 Metropolitan Cities (Delhi City)",
+        "official_portal_url": "https://ncrb.gov.in/crime-in-india.html",
+        "delhi_police_url": "https://delhipolice.gov.in/statistics",
+        "geographic_resolution": "NCT of Delhi State/UT Total with Police District Administrative Allocation",
+        "is_derived_estimate": True,
+        "population_methodology": "Census of India 2011 surveyed 9 Revenue Districts. Police district populations are derived projections used by Delhi Police.",
+        "boundary_type": "spatial_approximation_reference",
+        "boundary_disclaimer": "Approximated Police District Jurisdictional Zone. Macro reference geometry for locality mapping; not an official cadastral boundary published by Delhi Police or Survey of India.",
+        "e_fir_theft_context": "Over 74% of registered IPC crimes in Delhi constitute property and vehicle theft, filed digitally via citizen e-FIR portals. Higher counts reflect digital reporting adoption rather than heightened physical danger.",
+    }
+
     district_profile = DistrictCrimeProfile(
         district_code=raw_district["district_code"],
         district_name=raw_district["district_name"],
@@ -220,6 +238,11 @@ async def get_locality_safety_data(
         historical_trend_ipc=raw_district.get("historical_trend_ipc", {}),
         categories_2022=categories,
         jurisdiction_polygon=boundary_polygon,
+        boundary_type="spatial_approximation_reference",
+        boundary_disclaimer="Approximated Police District Jurisdictional Zone. Macro reference geometry for locality mapping; not an official cadastral boundary published by Delhi Police or Survey of India.",
+        is_derived_estimate=True,
+        state_ut_benchmark=state_ut_totals,
+        provenance_details=provenance_details,
     )
 
     # 4. Query real emergency / police stations from OpenStreetMap via location service

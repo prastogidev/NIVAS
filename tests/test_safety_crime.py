@@ -147,3 +147,48 @@ def test_api_safety_data_endpoint(client):
     assert data["matched_district"]["reporting_year"] == 2022
     assert "categories_2022" in data["matched_district"]
     assert "historical_trend_ipc" in data["matched_district"]
+
+
+@pytest.mark.asyncio
+async def test_get_locality_safety_data_provenance_and_benchmark():
+    """Verify official NCRB Table 1A.1 benchmark and provenance fields are present."""
+    res = await get_locality_safety_data(
+        latitude=28.5921,
+        longitude=77.0460,
+        address="Dwarka Sector 12, Delhi",
+        radius=1200,
+    )
+    assert res.status == "active"
+    district = res.matched_district
+    assert district is not None
+
+    # Provenance fields
+    assert district.boundary_type == "spatial_approximation_reference"
+    assert "approximated" in district.boundary_disclaimer.lower()
+    assert district.is_derived_estimate is True
+    assert district.provenance_details is not None
+    assert "NCRB" in district.provenance_details["official_table_state_ut"]
+    assert "Table 1A.1" in district.provenance_details["official_table_state_ut"]
+
+    # State/UT Benchmark
+    benchmark = district.state_ut_benchmark
+    assert benchmark is not None
+    assert "2022" in benchmark
+    assert benchmark["2022"]["total_ipc_cases"] == 298988
+    assert benchmark["2022"]["crime_rate_per_lakh"] == 1422.6
+    assert "Table 1A.1" in benchmark["2022"]["source_table"]
+
+
+@pytest.mark.asyncio
+async def test_get_locality_safety_data_zero_radius():
+    """Verify zero or non-positive radius defaults gracefully to 0 without crashing."""
+    res = await get_locality_safety_data(
+        latitude=28.5921,
+        longitude=77.0460,
+        address="Dwarka Sector 12, Delhi",
+        radius=0,
+    )
+    assert res.status == "active"
+    assert res.search_radius_meters == 0
+    assert res.nearby_police_stations == []
+
