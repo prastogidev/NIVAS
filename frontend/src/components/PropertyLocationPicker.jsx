@@ -107,6 +107,7 @@ export default function PropertyLocationPicker({
   polygonCoords = null,
   polygonStyle = null,
   geoJsonLayers = null,
+  children,
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -618,6 +619,8 @@ export default function PropertyLocationPicker({
           <span>{reverseError}</span>
         </div>
       )}
+
+      {children}
 
       {/* Interactive Map Box */}
       <div

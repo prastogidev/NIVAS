@@ -17,6 +17,9 @@ import {
   ArrowRight,
   ShieldAlert,
   Loader2,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw,
 } from 'lucide-react';
 import PropertyLocationPicker from './PropertyLocationPicker';
 import { fetchDisasterHazardData, compareDisasterLocations } from '../services/api';
@@ -85,9 +88,19 @@ export default function DisasterWorkspace({
   const [error, setError] = useState(null);
   const [retryTrigger, setRetryTrigger] = useState(0);
 
-  // Layer Toggles
+  // Layer Toggles & Configuration Panel
   const [showFloodLayer, setShowFloodLayer] = useState(true);
   const [showWaterlogLayer, setShowWaterlogLayer] = useState(true);
+  const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(true);
+
+  const totalLayersCount = 2;
+  const activeLayersCount = (showFloodLayer ? 1 : 0) + (showWaterlogLayer ? 1 : 0);
+  const isDefaultLayers = showFloodLayer && showWaterlogLayer;
+
+  const handleResetLayers = () => {
+    setShowFloodLayer(true);
+    setShowWaterlogLayer(true);
+  };
 
   // Compare Mode State (independent from single mode)
   const [candidateLocation, setCandidateLocation] = useState({
@@ -222,8 +235,8 @@ export default function DisasterWorkspace({
       {disasterMode === 'single' ? (
         <div className="disaster-single-flow">
           {/* Main Map Panel with Hazard Overlays */}
-          <section className="card livability-map-panel">
-            <div className="map-panel-header">
+          <section className="card livability-map-panel" data-testid="disaster-hazard-map-panel">
+            <div className="map-panel-header" data-testid="disaster-map-header">
               <div className="map-header-title-wrap">
                 <MapPin size={18} className="map-header-icon" />
                 <div>
@@ -232,42 +245,176 @@ export default function DisasterWorkspace({
                 </div>
               </div>
 
-              <div className="disaster-layer-controls">
-                <label className="layer-checkbox-pill">
-                  <input
-                    type="checkbox"
-                    checked={showFloodLayer}
-                    onChange={(e) => setShowFloodLayer(e.target.checked)}
-                  />
-                  <span className="layer-color-indicator flood" />
-                  <span>Yamuna Floodplain</span>
-                </label>
-                <label className="layer-checkbox-pill">
-                  <input
-                    type="checkbox"
-                    checked={showWaterlogLayer}
-                    onChange={(e) => setShowWaterlogLayer(e.target.checked)}
-                  />
-                  <span className="layer-color-indicator waterlog" />
-                  <span>Waterlog Hotspots</span>
-                </label>
+              <div className="map-coords-indicator">
+                <span className="coords-indicator-label">Active Focus:</span>
+                <span className="coords-indicator-val">
+                  {selectedLocation.latitude.toFixed(4)}° N, {selectedLocation.longitude.toFixed(4)}° E
+                </span>
               </div>
             </div>
 
-            <div className="livability-map-container" style={{ height: 350 }}>
+            <div className="livability-map-container">
               <PropertyLocationPicker
                 latitude={selectedLocation.latitude}
                 longitude={selectedLocation.longitude}
                 onLocationChange={setSelectedLocation}
-                mapHeight={350}
+                searchPlaceholder="Search locality or landmark in Delhi (e.g. Yamuna Bazar, Civil Lines, Dwarka)..."
+                mapHeight={380}
                 geoJsonLayers={activeSpatialLayers}
-              />
+              >
+                {/* Compact, Collapsible Map Layers Panel */}
+                <div
+                  className={`hazard-layers-panel ${isLayersPanelOpen ? 'expanded' : 'collapsed'}`}
+                  data-testid="hazard-layers-panel"
+                >
+                  <div className="hazard-layers-toolbar">
+                    <button
+                      type="button"
+                      className="hazard-layers-toggle-btn"
+                      onClick={() => setIsLayersPanelOpen((prev) => !prev)}
+                      aria-expanded={isLayersPanelOpen}
+                      aria-controls="hazard-layers-content"
+                      data-testid="toggle-layers-panel-btn"
+                    >
+                      <Layers size={14} className="layers-icon" />
+                      <span className="layers-title">Map Hazard Overlays</span>
+                      <span className="layers-active-badge" data-testid="layers-active-count">
+                        {activeLayersCount} of {totalLayersCount} Active
+                      </span>
+                      {isLayersPanelOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+
+                    <div className="hazard-layers-toolbar-actions">
+                      {!isLayersPanelOpen && (
+                        <div className="collapsed-layers-preview">
+                          {showFloodLayer && (
+                            <span className="layer-preview-chip flood">
+                              <span className="legend-dot flood" /> Yamuna Floodplain
+                            </span>
+                          )}
+                          {showWaterlogLayer && (
+                            <span className="layer-preview-chip waterlog">
+                              <span className="legend-dot waterlog" /> Waterlog Hotspots
+                            </span>
+                          )}
+                          {activeLayersCount === 0 && (
+                            <span className="layer-preview-chip none">No Overlays Active</span>
+                          )}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        className={`layers-reset-btn ${isDefaultLayers ? 'disabled' : ''}`}
+                        onClick={handleResetLayers}
+                        disabled={isDefaultLayers}
+                        title="Reset layer overlays to default (all enabled)"
+                        data-testid="reset-layers-btn"
+                      >
+                        <RotateCcw size={12} />
+                        <span>Reset to Default</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {isLayersPanelOpen && (
+                    <div
+                      id="hazard-layers-content"
+                      className="hazard-layers-body"
+                      role="region"
+                      aria-label="Hazard Map Layers Configuration"
+                    >
+                      <div className="hazard-layers-grid">
+                        {/* Layer 1: Riverine Inundation (Yamuna Floodplain) */}
+                        <div className={`hazard-layer-item ${showFloodLayer ? 'active' : 'inactive'}`}>
+                          <div className="layer-item-main">
+                            <div className="layer-item-header">
+                              <div className="layer-badge-wrap">
+                                <span className="layer-category-pill flood">Riverine Inundation</span>
+                                <span className="layer-status-pill">{showFloodLayer ? 'Visible' : 'Hidden'}</span>
+                              </div>
+                              <label className="hazard-toggle-switch" htmlFor="toggle-flood-layer">
+                                <input
+                                  id="toggle-flood-layer"
+                                  type="checkbox"
+                                  checked={showFloodLayer}
+                                  onChange={(e) => setShowFloodLayer(e.target.checked)}
+                                  data-testid="layer-toggle-flood"
+                                  aria-label="Toggle Yamuna River Floodplain Corridor Layer"
+                                />
+                                <span className="slider-round flood" />
+                              </label>
+                            </div>
+
+                            <div className="layer-item-content">
+                              <div className="layer-item-title-row">
+                                <span className="layer-swatch-indicator flood" />
+                                <h4 className="layer-item-title">Yamuna River Floodplain Corridor</h4>
+                              </div>
+                              <p className="layer-item-desc">
+                                Authoritative Central Water Commission (CWC) riverbed macro-corridor and NGT 25-year flood inundation boundary.
+                              </p>
+                            </div>
+
+                            <div className="layer-item-footer">
+                              <span className="layer-source-tag">Source: CWC & NGT 2015</span>
+                              <span className="layer-visual-hint">Shaded red riverbed corridor</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Layer 2: Surface Drainage (Waterlogging Hotspots) */}
+                        <div className={`hazard-layer-item ${showWaterlogLayer ? 'active' : 'inactive'}`}>
+                          <div className="layer-item-main">
+                            <div className="layer-item-header">
+                              <div className="layer-badge-wrap">
+                                <span className="layer-category-pill waterlog">Surface Drainage</span>
+                                <span className="layer-status-pill">{showWaterlogLayer ? 'Visible' : 'Hidden'}</span>
+                              </div>
+                              <label className="hazard-toggle-switch" htmlFor="toggle-waterlog-layer">
+                                <input
+                                  id="toggle-waterlog-layer"
+                                  type="checkbox"
+                                  checked={showWaterlogLayer}
+                                  onChange={(e) => setShowWaterlogLayer(e.target.checked)}
+                                  data-testid="layer-toggle-waterlog"
+                                  aria-label="Toggle Chronic Monsoon Waterlogging Hotspots Layer"
+                                />
+                                <span className="slider-round waterlog" />
+                              </label>
+                            </div>
+
+                            <div className="layer-item-content">
+                              <div className="layer-item-title-row">
+                                <span className="layer-swatch-indicator waterlog" />
+                                <h4 className="layer-item-title">Chronic Monsoon Waterlogging Hotspots</h4>
+                              </div>
+                              <p className="layer-item-desc">
+                                Delhi Public Works Department (PWD) chronic inundation underpasses, arterial intersections, and drainage culvert choke points.
+                              </p>
+                            </div>
+
+                            <div className="layer-item-footer">
+                              <span className="layer-source-tag">Source: Delhi PWD Compendium</span>
+                              <span className="layer-visual-hint">Amber underpass markers</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </PropertyLocationPicker>
             </div>
 
             <div className="disaster-map-footer">
               <div className="legend-row">
-                <span className="legend-chip"><span className="legend-dot flood" /> Yamuna Floodplain Corridor (NGT Inundation Boundary)</span>
-                <span className="legend-chip"><span className="legend-dot waterlog" /> Chronic Monsoon Drainage Hotspots (PWD Underpasses)</span>
+                <span className={`legend-chip ${showFloodLayer ? '' : 'layer-off'}`}>
+                  <span className="legend-dot flood" /> Yamuna Floodplain Corridor (NGT Inundation Boundary)
+                </span>
+                <span className={`legend-chip ${showWaterlogLayer ? '' : 'layer-off'}`}>
+                  <span className="legend-dot waterlog" /> Chronic Monsoon Drainage Hotspots (PWD Underpasses)
+                </span>
               </div>
             </div>
           </section>
