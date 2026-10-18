@@ -66,6 +66,18 @@ vi.mock('leaflet', () => {
           addLayer: function(l) { layers.push(l); },
         };
       },
+      circle: (coords, options) => {
+        const circleObj = {
+          coords,
+          options,
+          radius: options?.radius || 1200,
+          addTo: function() { return this; },
+          setLatLng: vi.fn(function(ll) { this.coords = ll; return this; }),
+          setRadius: vi.fn(function(r) { this.radius = r; return this; }),
+          remove: vi.fn(),
+        };
+        return circleObj;
+      },
       DomEvent: {
         stopPropagation: (...args) => mockStopPropagation(...args),
       },
@@ -1637,6 +1649,508 @@ describe('Livability Location Data Foundation', () => {
       expect(errorBubble).toBeTruthy();
       expect(screen.getByText(/Welcome to the NIVAS Neighborhood AI Advisor/i)).toBeTruthy();
       expect(screen.getByText('Is this area flood prone?')).toBeTruthy();
+    });
+  });
+
+  describe('NIVAS: Dynamic Search Radius Slider & Interactive Circle', () => {
+    it('defaults to 1.2 km (1200 m) search radius with clear display', () => {
+      render(<LivabilityWorkspace />);
+
+      const slider = screen.getByTestId('search-radius-slider');
+      expect(slider).toBeTruthy();
+      expect(slider.value).toBe('1200');
+
+      const radiusValue = screen.getByTestId('radius-display-value');
+      expect(radiusValue.textContent).toBe('1.2 km');
+    });
+
+    it('updates radius display immediately when slider is moved', () => {
+      render(<LivabilityWorkspace />);
+
+      const slider = screen.getByTestId('search-radius-slider');
+      expect(slider.getAttribute('min')).toBe('0');
+      expect(slider.getAttribute('max')).toBe('10000');
+
+      fireEvent.change(slider, { target: { value: '2500' } });
+
+      const radiusValue = screen.getByTestId('radius-display-value');
+      expect(radiusValue.textContent).toBe('2.5 km');
+      expect(slider.value).toBe('2500');
+
+      // Adjust to 500m
+      fireEvent.change(slider, { target: { value: '500' } });
+      expect(radiusValue.textContent).toBe('500 m');
+      expect(slider.value).toBe('500');
+
+      // Adjust to 0m (pinpoint-only zero state)
+      fireEvent.change(slider, { target: { value: '0' } });
+      expect(radiusValue.textContent).toBe('0 m');
+      expect(slider.value).toBe('0');
+      expect(screen.getByText(/0 amenities \(Pinpoint only\)/i)).toBeTruthy();
+      expect(screen.getByText(/Search radius set to 0 m \(pinpoint only\)/i)).toBeTruthy();
+
+      // Adjust to 10,000m (10 km maximum)
+      fireEvent.change(slider, { target: { value: '10000' } });
+      expect(radiusValue.textContent).toBe('10 km');
+      expect(slider.value).toBe('10000');
+    });
+
+    it('filters facilities accurately according to the selected radius', async () => {
+      // Mock 3 facilities with known distances from (28.5921, 77.0460)
+      // 1. Close: 0.3 km away (inside 500m)
+      // 2. Medium: 1.0 km away (inside 1.2km, outside 500m)
+      // 3. Far: 2.2 km away (outside 1.2km, inside 2.5km)
+      const mockFacilities = [
+        {
+          id: 'fac-1',
+          name: 'Close Clinic',
+          category: 'clinic',
+          category_label: 'Clinic',
+          latitude: 28.5940, // ~250m north
+          longitude: 77.0460,
+          source: 'OpenStreetMap',
+        },
+        {
+          id: 'fac-2',
+          name: 'Midway School',
+          category: 'school',
+          category_label: 'School',
+          latitude: 28.6010, // ~1km north
+          longitude: 77.0460,
+          source: 'OpenStreetMap',
+        },
+        {
+          id: 'fac-3',
+          name: 'Distant Hospital',
+          category: 'hospital',
+          category_label: 'Hospital',
+          latitude: 28.6120, // ~2.2km north
+          longitude: 77.0460,
+          source: 'OpenStreetMap',
+        },
+      ];
+
+      vi.spyOn(api, 'fetchLivabilityLocationData').mockResolvedValue({
+        latitude: 28.5921,
+        longitude: 77.0460,
+        address: 'Dwarka Sector 12',
+        retrieved_at: '2026-10-18T12:00:00Z',
+        infrastructure: {
+          status: 'active',
+          source: 'OpenStreetMap Overpass API',
+          facilities: mockFacilities,
+          schools_count: 1,
+          hospitals_count: 1,
+          clinics_count: 1,
+          pharmacies_count: 0,
+          police_stations_count: 0,
+          fire_stations_count: 0,
+          public_transport_count: 0,
+          railway_stations_count: 0,
+          major_roads_count: 0,
+          total_facilities: 3,
+        },
+        air_quality: { status: 'provider_not_configured' },
+        environmental_hazards: { status: 'data_not_configured', message: 'None' },
+      });
+
+      render(<LivabilityWorkspace />);
+
+      // At default 1.2 km: Close Clinic and Midway School are visible (2 amenities)
+      await waitFor(() => {
+        expect(screen.getByText('Close Clinic')).toBeTruthy();
+        expect(screen.getByText('Midway School')).toBeTruthy();
+        expect(screen.queryByText('Distant Hospital')).toBeNull();
+      });
+
+      // Move slider down to 500m: Only Close Clinic remains
+      const slider = screen.getByTestId('search-radius-slider');
+      fireEvent.change(slider, { target: { value: '500' } });
+
+      await waitFor(() => {
+        expect(screen.getByText('Close Clinic')).toBeTruthy();
+        expect(screen.queryByText('Midway School')).toBeNull();
+        expect(screen.queryByText('Distant Hospital')).toBeNull();
+      });
+
+      // Move slider up to 3000m (3km): All 3 are within radius
+      fireEvent.change(slider, { target: { value: '3000' } });
+
+      await waitFor(() => {
+        expect(screen.getByText('Close Clinic')).toBeTruthy();
+        expect(screen.getByText('Midway School')).toBeTruthy();
+        expect(screen.getByText('Distant Hospital')).toBeTruthy();
+      });
+    });
+
+    it('deterministically filters facilities across 0m, 250m, 1.2km, 3km, 6km, and 10km radii and ensures badge, categories, and directory agree', async () => {
+      // Deterministic dataset around (28.5921, 77.0460)
+      // 1. fac_200m: ~0.20 km (inside 250m)
+      // 2. fac_800m: ~0.80 km (inside 1.2km)
+      // 3. fac_2km: ~2.00 km (inside 3km)
+      // 4. fac_5km: ~5.00 km (inside 6km)
+      // 5. fac_8km: ~8.00 km (inside 10km)
+      // 6. fac_12km: ~12.00 km (outside 10km)
+      const mockMultiRadiusFacilities = [
+        {
+          id: 'fac-200m',
+          name: 'Primary Health Center',
+          category: 'clinic',
+          category_label: 'Clinic',
+          latitude: 28.5939,
+          longitude: 77.0460,
+          source: 'OpenStreetMap',
+        },
+        {
+          id: 'fac-800m',
+          name: 'Sector Model School',
+          category: 'school',
+          category_label: 'School',
+          latitude: 28.5993,
+          longitude: 77.0460,
+          source: 'OpenStreetMap',
+        },
+        {
+          id: 'fac-2km',
+          name: 'Metro Transit Hub',
+          category: 'transit',
+          category_label: 'Bus Station',
+          latitude: 28.6101,
+          longitude: 77.0460,
+          source: 'OpenStreetMap',
+        },
+        {
+          id: 'fac-5km',
+          name: 'Sub-District Hospital',
+          category: 'hospital',
+          category_label: 'Hospital',
+          latitude: 28.6371,
+          longitude: 77.0460,
+          source: 'OpenStreetMap',
+        },
+        {
+          id: 'fac-8km',
+          name: 'Regional Highway Corridor',
+          category: 'road',
+          category_label: 'Major Road (Primary)',
+          latitude: 28.6641,
+          longitude: 77.0460,
+          source: 'OpenStreetMap',
+        },
+        {
+          id: 'fac-12km',
+          name: 'Remote Boundary Station',
+          category: 'police',
+          category_label: 'Police Station',
+          latitude: 28.7001,
+          longitude: 77.0460,
+          source: 'OpenStreetMap',
+        },
+      ];
+
+      vi.spyOn(api, 'fetchLivabilityLocationData').mockResolvedValue({
+        latitude: 28.5921,
+        longitude: 77.0460,
+        address: 'Dwarka Sector 12',
+        retrieved_at: '2026-10-18T12:00:00Z',
+        infrastructure: {
+          status: 'active',
+          source: 'OpenStreetMap Overpass API',
+          facilities: mockMultiRadiusFacilities,
+          schools_count: 1,
+          hospitals_count: 1,
+          clinics_count: 1,
+          pharmacies_count: 0,
+          police_stations_count: 1,
+          fire_stations_count: 0,
+          public_transport_count: 1,
+          railway_stations_count: 0,
+          major_roads_count: 1,
+          total_facilities: 6,
+        },
+        air_quality: { status: 'provider_not_configured' },
+        environmental_hazards: { status: 'data_not_configured', message: 'None' },
+      });
+
+      render(<LivabilityWorkspace />);
+
+      const slider = screen.getByTestId('search-radius-slider');
+      const badge = () => screen.getByTestId('search-radius-slider').closest('.livability-radius-control-bar').querySelector('.radius-control-badge');
+
+      // 1. Default (1200 m / 1.2 km): contains fac-200m and fac-800m = 2 amenities
+      await waitFor(() => {
+        expect(screen.getByText('Primary Health Center')).toBeTruthy();
+        expect(screen.getByText('Sector Model School')).toBeTruthy();
+        expect(screen.queryByText('Metro Transit Hub')).toBeNull();
+        expect(screen.queryByText('Sub-District Hospital')).toBeNull();
+        expect(screen.queryByText('Regional Highway Corridor')).toBeNull();
+        expect(screen.queryByText('Remote Boundary Station')).toBeNull();
+        expect(badge().textContent).toContain('2 amenities within circle');
+      });
+
+      // 2. Radius 0 m (Pinpoint-only zero state): exactly 0 amenities
+      fireEvent.change(slider, { target: { value: '0' } });
+      await waitFor(() => {
+        expect(badge().textContent).toContain('0 amenities (Pinpoint only)');
+        expect(screen.queryByText('Primary Health Center')).toBeNull();
+        expect(screen.queryByText('Sector Model School')).toBeNull();
+        expect(screen.getAllByText(/Search radius set to 0 m \(pinpoint only\)/i).length).toBeGreaterThanOrEqual(1);
+      });
+
+      // 3. Radius 250 m: contains only fac-200m = 1 amenity
+      fireEvent.change(slider, { target: { value: '250' } });
+      await waitFor(() => {
+        expect(badge().textContent).toContain('1 amenity within circle');
+        expect(screen.getByText('Primary Health Center')).toBeTruthy();
+        expect(screen.queryByText('Sector Model School')).toBeNull();
+      });
+
+      // 4. Radius 3000 m (3 km): contains fac-200m, fac-800m, fac-2km = 3 amenities
+      fireEvent.change(slider, { target: { value: '3000' } });
+      await waitFor(() => {
+        expect(badge().textContent).toContain('3 amenities within circle');
+        expect(screen.getByText('Primary Health Center')).toBeTruthy();
+        expect(screen.getByText('Sector Model School')).toBeTruthy();
+        expect(screen.getByText('Metro Transit Hub')).toBeTruthy();
+        expect(screen.queryByText('Sub-District Hospital')).toBeNull();
+      });
+
+      // 5. Radius 6000 m (6 km): contains fac-200m, fac-800m, fac-2km, fac-5km = 4 amenities
+      fireEvent.change(slider, { target: { value: '6000' } });
+      await waitFor(() => {
+        expect(badge().textContent).toContain('4 amenities within circle');
+        expect(screen.getByText('Primary Health Center')).toBeTruthy();
+        expect(screen.getByText('Sector Model School')).toBeTruthy();
+        expect(screen.getByText('Metro Transit Hub')).toBeTruthy();
+        expect(screen.getByText('Sub-District Hospital')).toBeTruthy();
+        expect(screen.queryByText('Regional Highway Corridor')).toBeNull();
+      });
+
+      // 6. Radius 10000 m (10 km): contains all 5 within 10km, fac-12km is EXCLUDED
+      fireEvent.change(slider, { target: { value: '10000' } });
+      await waitFor(() => {
+        expect(badge().textContent).toContain('5 amenities within circle');
+        expect(screen.getByText('Primary Health Center')).toBeTruthy();
+        expect(screen.getByText('Sector Model School')).toBeTruthy();
+        expect(screen.getByText('Metro Transit Hub')).toBeTruthy();
+        expect(screen.getByText('Sub-District Hospital')).toBeTruthy();
+        expect(screen.getByText('Regional Highway Corridor')).toBeTruthy();
+        expect(screen.queryByText('Remote Boundary Station')).toBeNull();
+      });
+
+      // Moving radius does NOT change the active exploration pin
+      expect(screen.getByText(/28.5921° N, 77.0460° E/i)).toBeTruthy();
+    });
+
+    it('invalidates previous location facilities and resets counter when exploration pin changes', async () => {
+      const mockDwarkaFacilities = [
+        {
+          id: 'dwarka-fac-1',
+          name: 'Dwarka Health Center',
+          category: 'clinic',
+          latitude: 28.5939,
+          longitude: 77.0460,
+          source: 'OpenStreetMap',
+        },
+      ];
+
+      vi.spyOn(api, 'fetchLivabilityLocationData').mockResolvedValue({
+        latitude: 28.5921,
+        longitude: 77.0460,
+        address: 'Dwarka Sector 12',
+        retrieved_at: '2026-10-18T12:00:00Z',
+        infrastructure: {
+          status: 'active',
+          source: 'OpenStreetMap Overpass API',
+          facilities: mockDwarkaFacilities,
+          schools_count: 0,
+          hospitals_count: 0,
+          clinics_count: 1,
+          pharmacies_count: 0,
+          police_stations_count: 0,
+          fire_stations_count: 0,
+          public_transport_count: 0,
+          railway_stations_count: 0,
+          major_roads_count: 0,
+          total_facilities: 1,
+        },
+        air_quality: { status: 'provider_not_configured' },
+        environmental_hazards: { status: 'data_not_configured', message: 'None' },
+      });
+
+      render(<LivabilityWorkspace />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Dwarka Health Center')).toBeTruthy();
+      });
+
+      // Perform a search to move pin to Shadipur
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            lat: '28.6517',
+            lon: '77.1583',
+            display_name: 'Shadipur, New Delhi, Delhi, India',
+          },
+        ],
+      });
+
+      const searchInput = screen.getByPlaceholderText(
+        /Search neighborhood or locality \(e\.g\. Hauz Khas, Vasant Kunj, Rohini\)\.\.\./i
+      );
+      const searchBtn = screen.getByRole('button', { name: /Search/i });
+
+      fireEvent.change(searchInput, { target: { value: 'Shadipur' } });
+      fireEvent.click(searchBtn);
+
+      // Previous location facilities must be invalidated immediately
+      await waitFor(() => {
+        expect(screen.queryByText('Dwarka Health Center')).toBeNull();
+        expect(screen.getByText(/28.6517° N, 77.1583° E/i)).toBeTruthy();
+      });
+    });
+  });
+
+  describe('NIVAS: Road Category Infrastructure Reliability & Filter Integrity', () => {
+    it('renders verified road features with truthful count, subcard metrics, and allows category filtering', async () => {
+      const mockData = {
+        latitude: 28.6517,
+        longitude: 77.1583,
+        address: 'Shadipur, New Delhi',
+        locality: 'Shadipur',
+        retrieved_at: '2026-10-18T12:00:00Z',
+        infrastructure: {
+          status: 'active',
+          source: 'OpenStreetMap Overpass API',
+          schools_count: 1,
+          hospitals_count: 0,
+          clinics_count: 0,
+          pharmacies_count: 0,
+          police_stations_count: 0,
+          fire_stations_count: 0,
+          public_transport_count: 0,
+          railway_stations_count: 0,
+          major_roads_count: 2,
+          total_facilities: 3,
+          facilities: [
+            {
+              id: 'road-1',
+              name: 'Patel Road',
+              category: 'road',
+              category_label: 'Major Road (Secondary)',
+              latitude: 28.6520,
+              longitude: 77.1590,
+              source: 'OpenStreetMap',
+            },
+            {
+              id: 'road-2',
+              name: 'Pusa Road',
+              category: 'road',
+              category_label: 'Major Road (Primary)',
+              latitude: 28.6535,
+              longitude: 77.1605,
+              source: 'OpenStreetMap',
+            },
+            {
+              id: 'school-1',
+              name: 'Shadipur Model School',
+              category: 'school',
+              category_label: 'School',
+              latitude: 28.6522,
+              longitude: 77.1580,
+              source: 'OpenStreetMap',
+            },
+          ],
+        },
+        air_quality: { status: 'provider_not_configured' },
+        environmental_hazards: { status: 'data_not_configured', message: 'None' },
+      };
+
+      vi.spyOn(api, 'fetchLivabilityLocationData').mockResolvedValue(mockData);
+
+      render(<LivabilityWorkspace location={{ latitude: 28.6517, longitude: 77.1583, address: 'Shadipur, New Delhi' }} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Patel Road')).toBeTruthy();
+        expect(screen.getByText('Pusa Road')).toBeTruthy();
+      });
+
+      // Legend shows truthful road count: Roads (2)
+      const roadLegendBtn = screen.getByTestId('legend-filter-road');
+      expect(roadLegendBtn.textContent).toContain('Roads (2)');
+
+      // Civic Infrastructure subcard shows Arterial Roads: 2
+      const roadsPill = screen.getByTestId('metric-pill-roads');
+      expect(roadsPill.textContent).toContain('2');
+      expect(roadsPill.textContent).toContain('Arterial Roads');
+
+      // Clarification in subcard footer: infrastructure evidence, not walkability/safety score
+      expect(screen.getByText(/Mapped roads indicate regional transit connectivity evidence, not walkability or safety ratings/i)).toBeTruthy();
+
+      // Category filtering: clicking Roads filter isolates road markers
+      fireEvent.click(roadLegendBtn);
+      expect(roadLegendBtn.classList.contains('active')).toBe(true);
+      expect(screen.getByText(/2 places shown/i)).toBeTruthy();
+
+      // Clicking again resets category filter to all
+      fireEvent.click(roadLegendBtn);
+      expect(roadLegendBtn.classList.contains('active')).toBe(false);
+      expect(screen.getByText(/3 places shown/i)).toBeTruthy();
+    });
+
+    it('displays explicit unavailable state when infrastructure fetch fails', async () => {
+      const mockFailedData = {
+        latitude: 28.6517,
+        longitude: 77.1583,
+        address: 'Shadipur, New Delhi',
+        infrastructure: {
+          status: 'fetch_failed',
+          error_message: 'OpenStreetMap Overpass API mirrors were unreachable or timed out',
+          schools_count: 0,
+          major_roads_count: 0,
+          facilities: [],
+        },
+        air_quality: { status: 'provider_not_configured' },
+        environmental_hazards: { status: 'data_not_configured', message: 'None' },
+      };
+
+      vi.spyOn(api, 'fetchLivabilityLocationData').mockResolvedValue(mockFailedData);
+
+      render(<LivabilityWorkspace location={{ latitude: 28.6517, longitude: 77.1583, address: 'Shadipur, New Delhi' }} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('legend-filter-road').textContent).toContain('Roads (Unavailable)');
+      });
+
+      expect(screen.getAllByText(/Overpass API mirrors were unreachable or timed out/i).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('distinguishes confirmed zero road results from failure', async () => {
+      const mockEmptyData = {
+        latitude: 28.6517,
+        longitude: 77.1583,
+        address: 'Shadipur, New Delhi',
+        infrastructure: {
+          status: 'empty',
+          schools_count: 0,
+          major_roads_count: 0,
+          total_facilities: 0,
+          facilities: [],
+        },
+        air_quality: { status: 'provider_not_configured' },
+        environmental_hazards: { status: 'data_not_configured', message: 'None' },
+      };
+
+      vi.spyOn(api, 'fetchLivabilityLocationData').mockResolvedValue(mockEmptyData);
+
+      render(<LivabilityWorkspace location={{ latitude: 28.6517, longitude: 77.1583, address: 'Shadipur, New Delhi' }} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('legend-filter-road').textContent).toContain('Roads (0)');
+      });
+
+      expect(screen.getByText(/0 civic amenities recorded within search radius in OpenStreetMap/i)).toBeTruthy();
     });
   });
 });

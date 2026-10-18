@@ -6,8 +6,9 @@ import ReportScreen from './components/ReportScreen';
 import CompareForm from './components/CompareForm';
 import CompareResultsView from './components/CompareResultsView';
 import LivabilityWorkspace from './components/LivabilityWorkspace';
+import DisasterWorkspace from './components/DisasterWorkspace';
 import { submitPropertyScore, compareProperties } from './services/api';
-import { Building2, RefreshCw, Scale, Search, Compass, ShieldCheck } from 'lucide-react';
+import { Building2, RefreshCw, Scale, Search, Compass, ShieldCheck, AlertTriangle } from 'lucide-react';
 import nivasLogo from './assets/nivas_logo.png';
 
 const HEADER_TAGLINE = 'Find the place that feels like home.';
@@ -34,12 +35,12 @@ const getInitialAppSection = () => {
   try {
     if (typeof window !== 'undefined' && window.location?.hash) {
       const hash = window.location.hash.replace('#', '').toLowerCase();
-      if (hash === 'livability' || hash === 'inspection') {
+      if (hash === 'livability' || hash === 'inspection' || hash === 'disaster') {
         return hash;
       }
     }
     const saved = safeStorage.getItem('nivas_app_section');
-    if (saved === 'livability' || saved === 'inspection') {
+    if (saved === 'livability' || saved === 'inspection' || saved === 'disaster') {
       return saved;
     }
   } catch (e) {
@@ -97,7 +98,7 @@ export default function App() {
     if (typeof window === 'undefined') return;
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '').toLowerCase();
-      if (hash === 'livability' || hash === 'inspection') {
+      if (hash === 'livability' || hash === 'inspection' || hash === 'disaster') {
         setAppSection(hash);
       }
     };
@@ -118,6 +119,7 @@ export default function App() {
 
   const handleSingleSubmit = async (formData) => {
     setPayload(formData);
+    setResult(null); // Invalidate any previous property results immediately
     setError(null);
     setCurrentScreen('processing');
 
@@ -127,6 +129,7 @@ export default function App() {
       setCurrentScreen('results');
     } catch (err) {
       console.error('API submission error:', err);
+      setResult(null); // Ensure no stale result is retained on failure
       let errorMessage = 'Failed to connect to backend API at http://127.0.0.1:8000/api/score';
       if (err.response?.data?.detail) {
         if (typeof err.response.data.detail === 'string') {
@@ -145,6 +148,7 @@ export default function App() {
 
   const handleCompareSubmit = async (formData) => {
     setComparePayload(formData);
+    setCompareResult(null); // Invalidate any previous compare results immediately
     setError(null);
     setCurrentScreen('processing');
 
@@ -154,6 +158,7 @@ export default function App() {
       setCurrentScreen('results');
     } catch (err) {
       console.error('Compare API submission error:', err);
+      setCompareResult(null); // Ensure no stale compare result is retained on failure
       let errorMessage = 'Failed to connect to backend API at http://127.0.0.1:8000/api/score/compare';
       if (err.response?.data?.detail) {
         if (typeof err.response.data.detail === 'string') {
@@ -201,7 +206,7 @@ export default function App() {
         </div>
 
         <div className="header-controls">
-          {/* Change 1: Top-Right Section Switcher: Livability vs Property Inspection */}
+          {/* Top-Right Section Switcher: Livability vs Disaster Hazards vs Property Inspection */}
           <div className="mode-switcher">
             <button
               className={`mode-btn ${appSection === 'livability' ? 'active' : ''}`}
@@ -209,6 +214,14 @@ export default function App() {
             >
               <Compass size={14} />
               <span>Livability</span>
+            </button>
+
+            <button
+              className={`mode-btn ${appSection === 'disaster' ? 'active' : ''}`}
+              onClick={() => setAppSection('disaster')}
+            >
+              <AlertTriangle size={14} />
+              <span>Disaster Hazards</span>
             </button>
 
             <button
@@ -237,6 +250,13 @@ export default function App() {
             onLocationChange={setLivabilityLocation}
             searchQuery={livabilitySearchQuery}
             onSearchQueryChange={setLivabilitySearchQuery}
+          />
+        </main>
+      ) : appSection === 'disaster' ? (
+        <main className="screen-content">
+          <DisasterWorkspace
+            location={livabilityLocation}
+            onLocationChange={setLivabilityLocation}
           />
         </main>
       ) : (

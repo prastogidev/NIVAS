@@ -25,9 +25,10 @@ export const checkHealth = async () => {
   return response.data;
 };
 
-export const fetchLivabilityLocationData = async ({ latitude, longitude, address }, signal) => {
+export const fetchLivabilityLocationData = async ({ latitude, longitude, address, radius }, signal) => {
   const params = { latitude, longitude };
   if (address) params.address = address;
+  if (typeof radius === 'number') params.radius = radius;
   const response = await apiClient.get('/api/livability/location-data', {
     params,
     signal,
@@ -45,6 +46,36 @@ export const sendLivabilityChatMessage = async (
   const response = await apiClient.post('/api/livability/chat', payload, {
     signal,
   });
+  return response.data;
+};
+
+export const fetchSafetyData = async ({ latitude, longitude, address, radius }, signal) => {
+  const params = { latitude, longitude };
+  if (address) params.address = address;
+  if (typeof radius === 'number') params.radius = radius;
+  const response = await apiClient.get('/api/livability/safety-data', {
+    params,
+    signal,
+  });
+  return response.data;
+};
+
+export const fetchDisasterHazardData = async ({ latitude, longitude, address }, signal) => {
+  const params = { latitude, longitude };
+  if (address) params.address = address;
+  const response = await apiClient.get('/api/disaster/hazard-data', {
+    params,
+    signal,
+  });
+  return response.data;
+};
+
+export const compareDisasterLocations = async ({ location_a, location_b }, signal) => {
+  const response = await apiClient.post(
+    '/api/disaster/compare',
+    { location_a, location_b },
+    { signal }
+  );
   return response.data;
 };
 

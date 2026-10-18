@@ -103,11 +103,17 @@ export default function PropertyLocationPicker({
   overlayMarkers = [],
   selectedFacilityId = null,
   onFacilitySelect = null,
+  radiusCircleMeters = null,
+  polygonCoords = null,
+  polygonStyle = null,
+  geoJsonLayers = null,
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerInstanceRef = useRef(null);
+  const circleInstanceRef = useRef(null);
   const overlayLayerRef = useRef(null);
+  const polygonLayerRef = useRef(null);
   const facilityMarkersMapRef = useRef(new Map());
   const isInternalUpdateRef = useRef(false);
 
@@ -220,6 +226,9 @@ export default function PropertyLocationPicker({
             isInternalUpdateRef.current = true;
             mapInstanceRef.current.setView([newLat, newLon], 16);
             markerInstanceRef.current.setLatLng([newLat, newLon]);
+            if (circleInstanceRef.current) {
+              circleInstanceRef.current.setLatLng([newLat, newLon]);
+            }
           }
 
           onLocationChange({
@@ -259,11 +268,35 @@ export default function PropertyLocationPicker({
         maxZoom: 19,
       }).addTo(map);
 
+      // Create dedicated radius circle pane below markers/overlays but above tileLayer
+      if (typeof map.createPane === 'function' && (typeof map.getPane !== 'function' || !map.getPane('radiusCirclePane'))) {
+        const circlePane = map.createPane('radiusCirclePane');
+        if (circlePane && circlePane.style) {
+          circlePane.style.zIndex = '350';
+          circlePane.style.pointerEvents = 'none';
+        }
+      }
+
       const marker = L.marker([validLat, validLon], {
         icon: createNivasMarkerIcon(),
         draggable: true,
         autoPan: true,
       }).addTo(map);
+
+      // Immediately instantiate radius circle if radiusCircleMeters > 0
+      if (typeof radiusCircleMeters === 'number' && radiusCircleMeters > 0 && typeof L.circle === 'function') {
+        const circlePane = (typeof map.getPane === 'function' && map.getPane('radiusCirclePane')) ? 'radiusCirclePane' : undefined;
+        circleInstanceRef.current = L.circle([validLat, validLon], {
+          radius: radiusCircleMeters,
+          color: '#0284C7',
+          weight: 2.5,
+          opacity: 0.9,
+          fillColor: '#38BDF8',
+          fillOpacity: 0.18,
+          interactive: false,
+          pane: circlePane,
+        }).addTo(map);
+      }
 
       // Create separate overlay layer group for facility POI markers
       const overlayLayer = typeof L.layerGroup === 'function'
@@ -271,9 +304,26 @@ export default function PropertyLocationPicker({
         : { clearLayers: () => {}, addLayer: () => {} };
       overlayLayerRef.current = overlayLayer;
 
+      // Create separate layer group for boundary/hazard polygons
+      const polygonLayer = typeof L.layerGroup === 'function'
+        ? L.layerGroup().addTo(map)
+        : { clearLayers: () => {}, addLayer: () => {} };
+      polygonLayerRef.current = polygonLayer;
+
+      // Marker drag event: dynamically follow pin while dragging
+      marker.on('drag', () => {
+        const pos = marker.getLatLng();
+        if (circleInstanceRef.current) {
+          circleInstanceRef.current.setLatLng(pos);
+        }
+      });
+
       // Marker dragend event
       marker.on('dragend', () => {
         const pos = marker.getLatLng();
+        if (circleInstanceRef.current) {
+          circleInstanceRef.current.setLatLng(pos);
+        }
         isInternalUpdateRef.current = true;
         reverseGeocode(pos.lat, pos.lng);
       });
@@ -282,6 +332,9 @@ export default function PropertyLocationPicker({
       map.on('click', (e) => {
         const { lat, lng } = e.latlng;
         marker.setLatLng([lat, lng]);
+        if (circleInstanceRef.current) {
+          circleInstanceRef.current.setLatLng([lat, lng]);
+        }
         isInternalUpdateRef.current = true;
         reverseGeocode(lat, lng);
       });
@@ -309,6 +362,12 @@ export default function PropertyLocationPicker({
     }
 
     return () => {
+      if (circleInstanceRef.current) {
+        if (typeof circleInstanceRef.current.remove === 'function') {
+          circleInstanceRef.current.remove();
+        }
+        circleInstanceRef.current = null;
+      }
       if (overlayLayerRef.current) {
         overlayLayerRef.current.clearLayers();
         overlayLayerRef.current = null;
@@ -350,12 +409,14 @@ export default function PropertyLocationPicker({
         riseOnHover: true,
       });
 
+      const isRoad = item.category === 'road';
       const popupHtml = `
         <div class="facility-popup-card">
           <span class="facility-popup-badge facility-${item.category || 'general'}">${item.category_label || item.category || 'Facility'}</span>
           <h4 class="facility-popup-title">${item.name || 'Local Facility'}</h4>
           <div class="facility-popup-coords">Coordinates: ${item.latitude.toFixed(5)}° N, ${item.longitude.toFixed(5)}° E</div>
           <div class="facility-popup-source">Verified Provider: ${item.source || 'OpenStreetMap'}</div>
+          ${isRoad ? '<div class="facility-popup-disclosure">Mapped road segment centerline point from OpenStreetMap; does not indicate safety or walkability score.</div>' : ''}
         </div>
       `;
 
@@ -393,6 +454,97 @@ export default function PropertyLocationPicker({
     }
   }, [selectedFacilityId]);
 
+  // Synchronize dynamic radius circle centered on active pin
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    if (typeof radiusCircleMeters === 'number' && radiusCircleMeters > 0 && typeof L.circle === 'function') {
+      const pinPos = markerInstanceRef.current ? markerInstanceRef.current.getLatLng() : null;
+      const centerLat = pinPos ? pinPos.lat : (typeof latitude === 'number' && !isNaN(latitude) ? latitude : validLat);
+      const centerLon = pinPos ? pinPos.lng : (typeof longitude === 'number' && !isNaN(longitude) ? longitude : validLon);
+
+      const circlePane = (typeof mapInstanceRef.current.getPane === 'function' && mapInstanceRef.current.getPane('radiusCirclePane'))
+        ? 'radiusCirclePane'
+        : undefined;
+
+      if (!circleInstanceRef.current) {
+        circleInstanceRef.current = L.circle([centerLat, centerLon], {
+          radius: radiusCircleMeters,
+          color: '#0284C7',
+          weight: 2.5,
+          opacity: 0.9,
+          fillColor: '#38BDF8',
+          fillOpacity: 0.18,
+          interactive: false,
+          pane: circlePane,
+        }).addTo(mapInstanceRef.current);
+      } else {
+        circleInstanceRef.current.setLatLng([centerLat, centerLon]);
+        circleInstanceRef.current.setRadius(radiusCircleMeters);
+        if (typeof circleInstanceRef.current.redraw === 'function') {
+          circleInstanceRef.current.redraw();
+        }
+      }
+    } else if (circleInstanceRef.current) {
+      if (typeof circleInstanceRef.current.remove === 'function') {
+        circleInstanceRef.current.remove();
+      }
+      circleInstanceRef.current = null;
+    }
+  }, [latitude, longitude, radiusCircleMeters, validLat, validLon]);
+
+  // Synchronize boundary polygon and GeoJSON hazard layers
+  useEffect(() => {
+    if (!polygonLayerRef.current || !mapInstanceRef.current) return;
+    polygonLayerRef.current.clearLayers();
+
+    if (Array.isArray(polygonCoords) && polygonCoords.length >= 3 && typeof L.polygon === 'function') {
+      const latLons = polygonCoords.map((pt) => {
+        // Support both [lon, lat] and [lat, lon]
+        const lon = pt[0];
+        const lat = pt[1];
+        return [lat, lon];
+      });
+
+      const poly = L.polygon(latLons, polygonStyle || {
+        color: '#059669',
+        weight: 2,
+        opacity: 0.85,
+        fillColor: '#10B981',
+        fillOpacity: 0.12,
+        interactive: false,
+      });
+      polygonLayerRef.current.addLayer(poly);
+    }
+
+    if (geoJsonLayers && typeof L.geoJSON === 'function') {
+      Object.entries(geoJsonLayers).forEach(([layerKey, feat]) => {
+        if (!feat) return;
+        const isFlood = layerKey === 'yamuna_flood_corridor';
+        const layer = L.geoJSON(feat, {
+          style: {
+            color: isFlood ? '#DC2626' : '#D97706',
+            weight: 2,
+            opacity: 0.85,
+            fillColor: isFlood ? '#EF4444' : '#F59E0B',
+            fillOpacity: isFlood ? 0.22 : 0.28,
+          },
+          pointToLayer: (geoJsonPoint, latlng) => {
+            return L.circleMarker(latlng, {
+              radius: 6,
+              fillColor: '#DC2626',
+              color: '#FFFFFF',
+              weight: 1.5,
+              opacity: 1,
+              fillOpacity: 0.9,
+            });
+          },
+        });
+        polygonLayerRef.current.addLayer(layer);
+      });
+    }
+  }, [polygonCoords, polygonStyle, geoJsonLayers]);
+
   // Sync external coordinate changes (e.g. if parent changes lat/lon)
   useEffect(() => {
     if (isInternalUpdateRef.current) {
@@ -406,6 +558,9 @@ export default function PropertyLocationPicker({
         if (Math.abs(currentPos.lat - latitude) > 0.0001 || Math.abs(currentPos.lng - longitude) > 0.0001) {
           mapInstanceRef.current.setView([latitude, longitude], mapInstanceRef.current.getZoom() || 15);
           markerInstanceRef.current.setLatLng([latitude, longitude]);
+        }
+        if (circleInstanceRef.current) {
+          circleInstanceRef.current.setLatLng([latitude, longitude]);
         }
       }
     }

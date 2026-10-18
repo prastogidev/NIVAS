@@ -13,6 +13,7 @@ import {
   Bus,
   Wind,
   ShieldAlert,
+  ShieldCheck,
   AlertCircle,
   CheckCircle2,
   Loader2,
@@ -22,6 +23,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import LocalityComparisonView from './LocalityComparisonView';
+import SafetyIntelligenceView from './SafetyIntelligenceView';
 
 /**
  * Calculate great-circle distance between two coordinates in kilometers using the Haversine formula.
@@ -124,7 +126,7 @@ export default function LivabilityWorkspace({
 
   const [workspaceView, setWorkspaceView] = useState(() => {
     const saved = safeStorage.getItem('nivas_livability_view');
-    if (saved === 'explore' || saved === 'compare') return saved;
+    if (saved === 'explore' || saved === 'compare' || saved === 'safety') return saved;
     return 'explore';
   });
 
@@ -165,8 +167,37 @@ export default function LivabilityWorkspace({
   const [isChatOpen, setIsChatOpen] = useState(true);
   const activeRequestRef = useRef(0);
 
+  // Dynamic Search Radius State (0m to 10000m, step 250m, default 1200m)
+  const [searchRadiusMeters, setSearchRadiusMeters] = useState(1200);
+  const [debouncedFetchRadius, setDebouncedFetchRadius] = useState(1200);
+  const radiusDebounceTimerRef = useRef(null);
+
+  const handleRadiusChange = useCallback((newRadius) => {
+    const parsed = Number(newRadius);
+    const val = isNaN(parsed) ? 1200 : parsed;
+    const clamped = Math.max(0, Math.min(10000, val));
+    // Step to nearest 250m increment
+    const stepped = Math.round(clamped / 250) * 250;
+    setSearchRadiusMeters(stepped);
+
+    if (radiusDebounceTimerRef.current) {
+      clearTimeout(radiusDebounceTimerRef.current);
+    }
+    radiusDebounceTimerRef.current = setTimeout(() => {
+      setDebouncedFetchRadius(stepped);
+    }, 450);
+  }, []);
+
   const handleRetryTelemetry = useCallback(() => {
     setRetryCount((prev) => prev + 1);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (radiusDebounceTimerRef.current) {
+        clearTimeout(radiusDebounceTimerRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -174,6 +205,45 @@ export default function LivabilityWorkspace({
       typeof selectedLocation.latitude !== 'number' ||
       typeof selectedLocation.longitude !== 'number'
     ) {
+      return;
+    }
+
+    // At 0m radius, bypass Overpass network query and return empty state immediately
+    if (debouncedFetchRadius === 0) {
+      setLocationData({
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        address: selectedLocation.address,
+        retrieved_at: new Date().toISOString(),
+        infrastructure: {
+          status: 'empty',
+          source: 'OpenStreetMap Overpass API',
+          schools_count: 0,
+          hospitals_count: 0,
+          clinics_count: 0,
+          pharmacies_count: 0,
+          police_stations_count: 0,
+          fire_stations_count: 0,
+          public_transport_count: 0,
+          railway_stations_count: 0,
+          major_roads_count: 0,
+          nearby_places: [],
+          facilities: [],
+          total_facilities: 0,
+          search_radius_meters: 0,
+          railway_search_radius_meters: 0,
+          error_message: null,
+        },
+        air_quality: {
+          status: 'provider_not_configured',
+        },
+        environmental_hazards: {
+          status: 'data_not_configured',
+          message: 'Real-time environmental hazard sensor network not configured for this region',
+        },
+      });
+      setIsLoadingData(false);
+      setDataError(null);
       return;
     }
 
@@ -188,6 +258,7 @@ export default function LivabilityWorkspace({
         latitude: selectedLocation.latitude,
         longitude: selectedLocation.longitude,
         address: selectedLocation.address,
+        radius: debouncedFetchRadius,
       },
       abortController.signal
     )
@@ -210,7 +281,7 @@ export default function LivabilityWorkspace({
     return () => {
       abortController.abort();
     };
-  }, [selectedLocation.latitude, selectedLocation.longitude, selectedLocation.address, retryCount]);
+  }, [selectedLocation.latitude, selectedLocation.longitude, selectedLocation.address, debouncedFetchRadius, retryCount]);
 
   // Selected facility for map marker focus / two-way interaction
   const [selectedFacilityId, setSelectedFacilityId] = useState(null);
@@ -218,14 +289,50 @@ export default function LivabilityWorkspace({
   // Verified Map Insights: Facility category filters
   const [categoryFilter, setCategoryFilter] = useState('all');
 
-  const allFacilities = useMemo(() => {
-    return locationData?.infrastructure?.facilities || [];
+  // Accumulated facility pool for active exploration coordinates
+  const [facilityPool, setFacilityPool] = useState([]);
+
+  // Synchronize facilityPool whenever locationData changes (initial load, tests, or network responses)
+  useEffect(() => {
+    const rawFacilities = Array.isArray(locationData?.infrastructure?.facilities)
+      ? locationData.infrastructure.facilities
+      : [];
+    if (rawFacilities.length === 0) return;
+
+    setFacilityPool((prevPool) => {
+      const seen = new Set();
+      const merged = [];
+      for (const fac of [...rawFacilities, ...prevPool]) {
+        const lat = typeof fac.latitude === 'number' ? fac.latitude : parseFloat(fac.latitude);
+        const lon = typeof fac.longitude === 'number' ? fac.longitude : parseFloat(fac.longitude);
+        if (typeof lat === 'number' && !isNaN(lat) && typeof lon === 'number' && !isNaN(lon)) {
+          const key = fac.id ? String(fac.id) : `${lat.toFixed(5)}_${lon.toFixed(5)}_${fac.category || ''}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            merged.push({
+              ...fac,
+              latitude: lat,
+              longitude: lon,
+            });
+          }
+        }
+      }
+      return merged;
+    });
   }, [locationData]);
 
-  // Enrich facilities with Haversine distance from selected exploration coordinates
-  const facilitiesWithDistance = useMemo(() => {
-    if (!Array.isArray(allFacilities)) return [];
-    return allFacilities
+  // Single Source of Truth for verified facilities within the selected radius
+  const facilitiesWithinRadius = useMemo(() => {
+    if (searchRadiusMeters <= 0) return [];
+    const radiusKm = searchRadiusMeters / 1000.0;
+    const toleranceKm = 0.005; // 5 meters floating-point tolerance
+
+    return facilityPool
+      .filter((fac) => {
+        const lat = typeof fac.latitude === 'number' ? fac.latitude : parseFloat(fac.latitude);
+        const lon = typeof fac.longitude === 'number' ? fac.longitude : parseFloat(fac.longitude);
+        return typeof lat === 'number' && !isNaN(lat) && typeof lon === 'number' && !isNaN(lon);
+      })
       .map((fac) => {
         const distanceKm = calculateHaversineDistanceKm(
           selectedLocation.latitude,
@@ -239,15 +346,19 @@ export default function LivabilityWorkspace({
           formattedDistance: formatFacilityDistance(distanceKm),
         };
       })
+      .filter((fac) => {
+        if (typeof fac.distanceKm !== 'number' || isNaN(fac.distanceKm)) return false;
+        return fac.distanceKm <= radiusKm + toleranceKm;
+      })
       .sort((a, b) => {
         if (a.distanceKm == null && b.distanceKm == null) return 0;
         if (a.distanceKm == null) return 1;
         if (b.distanceKm == null) return -1;
         return a.distanceKm - b.distanceKm;
       });
-  }, [allFacilities, selectedLocation.latitude, selectedLocation.longitude]);
+  }, [facilityPool, searchRadiusMeters, selectedLocation.latitude, selectedLocation.longitude]);
 
-  // Group verified facilities by category for structured proximity directory
+  // Group verified facilities within radius by category for structured proximity directory
   const facilitiesByCategory = useMemo(() => {
     const groups = {
       school: { label: 'Schools & Education', icon: GraduationCap, items: [] },
@@ -257,7 +368,7 @@ export default function LivabilityWorkspace({
       road: { label: 'Roadways & Corridors', icon: Compass, items: [] },
     };
 
-    facilitiesWithDistance.forEach((fac) => {
+    facilitiesWithinRadius.forEach((fac) => {
       if (fac.category === 'school') {
         groups.school.items.push(fac);
       } else if (['hospital', 'clinic', 'pharmacy'].includes(fac.category)) {
@@ -272,27 +383,85 @@ export default function LivabilityWorkspace({
     });
 
     return groups;
-  }, [facilitiesWithDistance]);
+  }, [facilitiesWithinRadius]);
 
   const filteredFacilities = useMemo(() => {
-    if (categoryFilter === 'all') return facilitiesWithDistance;
+    if (categoryFilter === 'all') return facilitiesWithinRadius;
     if (categoryFilter === 'healthcare') {
-      return facilitiesWithDistance.filter((f) => ['hospital', 'clinic', 'pharmacy'].includes(f.category));
+      return facilitiesWithinRadius.filter((f) => ['hospital', 'clinic', 'pharmacy'].includes(f.category));
     }
     if (categoryFilter === 'transit') {
-      return facilitiesWithDistance.filter((f) => ['transit', 'railway'].includes(f.category));
+      return facilitiesWithinRadius.filter((f) => ['transit', 'railway'].includes(f.category));
     }
     if (categoryFilter === 'emergency') {
-      return facilitiesWithDistance.filter((f) => ['police', 'fire'].includes(f.category));
+      return facilitiesWithinRadius.filter((f) => ['police', 'fire'].includes(f.category));
     }
-    return facilitiesWithDistance.filter((f) => f.category === categoryFilter);
-  }, [facilitiesWithDistance, categoryFilter]);
+    return facilitiesWithinRadius.filter((f) => f.category === categoryFilter);
+  }, [facilitiesWithinRadius, categoryFilter]);
 
-  const schoolCount = useMemo(() => allFacilities.filter((f) => f.category === 'school').length, [allFacilities]);
-  const healthcareCount = useMemo(() => allFacilities.filter((f) => ['hospital', 'clinic', 'pharmacy'].includes(f.category)).length, [allFacilities]);
-  const transitCount = useMemo(() => allFacilities.filter((f) => ['transit', 'railway'].includes(f.category)).length, [allFacilities]);
-  const emergencyCount = useMemo(() => allFacilities.filter((f) => ['police', 'fire'].includes(f.category)).length, [allFacilities]);
-  const roadCount = useMemo(() => allFacilities.filter((f) => f.category === 'road').length, [allFacilities]);
+  const schoolCount = useMemo(() => facilitiesWithinRadius.filter((f) => f.category === 'school').length, [facilitiesWithinRadius]);
+  const healthcareCount = useMemo(() => facilitiesWithinRadius.filter((f) => ['hospital', 'clinic', 'pharmacy'].includes(f.category)).length, [facilitiesWithinRadius]);
+  const transitCount = useMemo(() => facilitiesWithinRadius.filter((f) => ['transit', 'railway'].includes(f.category)).length, [facilitiesWithinRadius]);
+  const emergencyCount = useMemo(() => facilitiesWithinRadius.filter((f) => ['police', 'fire'].includes(f.category)).length, [facilitiesWithinRadius]);
+  const roadCount = useMemo(() => facilitiesWithinRadius.filter((f) => f.category === 'road').length, [facilitiesWithinRadius]);
+
+  const displayedSchools = useMemo(() => {
+    if (searchRadiusMeters === 0) return 0;
+    return Array.isArray(locationData?.infrastructure?.facilities)
+      ? schoolCount
+      : (locationData?.infrastructure?.schools_count || 0);
+  }, [searchRadiusMeters, locationData, schoolCount]);
+
+  const displayedHealthcare = useMemo(() => {
+    if (searchRadiusMeters === 0) return 0;
+    return Array.isArray(locationData?.infrastructure?.facilities)
+      ? healthcareCount
+      : ((locationData?.infrastructure?.hospitals_count || 0) +
+         (locationData?.infrastructure?.clinics_count || 0) +
+         (locationData?.infrastructure?.pharmacies_count || 0));
+  }, [searchRadiusMeters, locationData, healthcareCount]);
+
+  const displayedTransit = useMemo(() => {
+    if (searchRadiusMeters === 0) return 0;
+    return Array.isArray(locationData?.infrastructure?.facilities)
+      ? transitCount
+      : ((locationData?.infrastructure?.public_transport_count || 0) +
+         (locationData?.infrastructure?.railway_stations_count || 0));
+  }, [searchRadiusMeters, locationData, transitCount]);
+
+  const displayedRoads = useMemo(() => {
+    if (searchRadiusMeters === 0) return 0;
+    if (locationData?.infrastructure?.status === 'fetch_failed') return '—';
+    return Array.isArray(locationData?.infrastructure?.facilities)
+      ? roadCount
+      : (locationData?.infrastructure?.major_roads_count ?? 0);
+  }, [searchRadiusMeters, locationData, roadCount]);
+
+  // Temporary development diagnostics for radius filtering and telemetry tracing (Section 4)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (import.meta.env?.DEV || window.__NIVAS_DEV_LOGS__)) {
+      console.debug('[NIVAS Telemetry Diagnostics]', {
+        requestId: activeRequestRef.current,
+        selectedRadiusMeters: searchRadiusMeters,
+        debouncedFetchRadius,
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        backendFacilitiesCount: locationData?.infrastructure?.facilities?.length || 0,
+        validCoordinatePoolCount: facilityPool.length,
+        facilitiesWithinRadiusCount: facilitiesWithinRadius.length,
+        requestStatus: locationData?.infrastructure?.status || (isLoadingData ? 'loading' : 'idle'),
+      });
+    }
+  }, [
+    searchRadiusMeters,
+    debouncedFetchRadius,
+    selectedLocation.latitude,
+    selectedLocation.longitude,
+    locationData,
+    facilityPool.length,
+    facilitiesWithinRadius.length,
+    isLoadingData,
+  ]);
 
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -327,11 +496,13 @@ export default function LivabilityWorkspace({
     setChatError(null);
     setSelectedFacilityId(null);
     const newLoc = {
-      latitude: loc.latitude,
-      longitude: loc.longitude,
+      latitude: typeof loc.latitude === 'number' ? loc.latitude : parseFloat(loc.latitude),
+      longitude: typeof loc.longitude === 'number' ? loc.longitude : parseFloat(loc.longitude),
       address: loc.address || selectedLocation.address || 'Selected Map Location',
     };
     setSelectedLocation(newLoc);
+    setLocationData(null);
+    setFacilityPool([]);
 
     setMessages((prev) => [
       ...prev,
@@ -380,7 +551,7 @@ export default function LivabilityWorkspace({
       search_radius_meters: locationData?.infrastructure?.search_radius_meters || 1200,
       railway_search_radius_meters: locationData?.infrastructure?.railway_search_radius_meters || 2000,
       infrastructure_status: locationData?.infrastructure?.status || 'active',
-      facilities: (facilitiesWithDistance || []).map((f) => ({
+      facilities: (facilitiesWithinRadius || []).map((f) => ({
         id: f.id,
         name: f.name,
         category: f.category,
@@ -507,10 +678,28 @@ export default function LivabilityWorkspace({
           <Scale size={14} />
           <span>Compare Localities</span>
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={workspaceView === 'safety'}
+          className={`livability-view-tab ${workspaceView === 'safety' ? 'active' : ''}`}
+          onClick={() => setWorkspaceView('safety')}
+          data-testid="tab-safety-intelligence"
+        >
+          <ShieldCheck size={14} />
+          <span>Safety & Crime Intelligence</span>
+        </button>
       </div>
 
       {workspaceView === 'compare' ? (
         <LocalityComparisonView />
+      ) : workspaceView === 'safety' ? (
+        <SafetyIntelligenceView
+          location={selectedLocation}
+          onLocationChange={setSelectedLocation}
+          radius={searchRadiusMeters}
+          onRadiusChange={handleRadiusChange}
+        />
       ) : (
         <div className="livability-workspace-explore-wrap">
         {/* Main Full-Width Interactive Map Panel */}
@@ -544,10 +733,61 @@ export default function LivabilityWorkspace({
               overlayMarkers={filteredFacilities}
               selectedFacilityId={selectedFacilityId}
               onFacilitySelect={handleFacilitySelect}
+              radiusCircleMeters={searchRadiusMeters}
               searchPlaceholder="Search neighborhood or locality (e.g. Hauz Khas, Vasant Kunj, Rohini)..."
               mapHeight={520}
               initialZoom={14}
             />
+          </div>
+
+          {/* Interactive Dynamic Search Radius Control */}
+          <div className="livability-radius-control-bar" role="region" aria-label="Search Radius Control">
+            <div className="radius-control-top-row">
+              <div className="radius-label-group">
+                <span className="radius-control-title">Search Radius:</span>
+                <span className="radius-control-value" data-testid="radius-display-value">
+                  {searchRadiusMeters === 0 ? '0 m' : searchRadiusMeters < 1000 ? `${searchRadiusMeters} m` : `${parseFloat((searchRadiusMeters / 1000).toFixed(2))} km`}
+                </span>
+                <span className="radius-control-badge">
+                  {searchRadiusMeters === 0
+                    ? '0 amenities (Pinpoint only)'
+                    : isLoadingData && !locationData
+                    ? 'Scanning amenities...'
+                    : `${facilitiesWithinRadius.length} ${facilitiesWithinRadius.length === 1 ? 'amenity' : 'amenities'} within circle`}
+                </span>
+              </div>
+              <div className="radius-ticks-legend">
+                <span>0</span>
+                <span>1.2km (default)</span>
+                <span>5km</span>
+                <span>10km</span>
+              </div>
+            </div>
+
+            <div className="radius-slider-track-wrap">
+              <input
+                type="range"
+                className="radius-range-slider"
+                min={0}
+                max={10000}
+                step={250}
+                value={searchRadiusMeters}
+                onChange={(e) => handleRadiusChange(e.target.value)}
+                aria-label="Adjust geographic search radius"
+                data-testid="search-radius-slider"
+              />
+            </div>
+
+            <div className="radius-control-footer">
+              <span className="radius-disclaimer">
+                <Info size={11} /> Straight-line radius (Haversine). Mapped facilities depend on verified OpenStreetMap coverage.
+              </span>
+              {debouncedFetchRadius !== searchRadiusMeters && (
+                <span className="radius-syncing-indicator">
+                  <Loader2 size={11} className="spin-icon" /> Syncing Overpass nodes...
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Accessible Map Legend & Facility Filter Bar */}
@@ -570,7 +810,7 @@ export default function LivabilityWorkspace({
                 onClick={() => setCategoryFilter('all')}
                 aria-pressed={categoryFilter === 'all'}
               >
-                All ({allFacilities.length})
+                All ({facilitiesWithinRadius.length})
               </button>
 
               <button
@@ -618,9 +858,10 @@ export default function LivabilityWorkspace({
                 className={`legend-filter-btn road ${categoryFilter === 'road' ? 'active' : ''}`}
                 onClick={() => setCategoryFilter(categoryFilter === 'road' ? 'all' : 'road')}
                 aria-pressed={categoryFilter === 'road'}
+                data-testid="legend-filter-road"
               >
                 <span className="legend-dot road"></span>
-                Roads ({roadCount})
+                Roads ({locationData?.infrastructure?.status === 'fetch_failed' ? 'Unavailable' : roadCount})
               </button>
             </div>
           </div>
@@ -706,7 +947,11 @@ export default function LivabilityWorkspace({
                   <span className="data-source-tag">OpenStreetMap Overpass</span>
                 </div>
 
-                {isLoadingData && !locationData?.infrastructure ? (
+                {searchRadiusMeters === 0 ? (
+                  <div className="data-subcard-notice warning">
+                    <Info size={13} /> Search radius set to 0 m (pinpoint only). Increase search radius to discover nearby civic amenities.
+                  </div>
+                ) : isLoadingData && !locationData?.infrastructure ? (
                   <div className="data-subcard-notice">
                     <Loader2 size={13} className="spin-icon" /> Querying Overpass API nodes...
                   </div>
@@ -735,26 +980,19 @@ export default function LivabilityWorkspace({
                   <>
                     <div className="data-metrics-row">
                       <div className="data-metric-pill">
-                        <span className="data-metric-val">{locationData.infrastructure.schools_count}</span>
+                        <span className="data-metric-val">{displayedSchools}</span>
                         <span className="data-metric-lbl">Schools</span>
                       </div>
                       <div className="data-metric-pill">
-                        <span className="data-metric-val">
-                          {locationData.infrastructure.hospitals_count +
-                            locationData.infrastructure.clinics_count +
-                            locationData.infrastructure.pharmacies_count}
-                        </span>
+                        <span className="data-metric-val">{displayedHealthcare}</span>
                         <span className="data-metric-lbl">Healthcare</span>
                       </div>
                       <div className="data-metric-pill">
-                        <span className="data-metric-val">
-                          {locationData.infrastructure.public_transport_count +
-                            locationData.infrastructure.railway_stations_count}
-                        </span>
+                        <span className="data-metric-val">{displayedTransit}</span>
                         <span className="data-metric-lbl">Transit & Metro</span>
                       </div>
-                      <div className="data-metric-pill">
-                        <span className="data-metric-val">{locationData.infrastructure.major_roads_count}</span>
+                      <div className="data-metric-pill" data-testid="metric-pill-roads">
+                        <span className="data-metric-val">{displayedRoads}</span>
                         <span className="data-metric-lbl">Arterial Roads</span>
                       </div>
                     </div>
@@ -778,7 +1016,7 @@ export default function LivabilityWorkspace({
 
                 <div className="data-subcard-footer">
                   <Info size={12} />
-                  <span>Real OpenStreetMap node telemetry · Zero synthetic entries</span>
+                  <span>Real OpenStreetMap node & way telemetry · Mapped roads indicate regional transit connectivity evidence, not walkability or safety ratings</span>
                 </div>
               </div>
 
@@ -854,17 +1092,17 @@ export default function LivabilityWorkspace({
                 <div className="directory-header-titles">
                   <h5 className="directory-title">Verified Nearby Facilities & Proximity Evidence</h5>
                   <p className="directory-subtitle">
-                    Civic amenities within {((locationData?.infrastructure?.search_radius_meters || 1200) / 1000).toFixed(1)} km
-                    {locationData?.infrastructure?.railway_search_radius_meters ? ` (${(locationData.infrastructure.railway_search_radius_meters / 1000).toFixed(1)} km for rail/metro)` : ''} of selected pin.
+                    Civic amenities within {searchRadiusMeters < 1000 ? `${searchRadiusMeters} m` : `${(searchRadiusMeters / 1000).toFixed(1)} km`}
+                    {locationData?.infrastructure?.railway_search_radius_meters && searchRadiusMeters > 0 ? ` (${(locationData.infrastructure.railway_search_radius_meters / 1000).toFixed(1)} km for rail/metro)` : ''} of selected pin.
                     Distances calculated using great-circle Haversine formula from exploration pin.
                   </p>
                 </div>
                 <span className="directory-count-badge">
-                  {facilitiesWithDistance.length} {facilitiesWithDistance.length === 1 ? 'verified node' : 'verified nodes'}
+                  {facilitiesWithinRadius.length} {facilitiesWithinRadius.length === 1 ? 'verified node' : 'verified nodes'}
                 </span>
               </div>
 
-              {isLoadingData && facilitiesWithDistance.length === 0 ? (
+              {isLoadingData && facilitiesWithinRadius.length === 0 ? (
                 <div className="directory-empty-state loading">
                   <Loader2 size={16} className="spin-icon" />
                   <span>Querying OpenStreetMap Overpass nodes...</span>
@@ -885,10 +1123,14 @@ export default function LivabilityWorkspace({
                     <span>Retry Telemetry</span>
                   </button>
                 </div>
-              ) : facilitiesWithDistance.length === 0 ? (
+              ) : facilitiesWithinRadius.length === 0 ? (
                 <div className="directory-empty-state empty">
                   <Info size={16} />
-                  <span>No mapped civic amenities found within search radius ({((locationData?.infrastructure?.search_radius_meters || 1200) / 1000).toFixed(1)} km) in OpenStreetMap.</span>
+                  <span>
+                    {searchRadiusMeters === 0
+                      ? 'Search radius set to 0 m (pinpoint only). Increase radius to view nearby civic amenities.'
+                      : `No mapped civic amenities found within search radius (${searchRadiusMeters < 1000 ? `${searchRadiusMeters} m` : `${(searchRadiusMeters / 1000).toFixed(1)} km`}) in OpenStreetMap.`}
+                  </span>
                 </div>
               ) : (
                 <div className="directory-groups-container">

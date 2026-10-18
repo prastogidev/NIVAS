@@ -1,0 +1,517 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  AlertTriangle,
+  Flame,
+  Waves,
+  CloudRain,
+  Activity,
+  MapPin,
+  Compass,
+  Info,
+  CheckCircle2,
+  ExternalLink,
+  Scale,
+  RefreshCw,
+  Search,
+  Layers,
+  ArrowRight,
+  ShieldAlert,
+  Loader2,
+} from 'lucide-react';
+import PropertyLocationPicker from './PropertyLocationPicker';
+import { fetchDisasterHazardData, compareDisasterLocations } from '../services/api';
+
+const safeStorage = {
+  getItem: (key) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem(key);
+      }
+    } catch (e) {}
+    return null;
+  },
+  setItem: (key, val) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, val);
+      }
+    } catch (e) {}
+  },
+};
+
+export default function DisasterWorkspace({
+  location: propLocation,
+  onLocationChange: propOnLocationChange,
+}) {
+  const [internalLocation, setInternalLocation] = useState(() => {
+    const saved = safeStorage.getItem('nivas_disaster_location');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.latitude === 'number' && typeof parsed.longitude === 'number' && parsed.address) {
+          return parsed;
+        }
+      } catch (e) {}
+    }
+    return {
+      latitude: 28.5921,
+      longitude: 77.0460,
+      address: 'Dwarka Sector 12, South West Delhi, Delhi',
+    };
+  });
+
+  const selectedLocation = propLocation || internalLocation;
+  const setSelectedLocation = (newLoc) => {
+    if (typeof propOnLocationChange === 'function') {
+      propOnLocationChange(newLoc);
+    } else {
+      setInternalLocation(newLoc);
+      safeStorage.setItem('nivas_disaster_location', JSON.stringify(newLoc));
+    }
+  };
+
+  const [disasterMode, setDisasterMode] = useState(() => {
+    const saved = safeStorage.getItem('nivas_disaster_mode');
+    return saved === 'compare' ? 'compare' : 'single';
+  });
+
+  useEffect(() => {
+    safeStorage.setItem('nivas_disaster_mode', disasterMode);
+  }, [disasterMode]);
+
+  // Single Location Hazard Telemetry State
+  const [hazardData, setHazardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [retryTrigger, setRetryTrigger] = useState(0);
+
+  // Layer Toggles
+  const [showFloodLayer, setShowFloodLayer] = useState(true);
+  const [showWaterlogLayer, setShowWaterlogLayer] = useState(true);
+
+  // Compare Mode State (independent from single mode)
+  const [candidateLocation, setCandidateLocation] = useState({
+    latitude: 28.6650,
+    longitude: 77.2400,
+    address: 'Yamuna Bazar, North Delhi, Delhi',
+  });
+  const [compareResult, setCompareResult] = useState(null);
+  const [isComparing, setIsComparing] = useState(false);
+  const [compareError, setCompareError] = useState(null);
+
+  const activeReqRef = useRef(0);
+
+  // Fetch Single Location Hazard Data
+  useEffect(() => {
+    if (typeof selectedLocation.latitude !== 'number' || typeof selectedLocation.longitude !== 'number') {
+      return;
+    }
+
+    const reqId = ++activeReqRef.current;
+    const abortCtrl = new AbortController();
+
+    setIsLoading(true);
+    setError(null);
+
+    fetchDisasterHazardData(
+      {
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        address: selectedLocation.address,
+      },
+      abortCtrl.signal
+    )
+      .then((data) => {
+        if (activeReqRef.current === reqId) {
+          setHazardData(data);
+          setIsLoading(false);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (activeReqRef.current === reqId) {
+          if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+            setError(err.message || 'Unable to retrieve disaster telemetry');
+            setIsLoading(false);
+          }
+        }
+      });
+
+    return () => {
+      abortCtrl.abort();
+    };
+  }, [selectedLocation.latitude, selectedLocation.longitude, selectedLocation.address, retryTrigger]);
+
+  // Run Comparison when in Compare Mode
+  const handleRunComparison = async () => {
+    setIsComparing(true);
+    setCompareError(null);
+    try {
+      const res = await compareDisasterLocations({
+        location_a: selectedLocation,
+        location_b: candidateLocation,
+      });
+      setCompareResult(res);
+      setIsComparing(false);
+    } catch (err) {
+      setCompareError(err.message || 'Disaster comparison failed');
+      setIsComparing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (disasterMode === 'compare' && !compareResult && !isComparing) {
+      handleRunComparison();
+    }
+  }, [disasterMode]);
+
+  // Filtered GeoJSON spatial layers based on UI toggles
+  const activeSpatialLayers = React.useMemo(() => {
+    const layers = {};
+    if (showFloodLayer && hazardData?.spatial_layers?.yamuna_flood_corridor) {
+      layers.yamuna_flood_corridor = hazardData.spatial_layers.yamuna_flood_corridor;
+    }
+    if (showWaterlogLayer && hazardData?.spatial_layers?.waterlogging_hotspots) {
+      layers.waterlogging_hotspots = hazardData.spatial_layers.waterlogging_hotspots;
+    }
+    return layers;
+  }, [showFloodLayer, showWaterlogLayer, hazardData]);
+
+  const hazards = hazardData?.hazards || [];
+
+  return (
+    <div className="disaster-workspace-root" data-testid="disaster-workspace">
+      {/* 1. Header Bar */}
+      <div className="livability-workspace-header">
+        <div className="livability-header-badge">
+          <Activity size={14} />
+          <span>Disaster & Climate Hazard Workspace</span>
+        </div>
+        <h1 className="livability-header-title">Geological & Environmental Hazard Intelligence</h1>
+        <p className="livability-header-subtitle">
+          Authoritative structural hazard zoning, riverine floodplain exposure, and urban waterlogging vulnerability grounded in official BIS IS 1893:2016, CWC, and IMD records.
+        </p>
+      </div>
+
+      {/* 2. Workspace Submode Bar */}
+      <div className="livability-view-mode-bar" role="tablist" aria-label="Disaster Workspace Modes">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={disasterMode === 'single'}
+          className={`livability-view-tab ${disasterMode === 'single' ? 'active' : ''}`}
+          onClick={() => setDisasterMode('single')}
+          data-testid="tab-disaster-evidence"
+        >
+          <Activity size={14} />
+          <span>Locality Hazard Evidence</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={disasterMode === 'compare'}
+          className={`livability-view-tab ${disasterMode === 'compare' ? 'active' : ''}`}
+          onClick={() => setDisasterMode('compare')}
+          data-testid="tab-disaster-compare"
+        >
+          <Scale size={14} />
+          <span>Relocation Candidate Compare</span>
+        </button>
+      </div>
+
+      {disasterMode === 'single' ? (
+        <div className="disaster-single-flow">
+          {/* Main Map Panel with Hazard Overlays */}
+          <section className="card livability-map-panel">
+            <div className="map-panel-header">
+              <div className="map-header-title-wrap">
+                <MapPin size={18} className="map-header-icon" />
+                <div>
+                  <h3 className="map-panel-title">GIS Hazard Zoning Explorer</h3>
+                  <span className="map-panel-subtitle">Official CWC Floodplain Corridor & PWD Chronic Inundation Hotspots</span>
+                </div>
+              </div>
+
+              <div className="disaster-layer-controls">
+                <label className="layer-checkbox-pill">
+                  <input
+                    type="checkbox"
+                    checked={showFloodLayer}
+                    onChange={(e) => setShowFloodLayer(e.target.checked)}
+                  />
+                  <span className="layer-color-indicator flood" />
+                  <span>Yamuna Floodplain</span>
+                </label>
+                <label className="layer-checkbox-pill">
+                  <input
+                    type="checkbox"
+                    checked={showWaterlogLayer}
+                    onChange={(e) => setShowWaterlogLayer(e.target.checked)}
+                  />
+                  <span className="layer-color-indicator waterlog" />
+                  <span>Waterlog Hotspots</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="livability-map-container" style={{ height: 350 }}>
+              <PropertyLocationPicker
+                latitude={selectedLocation.latitude}
+                longitude={selectedLocation.longitude}
+                onLocationChange={setSelectedLocation}
+                mapHeight={350}
+                geoJsonLayers={activeSpatialLayers}
+              />
+            </div>
+
+            <div className="disaster-map-footer">
+              <div className="legend-row">
+                <span className="legend-chip"><span className="legend-dot flood" /> Yamuna Floodplain Corridor (NGT Inundation Boundary)</span>
+                <span className="legend-chip"><span className="legend-dot waterlog" /> Chronic Monsoon Drainage Hotspots (PWD Underpasses)</span>
+              </div>
+            </div>
+          </section>
+
+          {/* Hazard Evidence Cards Grid */}
+          <div className="disaster-evidence-section">
+            <div className="section-title-wrap">
+              <ShieldAlert size={18} className="section-icon" />
+              <div>
+                <h3>Documented Hazard Evidence ({hazards.length} Categories)</h3>
+                <p className="section-subtitle">
+                  Location: <strong>{selectedLocation.address || `${selectedLocation.latitude.toFixed(4)}° N, ${selectedLocation.longitude.toFixed(4)}° E`}</strong>
+                </p>
+              </div>
+            </div>
+
+            {isLoading && (
+              <div className="card loading-card">
+                <Loader2 size={24} className="spin-icon" />
+                <span>Retrieving official geological and flood telemetry...</span>
+              </div>
+            )}
+
+            {error && (
+              <div className="card error-card">
+                <AlertTriangle size={18} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div className="hazard-cards-grid">
+              {hazards.map((hz, idx) => {
+                const isCrit = hz.severity === 'critical';
+                const isHigh = hz.severity === 'high';
+                const isMod = hz.severity === 'moderate';
+
+                return (
+                  <div
+                    key={idx}
+                    className={`card hazard-item-card severity-${hz.severity}`}
+                    data-testid={`hazard-card-${hz.hazard_type}`}
+                  >
+                    <div className="hazard-item-header">
+                      <div className="hazard-title-wrap">
+                        {hz.hazard_type === 'earthquake' && <Activity size={18} className="hz-icon" />}
+                        {hz.hazard_type === 'flood' && <Waves size={18} className="hz-icon" />}
+                        {hz.hazard_type === 'waterlogging' && <CloudRain size={18} className="hz-icon" />}
+                        {hz.hazard_type === 'heatwave' && <Flame size={18} className="hz-icon" />}
+                        {hz.hazard_type === 'rainfall' && <CloudRain size={18} className="hz-icon" />}
+                        <h4 className="hazard-item-title">{hz.title}</h4>
+                      </div>
+                      <span className={`severity-badge sev-${hz.severity || 'info'}`}>
+                        {(hz.severity || 'info').toUpperCase()} EXPOSURE
+                      </span>
+                    </div>
+
+                    <p className="hazard-desc">{hz.description}</p>
+
+                    <div className="hazard-mitigation-box">
+                      <span className="mitigation-label">Engineering / Due Diligence Guidance:</span>
+                      <p className="mitigation-text">{hz.mitigation_notes}</p>
+                    </div>
+
+                    <div className="hazard-item-footer">
+                      <span className="hazard-agency">Source: {hz.source_agency}</span>
+                      <a href={hz.source_url} target="_blank" rel="noopener noreferrer" className="hazard-link">
+                        <span>Source</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Transparency Disclosures */}
+          <div className="card safety-disclosures-card">
+            <div className="disclosures-header">
+              <Info size={18} style={{ color: 'var(--ink-deep)' }} />
+              <h3>Disaster Telemetry Disclosures & Principles</h3>
+            </div>
+            <ul className="disclosures-list">
+              <li>Structural hazard zoning (BIS IS 1893:2016) indicates long-term engineering design requirements, not short-term disaster predictions.</li>
+              <li>NIVAS does not compute a composite 'disaster safety score'; each environmental threat is presented with its independent official evidence.</li>
+              <li>Absence of recorded flood inundation on upland terrain does not eliminate the risk of extreme localized cloudburst pooling.</li>
+            </ul>
+          </div>
+        </div>
+      ) : (
+        /* Relocation Candidate Compare Mode */
+        <div className="disaster-compare-flow" data-testid="disaster-compare-flow">
+          <div className="card disaster-compare-config-card">
+            <div className="compare-config-header">
+              <Scale size={20} style={{ color: 'var(--ink-deep)' }} />
+              <div>
+                <h3>Relocation Hazard Comparison</h3>
+                <p className="section-subtitle">
+                  Compare documented flood, seismic, and waterlogging exposures between your current locality and a potential relocation candidate.
+                </p>
+              </div>
+            </div>
+
+            <div className="compare-locations-grid">
+              <div className="compare-loc-box">
+                <span className="compare-loc-tag">Location A (Current / Baseline)</span>
+                <span className="compare-loc-name">{selectedLocation.address}</span>
+                <span className="compare-loc-coords">
+                  {selectedLocation.latitude.toFixed(4)}° N, {selectedLocation.longitude.toFixed(4)}° E
+                </span>
+              </div>
+
+              <div className="compare-arrow-wrap">
+                <ArrowRight size={20} />
+              </div>
+
+              <div className="compare-loc-box">
+                <span className="compare-loc-tag candidate">Location B (Relocation Candidate)</span>
+                <input
+                  type="text"
+                  className="compare-candidate-input"
+                  value={candidateLocation.address}
+                  onChange={(e) => setCandidateLocation((prev) => ({ ...prev, address: e.target.value }))}
+                  placeholder="Enter candidate locality (e.g. Mayur Vihar, Delhi)"
+                />
+                <div className="candidate-presets">
+                  <span className="preset-label">Quick test:</span>
+                  <button
+                    type="button"
+                    className="preset-btn"
+                    onClick={() =>
+                      setCandidateLocation({
+                        latitude: 28.6650,
+                        longitude: 77.2400,
+                        address: 'Yamuna Bazar, North Delhi, Delhi',
+                      })
+                    }
+                  >
+                    Yamuna Bazar (Floodplain)
+                  </button>
+                  <button
+                    type="button"
+                    className="preset-btn"
+                    onClick={() =>
+                      setCandidateLocation({
+                        latitude: 28.6280,
+                        longitude: 77.0850,
+                        address: 'Janakpuri, West Delhi, Delhi',
+                      })
+                    }
+                  >
+                    Janakpuri (Upland)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="compare-action-row">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleRunComparison}
+                disabled={isComparing}
+              >
+                {isComparing ? (
+                  <>
+                    <Loader2 size={15} className="spin-icon" />
+                    <span>Evaluating Hazard Exposures...</span>
+                  </>
+                ) : (
+                  <>
+                    <Scale size={15} />
+                    <span>Run Relocation Hazard Comparison</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {compareError && (
+            <div className="card error-card">
+              <AlertTriangle size={18} />
+              <span>{compareError}</span>
+            </div>
+          )}
+
+          {compareResult && (
+            <div className="disaster-compare-results-section">
+              <div className="card disaster-compare-table-card">
+                <div className="card-section-header">
+                  <Activity size={18} className="section-icon" />
+                  <div>
+                    <h3>Side-by-Side Hazard Exposure Evidence</h3>
+                    <p className="section-subtitle">
+                      Contrasting documented evidence from official BIS, CWC, and PWD datasets.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="compare-table-responsive">
+                  <table className="disaster-compare-table">
+                    <thead>
+                      <tr>
+                        <th>Hazard Exposure</th>
+                        <th>{compareResult.location_a.locality_name || 'Location A'}</th>
+                        <th>{compareResult.location_b.locality_name || 'Location B'}</th>
+                        <th>Comparative Analysis</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {compareResult.comparative_analysis.map((row, idx) => (
+                        <tr key={idx}>
+                          <td className="hazard-title-cell">
+                            <strong>{row.title}</strong>
+                          </td>
+                          <td>
+                            <span className="verdict-tag">{row.location_a_verdict}</span>
+                          </td>
+                          <td>
+                            <span className="verdict-tag">{row.location_b_verdict}</span>
+                          </td>
+                          <td className="summary-cell">{row.summary}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="card safety-disclosures-card">
+                <div className="disclosures-header">
+                  <Info size={18} style={{ color: 'var(--ink-deep)' }} />
+                  <h3>Comparison Methodology Disclosures</h3>
+                </div>
+                <ul className="disclosures-list">
+                  {compareResult.disclaimers?.map((d, i) => (
+                    <li key={i}>{d}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
