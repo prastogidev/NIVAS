@@ -30,8 +30,8 @@ Every feature in NIVAS is audited and classified into one of four states:
 | **Property Inspection** | Thermal Gradient Simulation | **WORKING** | Simulated infrared temperature gradient analysis detecting insulation voids and moisture anomalies. |
 | **Property Inspection** | Multi-Property Comparison | **WORKING** | Side-by-side comparison matrix evaluating structural health, repair cost estimates, and risk index. |
 | **Neighborhood AI Advisor** | Multi-Provider Chat Engine | **WORKING** | Supports Google Gemini (via `@google/genai`), Groq, and heuristic fallback. Complete provider status indicators in UI. |
-| **Document Intelligence** | PDF / Text Metadata Extraction | **NOT IMPLEMENTED** -> **IMPLEMENTING** | Structured extraction for Sale Deeds, Agreements, Conveyances, Parties, Consideration, Registration details with page citations. |
-| **Document Intelligence** | Cross-Document Discrepancy Engine | **NOT IMPLEMENTED** -> **IMPLEMENTING** | Automated diffing across transaction documents flagging mismatches in consideration, plot numbers, party names. |
+| **Document Intelligence** | PDF / Text Metadata Extraction | **WORKING** | Structured extraction for Sale Deeds, Agreements, Conveyances, Parties, Consideration, Registration details with page citations. |
+| **Document Intelligence** | Cross-Document Discrepancy Engine | **WORKING** | Automated diffing across transaction documents flagging mismatches in consideration, plot numbers, party names, and registration dates. |
 
 ---
 

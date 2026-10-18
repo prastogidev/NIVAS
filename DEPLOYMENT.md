@@ -1,5 +1,8 @@
 # NIVAS — Vercel Multi-Service Deployment Guide
 
+> [!NOTE]
+> **Documentation Library**: This guide is mirrored and maintained in the centralized documentation suite at [`docs/deployment.md`](./docs/deployment.md). For architecture and repository structure, see [`docs/architecture.md`](./docs/architecture.md) and [`docs/repository-structure.md`](./docs/repository-structure.md).
+
 **Canonical GitHub Repository:** [https://github.com/prastogidev/NIVAS](https://github.com/prastogidev/NIVAS)  
 **Project Name:** NIVAS (Neighborhood Intelligence & Verification Analytics System)
 
