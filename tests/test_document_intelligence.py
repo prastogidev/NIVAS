@@ -217,3 +217,47 @@ def test_api_analyze_multiple_documents_with_comparison(client):
     assert data["comparison"] is not None
     assert data["comparison"]["document_count"] == 2
     assert data["comparison"]["overall_risk_level"] == "low"
+
+
+def test_malformed_pdf_rejection():
+    """Verify that a file with .pdf extension but invalid header is rejected."""
+    fake_corrupted_pdf = b"NOT_A_PDF_STREAM_RANDOM_BYTES"
+    with pytest.raises(ValueError, match="does not appear to be a valid PDF document"):
+        extract_pages_from_file(fake_corrupted_pdf, "fake.pdf")
+
+
+def test_empty_file_rejection_api(client):
+    """Verify that uploading an empty or whitespace-only file returns HTTP 400."""
+    files = [
+        ("files", ("empty.txt", io.BytesIO(b""), "text/plain")),
+    ]
+    response = client.post("/api/documents/analyze", files=files)
+    assert response.status_code == 400
+    assert "empty" in response.json()["detail"].lower()
+
+
+def test_sample_documents_synthetic_demo_labeling(client):
+    """Verify that sample documents are prominently disclosed as synthetic demo records."""
+    response = client.get("/api/documents/sample-documents")
+    assert response.status_code == 200
+    data = response.json()
+    assert "notice" in data
+    assert "SYNTHETIC" in data["notice"]
+    for sample in data["samples"]:
+        assert sample["is_synthetic_demo"] is True
+        assert "Synthetic Demonstration Document" in sample["provenance"]
+        assert "SYNTHETIC DEMO INSTRUMENT" in sample["content"]
+
+
+def test_api_compare_extracted_documents_endpoint(client):
+    """Verify POST /api/documents/compare endpoint with previously extracted document results."""
+    doc1 = analyze_document_bytes(SAMPLE_SALE_DEED_TEXT.encode("utf-8"), "Sale_Deed.txt")
+    doc2 = analyze_document_bytes(SAMPLE_AGREEMENT_TEXT.encode("utf-8"), "Agreement.txt")
+
+    payload = [doc1.model_dump(), doc2.model_dump()]
+    response = client.post("/api/documents/compare", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["document_count"] == 2
+    assert data["overall_risk_level"] == "low"
+    assert len(data["matches"]) >= 1

@@ -78,12 +78,22 @@ def extract_pages_from_file(file_bytes: bytes, filename: str) -> Tuple[List[Tupl
     is_scanned_or_empty = False
 
     if lower_name.endswith(".pdf"):
+        if not file_bytes.startswith(b"%PDF-"):
+            raise ValueError(f"File '{filename}' does not appear to be a valid PDF document (missing %PDF- header).")
+
         try:
             reader = pypdf.PdfReader(io.BytesIO(file_bytes))
         except Exception as e:
             raise ValueError(f"Could not parse PDF file '{filename}': {str(e)}")
 
+        if reader.is_encrypted:
+            raise ValueError(
+                f"PDF file '{filename}' is password-protected or encrypted. Please provide an unencrypted PDF document."
+            )
+
         num_pages = len(reader.pages)
+        if num_pages == 0:
+            raise ValueError(f"PDF file '{filename}' contains 0 pages.")
         if num_pages > MAX_PAGE_COUNT:
             raise ValueError(
                 f"PDF file '{filename}' has {num_pages} pages, which exceeds the limit of {MAX_PAGE_COUNT} pages."

@@ -52,7 +52,7 @@ async def analyze_documents(
         filename = file.filename or "uploaded_document"
         try:
             content_bytes = await file.read()
-            if not content_bytes:
+            if not content_bytes or not content_bytes.strip():
                 raise ValueError(f"Uploaded file '{filename}' is empty.")
 
             result = analyze_document_bytes(content_bytes, filename)
@@ -99,8 +99,10 @@ async def get_sample_document_data():
     """
     Provides pre-baked synthetic sample document contents (Agreement to Sell vs Sale Deed)
     so users can immediately evaluate the Document Intelligence workspace without uploading private files.
+    All samples are explicitly labeled as synthetic demo instruments.
     """
     agreement_sample = (
+        "[SYNTHETIC DEMO INSTRUMENT — NOT AN OFFICIAL GOVERNMENT PROPERTY RECORD]\n"
         "AGREEMENT TO SELL\n"
         "This Agreement to Sell is made and entered into on this 14th day of March, 2024 at New Delhi.\n\n"
         "BETWEEN\n"
@@ -121,6 +123,7 @@ async def get_sample_document_data():
     )
 
     sale_deed_sample = (
+        "[SYNTHETIC DEMO INSTRUMENT — NOT AN OFFICIAL GOVERNMENT PROPERTY RECORD]\n"
         "ABSOLUTE SALE DEED\n"
         "This Sale Deed is executed on this 12th day of June, 2024 at New Delhi.\n\n"
         "BY AND BETWEEN\n"
@@ -148,6 +151,7 @@ async def get_sample_document_data():
     )
 
     mismatched_sample = (
+        "[SYNTHETIC DEMO INSTRUMENT — NOT AN OFFICIAL GOVERNMENT PROPERTY RECORD]\n"
         "AGREEMENT TO SELL (AMENDED DRAFT)\n"
         "This Agreement to Sell is made on this 20th day of March, 2024.\n"
         "VENDOR: Shri Rajesh Kumar Sharma\n"
@@ -158,24 +162,32 @@ async def get_sample_document_data():
     )
 
     return {
+        "notice": "DEMO / SYNTHETIC TEST INSTRUMENTS ONLY — Not official property records or genuine titles.",
         "samples": [
             {
                 "id": "agreement_sample",
                 "filename": "Agreement_to_Sell_Defence_Colony.txt",
                 "content": agreement_sample,
                 "label": "Sample 1: Agreement to Sell",
+                "is_synthetic_demo": True,
+                "provenance": "Synthetic Demonstration Document (Delhi Test Fixture — Not Official Property Title)",
             },
             {
                 "id": "sale_deed_sample",
                 "filename": "Sale_Deed_Defence_Colony.txt",
                 "content": sale_deed_sample,
                 "label": "Sample 2: Absolute Sale Deed (Consistent)",
+                "is_synthetic_demo": True,
+                "provenance": "Synthetic Demonstration Document (Delhi Test Fixture — Not Official Property Title)",
             },
             {
                 "id": "mismatched_sample",
                 "filename": "Draft_Agreement_Conflict.txt",
                 "content": mismatched_sample,
                 "label": "Sample 3: Conflicting Draft (Price & Plot Conflict)",
+                "is_synthetic_demo": True,
+                "provenance": "Synthetic Demonstration Document (Delhi Test Fixture — Not Official Property Title)",
             },
-        ]
+        ],
     }
+
