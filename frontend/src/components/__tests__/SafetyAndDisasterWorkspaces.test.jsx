@@ -45,6 +45,14 @@ vi.mock('leaflet', () => {
 describe('Safety & Crime Intelligence Workspace Component', () => {
   const mockSafetyResponse = {
     status: 'active',
+    official_state_crime: {
+      state_ut_name: 'NCT of Delhi',
+      reporting_year: 2022,
+      total_ipc_cases: 298988,
+      crime_rate_per_lakh: 1422.6,
+      data_status: 'verified_official',
+      is_derived_estimate: false,
+    },
     matched_district: {
       district_id: 'south_west',
       district_name: 'Dwarka (South-West)',
@@ -136,6 +144,51 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
     expect(screen.getByText('342.5')).toBeDefined();
     expect(screen.getByText('41.2%')).toBeDefined();
     expect(screen.getAllByText('7,850').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Derived Estimate')).toBeDefined();
+  });
+
+  it('renders verified official State/UT benchmark card with NCRB Table 1A.1 data', async () => {
+    render(
+      <SafetyIntelligenceView
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        onLocationChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('official-state-benchmark')).toBeDefined();
+    });
+
+    expect(screen.getByText('Verified Official Benchmark (State/UT Level)')).toBeDefined();
+    expect(screen.getByText('298,988')).toBeDefined();
+    expect(screen.getByText('1422.6')).toBeDefined();
+  });
+
+  it('suppresses district crime rate per 100k when null and displays explanatory footnote', async () => {
+    const suppressedMock = {
+      ...mockSafetyResponse,
+      matched_district: {
+        ...mockSafetyResponse.matched_district,
+        crime_rate_per_lakh: null,
+        rate_unavailable_reason: 'Census population denominators do not align with operational police districts',
+      },
+    };
+    vi.spyOn(api, 'fetchSafetyData').mockResolvedValue(suppressedMock);
+
+    render(
+      <SafetyIntelligenceView
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        onLocationChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Dwarka (South-West) Crime Intelligence')).toBeDefined();
+    });
+
+    expect(screen.getByText('—')).toBeDefined();
+    expect(screen.getByText('Suppressed')).toBeDefined();
+    expect(screen.getByText(/Census population denominators do not align/i)).toBeDefined();
   });
 
   it('renders crime categories with truthful numbers and clearance rates', async () => {

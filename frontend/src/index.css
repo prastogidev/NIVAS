@@ -6466,6 +6466,112 @@ label:has(span.required)::after {
   padding-left: 1.25rem;
 }
 
+.safety-official-benchmark-card {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(30, 58, 95, 0.02) 100%);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-left: 4px solid #2563EB;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.official-benchmark-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(37, 99, 235, 0.12);
+}
+
+.benchmark-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1E40AF;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.benchmark-source {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.official-benchmark-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.ob-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ob-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.ob-val-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.ob-val {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--ink-deep);
+  line-height: 1.2;
+}
+
+.ob-val-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1E40AF;
+  line-height: 1.3;
+}
+
+.ob-unit {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ob-sub {
+  font-size: 0.73rem;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+.metric-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.metric-derived-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  background: rgba(217, 119, 6, 0.12);
+  color: #B45309;
+  border: 1px solid rgba(217, 119, 6, 0.25);
+}
+
 /* ==========================================================================
    DISASTER HAZARDS WORKSPACE
    ========================================================================== */

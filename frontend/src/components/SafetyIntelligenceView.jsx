@@ -214,26 +214,87 @@ export default function SafetyIntelligenceView({
         )}
       </div>
 
-      {/* 2. Key Metrics Row */}
+      {/* 2. Official State/UT Baseline Benchmark Card (NCRB Table 1A.1) */}
+      {safetyData?.official_state_crime && (
+        <div className="card safety-official-benchmark-card" data-testid="official-state-benchmark">
+          <div className="official-benchmark-header">
+            <div className="benchmark-badge">
+              <Scale size={14} />
+              <span>Verified Official Benchmark (State/UT Level)</span>
+            </div>
+            <span className="benchmark-source">NCRB Crime in India 2022 · Table 1A.1</span>
+          </div>
+          <div className="official-benchmark-grid">
+            <div className="ob-item">
+              <span className="ob-label">NCT of Delhi Total Cognizable IPC Cases</span>
+              <div className="ob-val-wrap">
+                <span className="ob-val">{safetyData.official_state_crime.total_ipc_cases?.toLocaleString()}</span>
+                <span className="ob-unit">cases (2022)</span>
+              </div>
+              <span className="ob-sub">Statutory State/UT aggregate from NCRB Table 1A.1</span>
+            </div>
+            <div className="ob-item">
+              <span className="ob-label">Official State Crime Rate per 100k</span>
+              <div className="ob-val-wrap">
+                <span className="ob-val">
+                  {safetyData.official_state_crime.crime_rate_per_lakh != null
+                    ? safetyData.official_state_crime.crime_rate_per_lakh.toFixed(1)
+                    : '—'}
+                </span>
+                <span className="ob-unit">crimes/100k</span>
+              </div>
+              <span className="ob-sub">Based on 21.02M Census RGI projected population</span>
+            </div>
+            <div className="ob-item">
+              <span className="ob-label">Data Attribution & Boundary Notice</span>
+              <div className="ob-val-wrap">
+                <span className="ob-val-text">NCRB State/UT Benchmark</span>
+              </div>
+              <span className="ob-sub">
+                District figures below are operational research estimates; Census denominators do not align with police districts.
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Key Metrics Row */}
       {matchedDistrict && (
         <div className="safety-metrics-grid">
           <div className="card safety-metric-card">
-            <span className="metric-label">2022 Reported IPC Crimes</span>
+            <div className="metric-header-row">
+              <span className="metric-label">2022 Reported IPC Crimes</span>
+              <span className="metric-derived-badge">Derived Estimate</span>
+            </div>
             <div className="metric-value-wrap">
               <span className="metric-num">{matchedDistrict.total_ipc_crimes_2022?.toLocaleString()}</span>
               <span className="metric-unit">annual FIRs</span>
             </div>
-            <span className="metric-foot">Official district total ({matchedDistrict.district_name})</span>
+            <span className="metric-foot">Operational research allocation ({matchedDistrict.district_name})</span>
           </div>
 
           <div className="card safety-metric-card">
-            <span className="metric-label">Rate per 100k Population</span>
+            <div className="metric-header-row">
+              <span className="metric-label">Rate per 100k Population</span>
+              {matchedDistrict.crime_rate_per_lakh == null && (
+                <span className="metric-derived-badge">Suppressed</span>
+              )}
+            </div>
             <div className="metric-value-wrap">
-              <span className="metric-num">{matchedDistrict.crime_rate_per_lakh?.toFixed(1)}</span>
-              <span className="metric-unit">crimes/100k</span>
+              <span className="metric-num">
+                {matchedDistrict.crime_rate_per_lakh != null
+                  ? matchedDistrict.crime_rate_per_lakh.toFixed(1)
+                  : '—'}
+              </span>
+              <span className="metric-unit">
+                {matchedDistrict.crime_rate_per_lakh != null ? 'crimes/100k' : 'Unavailable'}
+              </span>
             </div>
             <span className="metric-foot">
-              Based on {matchedDistrict.population_projection_2022?.toLocaleString()} projected residents
+              {matchedDistrict.rate_unavailable_reason ||
+                (matchedDistrict.crime_rate_per_lakh != null
+                  ? `Based on ${matchedDistrict.population_projection_2022?.toLocaleString()} projected residents`
+                  : 'Census population denominators do not align with operational police districts')}
             </span>
           </div>
 
@@ -257,7 +318,7 @@ export default function SafetyIntelligenceView({
         </div>
       )}
 
-      {/* 3. Interactive Map with District Boundary & Real Police Stations */}
+      {/* 4. Interactive Map with District Boundary & Real Police Stations */}
       <div className="card safety-map-panel">
         <div className="safety-map-header">
           <div className="safety-map-title-wrap">
@@ -265,7 +326,7 @@ export default function SafetyIntelligenceView({
             <div>
               <h3>Police District Jurisdiction & Emergency Infrastructure</h3>
               <span className="map-subtitle">
-                Green boundary indicates official {matchedDistrict ? matchedDistrict.district_name : 'Police District'} jurisdiction. Markers indicate verified physical police facilities.
+                Green boundary indicates indicative reference territory for {matchedDistrict ? matchedDistrict.district_name : 'Police District'} (spatial approximation; not an official cadastral boundary). Markers indicate verified physical police facilities.
               </span>
             </div>
           </div>
