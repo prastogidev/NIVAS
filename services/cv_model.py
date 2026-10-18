@@ -9,15 +9,26 @@ from typing import Optional, List, Tuple, Dict, Any
 import numpy as np
 from PIL import Image
 import httpx
-import torch
-import torch.nn.functional as F
+try:
+    import torch
+    import torch.nn.functional as F
+    from backend.cv.model import build_efficientnet_b0, get_eval_transforms, WALL_CONDITION_CLASSES
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    F = None
+    build_efficientnet_b0 = None
+    get_eval_transforms = None
+    WALL_CONDITION_CLASSES = ["clean", "crack", "peeling", "water_damage", "mold"]
+    TORCH_AVAILABLE = False
 
 from backend.models.score import ImageInfo, CVModelResult, VisualEvidenceItem
-from backend.cv.model import build_efficientnet_b0, get_eval_transforms, WALL_CONDITION_CLASSES
 
 logger = logging.getLogger("nivas.services.cv_model")
 
-MODEL_WEIGHTS_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "models" / "wall_condition_efficientnet.pth"
+_LOCAL_MODEL_PATH = Path(__file__).resolve().parent.parent / "data" / "models" / "wall_condition_efficientnet.pth"
+_ROOT_MODEL_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "models" / "wall_condition_efficientnet.pth"
+MODEL_WEIGHTS_PATH = _LOCAL_MODEL_PATH if _LOCAL_MODEL_PATH.exists() else _ROOT_MODEL_PATH
 BLUR_VARIANCE_THRESHOLD = 50.0  # Images with Laplacian variance below 50.0 are flagged as blurry
 VIDEO_SAMPLE_INTERVAL_SECONDS = 2.0
 
@@ -213,6 +224,10 @@ async def run_cv_analysis(image_info: Optional[ImageInfo]) -> Optional[CVModelRe
         logger.info("No image_info provided in request. Returning None.")
         return None
 
+    if not TORCH_AVAILABLE:
+        logger.info("PyTorch is not available in the current serverless runtime environment. Returning None for CV analysis.")
+        return None
+
     if image_info.video_url or image_info.video_base64:
         return await run_video_cv_analysis(image_info)
 
@@ -338,6 +353,10 @@ async def run_video_cv_analysis(image_info: ImageInfo) -> Optional[CVModelResult
     A video produces a result only when the existing checkpoint successfully
     classifies at least one non-blurry decoded frame.
     """
+    if not TORCH_AVAILABLE:
+        logger.info("PyTorch is not available in the current serverless runtime environment. Returning None for video CV.")
+        return None
+
     if not MODEL_WEIGHTS_PATH.exists():
         logger.info("Trained model checkpoint '%s' not found. Returning None for video CV.", MODEL_WEIGHTS_PATH)
         return None

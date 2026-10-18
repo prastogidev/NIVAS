@@ -11,9 +11,10 @@ from backend.models.score import PriceBenchmarkResult, PropertyListing
 logger = logging.getLogger("nivas.services.price")
 
 # Path to local compliant benchmark repository & cache directory
-# Canonical data location: /NIVAS/data/cached_demo_data
-# From backend/services/price.py: parent.parent.parent is /NIVAS
-DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "cached_demo_data"
+# Canonical data location: backend/data/cached_demo_data or /NIVAS/data/cached_demo_data
+_LOCAL_BACKEND_DATA = Path(__file__).resolve().parent.parent / "data" / "cached_demo_data"
+_ROOT_DATA = Path(__file__).resolve().parent.parent.parent / "data" / "cached_demo_data"
+DATA_DIR = _LOCAL_BACKEND_DATA if _LOCAL_BACKEND_DATA.exists() else _ROOT_DATA
 CACHE_DIR = DATA_DIR / "cache"
 
 # Configurable Cache Time-To-Live in seconds (default: 24 hours / 86400 seconds)

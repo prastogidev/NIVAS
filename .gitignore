@@ -55,3 +55,5 @@ htmlcov/
 # Data files (if they contain sensitive/large data)
 data/*.db
 data/*.sqlite
+data/cached_demo_data/cache/*.json
+.vercel/

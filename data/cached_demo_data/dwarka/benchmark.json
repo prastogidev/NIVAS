@@ -1,0 +1,32 @@
+{
+  "locality": "Dwarka",
+  "city": "New Delhi",
+  "delhi_circle_category": "Category B",
+  "base_circle_rate_sqft": 22760,
+  "market_price_stats": {
+    "Apartment": {
+      "median_price_per_sqft": 8500,
+      "min_price_per_sqft": 7000,
+      "max_price_per_sqft": 11500,
+      "sample_listings_count": 42
+    },
+    "Independent House": {
+      "median_price_per_sqft": 10500,
+      "min_price_per_sqft": 8500,
+      "max_price_per_sqft": 14000,
+      "sample_listings_count": 18
+    },
+    "Villa": {
+      "median_price_per_sqft": 12000,
+      "min_price_per_sqft": 9500,
+      "max_price_per_sqft": 16000,
+      "sample_listings_count": 12
+    },
+    "Commercial Space": {
+      "median_price_per_sqft": 18500,
+      "min_price_per_sqft": 14000,
+      "max_price_per_sqft": 26000,
+      "sample_listings_count": 25
+    }
+  }
+}

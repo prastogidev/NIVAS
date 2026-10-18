@@ -1,0 +1,32 @@
+{
+  "locality": "Rohini",
+  "city": "New Delhi",
+  "delhi_circle_category": "Category B/C",
+  "base_circle_rate_sqft": 14850,
+  "market_price_stats": {
+    "Apartment": {
+      "median_price_per_sqft": 7200,
+      "min_price_per_sqft": 5800,
+      "max_price_per_sqft": 9500,
+      "sample_listings_count": 35
+    },
+    "Independent House": {
+      "median_price_per_sqft": 9200,
+      "min_price_per_sqft": 7500,
+      "max_price_per_sqft": 12000,
+      "sample_listings_count": 22
+    },
+    "Villa": {
+      "median_price_per_sqft": 11000,
+      "min_price_per_sqft": 8800,
+      "max_price_per_sqft": 14500,
+      "sample_listings_count": 10
+    },
+    "Commercial Space": {
+      "median_price_per_sqft": 16000,
+      "min_price_per_sqft": 12500,
+      "max_price_per_sqft": 22000,
+      "sample_listings_count": 19
+    }
+  }
+}

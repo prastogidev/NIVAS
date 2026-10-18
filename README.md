@@ -79,8 +79,8 @@ backend/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/prastogidev/SIH_NIVAS.git
-   cd SIH_NIVAS
+   git clone https://github.com/prastogidev/NIVAS.git
+   cd NIVAS
    ```
 
 2. **Create and activate virtual environment**
