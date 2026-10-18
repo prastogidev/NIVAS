@@ -30,7 +30,10 @@ def test_crime_baseline_dataset_integrity():
         assert "district_name" in data
         assert data["total_ipc_crimes_2022"] > 0
         assert data["population_projection_2022"] > 0
-        assert data["crime_rate_per_lakh"] > 0
+        assert data["crime_rate_per_lakh"] is None, "District crime rate per lakh must be suppressed due to unaligned Census boundaries"
+        assert data["data_status"] == "derived_estimate"
+        assert data["is_derived_estimate"] is True
+        assert "Census" in data["rate_unavailable_reason"]
         assert len(data["historical_trend_ipc"]) == 5
         assert len(data["categories_2022"]) >= 4
 
@@ -91,7 +94,7 @@ def test_resolve_outside_delhi():
 
 @pytest.mark.asyncio
 async def test_get_locality_safety_data_active():
-    """Verify full safety response for valid Delhi location."""
+    """Verify full safety response for valid Delhi location with strict official-data separation."""
     res = await get_locality_safety_data(
         latitude=28.5921,
         longitude=77.0460,
@@ -103,11 +106,41 @@ async def test_get_locality_safety_data_active():
     assert res.matched_district.district_code == "DEL_DWK"
     assert res.matched_district.district_name == "Dwarka District"
     assert res.matched_district.total_ipc_crimes_2022 > 0
+    assert res.matched_district.crime_rate_per_lakh is None, "Per-capita rate must be suppressed at district level"
+    assert res.matched_district.data_status == "derived_estimate"
+    assert res.matched_district.is_derived_estimate is True
+    assert res.matched_district.rate_unavailable_reason is not None
     assert res.matched_district.reporting_year == 2022
     assert len(res.matched_district.historical_trend_ipc) == 5
     assert len(res.matched_district.categories_2022) >= 4
     assert res.matched_district.jurisdiction_polygon is not None
     assert len(res.transparency_notes) >= 3
+
+    # Check verified official state crime stat
+    assert res.official_state_crime is not None
+    assert res.official_state_crime.data_status == "verified_official"
+    assert res.official_state_crime.is_derived_estimate is False
+    assert res.official_state_crime.total_ipc_cases == 298988
+    assert res.official_state_crime.crime_rate_per_lakh == 1422.6
+    assert res.official_state_crime.state_ut_name == "NCT of Delhi"
+
+
+@pytest.mark.asyncio
+async def test_get_locality_safety_data_delhi_bbox_outside_polygons():
+    """Verify point inside Delhi bounding box but outside approximate polygons never synthesizes a match."""
+    # Far southwest corner of Delhi bounding box outside approximate district polygons
+    res = await get_locality_safety_data(
+        latitude=28.21,
+        longitude=76.78,
+        address="Rural Border, NCT of Delhi",
+        radius=1200,
+    )
+    assert res.status == "unknown_jurisdiction"
+    assert res.matched_district is None
+    assert "police district reference polygon" in res.error_message
+    # Official state baseline should still be available
+    assert res.official_state_crime is not None
+    assert res.official_state_crime.total_ipc_cases == 298988
 
 
 @pytest.mark.asyncio
@@ -145,8 +178,13 @@ def test_api_safety_data_endpoint(client):
     assert data["status"] == "active"
     assert data["matched_district"]["district_code"] == "DEL_DWK"
     assert data["matched_district"]["reporting_year"] == 2022
+    assert data["matched_district"]["crime_rate_per_lakh"] is None
+    assert data["matched_district"]["data_status"] == "derived_estimate"
     assert "categories_2022" in data["matched_district"]
     assert "historical_trend_ipc" in data["matched_district"]
+    assert data["official_state_crime"]["data_status"] == "verified_official"
+    assert data["official_state_crime"]["total_ipc_cases"] == 298988
+    assert data["official_state_crime"]["crime_rate_per_lakh"] == 1422.6
 
 
 @pytest.mark.asyncio

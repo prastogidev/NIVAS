@@ -6,15 +6,41 @@
     "delhi_police_url": "https://delhipolice.gov.in/statistics",
     "retrieval_timestamp": "2026-10-18T20:25:00Z",
     "latest_reporting_year": 2022,
-    "historical_years_covered": [2018, 2019, 2020, 2021, 2022],
+    "historical_years_covered": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ],
     "geographic_resolution": "police_district",
     "total_districts": 15,
     "official_state_ut_totals": {
-      "2018": { "total_ipc_cases": 236476, "crime_rate_per_lakh": 1215.7, "source_table": "NCRB Crime in India 2018, Table 1A.1" },
-      "2019": { "total_ipc_cases": 299475, "crime_rate_per_lakh": 1518.0, "source_table": "NCRB Crime in India 2019, Table 1A.1" },
-      "2020": { "total_ipc_cases": 245844, "crime_rate_per_lakh": 1228.6, "source_table": "NCRB Crime in India 2020, Table 1A.1" },
-      "2021": { "total_ipc_cases": 287563, "crime_rate_per_lakh": 1410.8, "source_table": "NCRB Crime in India 2021, Table 1A.1" },
-      "2022": { "total_ipc_cases": 298988, "crime_rate_per_lakh": 1422.6, "source_table": "NCRB Crime in India 2022, Table 1A.1" }
+      "2018": {
+        "total_ipc_cases": 236476,
+        "crime_rate_per_lakh": 1215.7,
+        "source_table": "NCRB Crime in India 2018, Table 1A.1"
+      },
+      "2019": {
+        "total_ipc_cases": 299475,
+        "crime_rate_per_lakh": 1518.0,
+        "source_table": "NCRB Crime in India 2019, Table 1A.1"
+      },
+      "2020": {
+        "total_ipc_cases": 245844,
+        "crime_rate_per_lakh": 1228.6,
+        "source_table": "NCRB Crime in India 2020, Table 1A.1"
+      },
+      "2021": {
+        "total_ipc_cases": 287563,
+        "crime_rate_per_lakh": 1410.8,
+        "source_table": "NCRB Crime in India 2021, Table 1A.1"
+      },
+      "2022": {
+        "total_ipc_cases": 298988,
+        "crime_rate_per_lakh": 1422.6,
+        "source_table": "NCRB Crime in India 2022, Table 1A.1"
+      }
     },
     "official_table_citations": {
       "table_state_ut": "NCRB Crime in India 2022, Table 1A.1: Crimes in States/UTs",
@@ -35,7 +61,7 @@
       "headquarters": "Parliament Street",
       "population_projection_2022": 152000,
       "total_ipc_crimes_2022": 3940,
-      "crime_rate_per_lakh": 2592.1,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 52.4,
       "historical_trend_ipc": {
         "2018": 3210,
@@ -80,7 +106,10 @@
           "share_pct": 22.7,
           "description": "Public servant obstruction, rash driving, and municipal violations"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_C": {
       "district_code": "DEL_C",
@@ -88,7 +117,7 @@
       "headquarters": "Daryaganj",
       "population_projection_2022": 640000,
       "total_ipc_crimes_2022": 12840,
-      "crime_rate_per_lakh": 2006.3,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 48.6,
       "historical_trend_ipc": {
         "2018": 11400,
@@ -133,7 +162,10 @@
           "share_pct": 22.2,
           "description": "Commercial disputes, hurt, and traffic-related IPC violations"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_N": {
       "district_code": "DEL_N",
@@ -141,7 +173,7 @@
       "headquarters": "Civil Lines",
       "population_projection_2022": 960000,
       "total_ipc_crimes_2022": 15420,
-      "crime_rate_per_lakh": 1606.3,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 46.2,
       "historical_trend_ipc": {
         "2018": 13800,
@@ -186,7 +218,10 @@
           "share_pct": 19.6,
           "description": "Burglary, rash driving, and public nuisance"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_NE": {
       "district_code": "DEL_NE",
@@ -194,7 +229,7 @@
       "headquarters": "Seelampur",
       "population_projection_2022": 2420000,
       "total_ipc_crimes_2022": 22150,
-      "crime_rate_per_lakh": 915.3,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 51.8,
       "historical_trend_ipc": {
         "2018": 17800,
@@ -239,7 +274,10 @@
           "share_pct": 22.2,
           "description": "Physical hurt, criminal intimidation, and local disputes"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_NW": {
       "district_code": "DEL_NW",
@@ -247,7 +285,7 @@
       "headquarters": "Ashok Vihar",
       "population_projection_2022": 1750000,
       "total_ipc_crimes_2022": 23890,
-      "crime_rate_per_lakh": 1365.1,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 45.9,
       "historical_trend_ipc": {
         "2018": 19600,
@@ -292,7 +330,10 @@
           "share_pct": 19.3,
           "description": "Cheating, criminal trespass, and rash driving"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_S": {
       "district_code": "DEL_S",
@@ -300,7 +341,7 @@
       "headquarters": "Hauz Khas",
       "population_projection_2022": 1410000,
       "total_ipc_crimes_2022": 21850,
-      "crime_rate_per_lakh": 1549.6,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 44.1,
       "historical_trend_ipc": {
         "2018": 18200,
@@ -345,7 +386,10 @@
           "share_pct": 17.7,
           "description": "Burglary, cheating, and property disputes"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_SE": {
       "district_code": "DEL_SE",
@@ -353,7 +397,7 @@
       "headquarters": "Sarita Vihar",
       "population_projection_2022": 1850000,
       "total_ipc_crimes_2022": 26400,
-      "crime_rate_per_lakh": 1427.0,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 47.3,
       "historical_trend_ipc": {
         "2018": 21900,
@@ -398,7 +442,10 @@
           "share_pct": 16.9,
           "description": "Burglary, criminal trespass, and rash driving"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_SW": {
       "district_code": "DEL_SW",
@@ -406,7 +453,7 @@
       "headquarters": "Vasant Vihar",
       "population_projection_2022": 1280000,
       "total_ipc_crimes_2022": 16900,
-      "crime_rate_per_lakh": 1320.3,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 49.5,
       "historical_trend_ipc": {
         "2018": 14100,
@@ -451,7 +498,10 @@
           "share_pct": 17.7,
           "description": "Burglary, rash driving, and property disputes"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_W": {
       "district_code": "DEL_W",
@@ -459,7 +509,7 @@
       "headquarters": "Rajouri Garden",
       "population_projection_2022": 1920000,
       "total_ipc_crimes_2022": 25700,
-      "crime_rate_per_lakh": 1338.5,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 48.0,
       "historical_trend_ipc": {
         "2018": 21500,
@@ -504,7 +554,10 @@
           "share_pct": 18.1,
           "description": "Burglary, commercial cheating, and hurt"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_ROH": {
       "district_code": "DEL_ROH",
@@ -512,7 +565,7 @@
       "headquarters": "Rohini Sector 23",
       "population_projection_2022": 1640000,
       "total_ipc_crimes_2022": 22400,
-      "crime_rate_per_lakh": 1365.9,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 47.7,
       "historical_trend_ipc": {
         "2018": 18400,
@@ -557,7 +610,10 @@
           "share_pct": 17.9,
           "description": "Criminal trespass, hurt, and public nuisance"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_OUT": {
       "district_code": "DEL_OUT",
@@ -565,7 +621,7 @@
       "headquarters": "Pushpanjali Enclave / Pitampura",
       "population_projection_2022": 1780000,
       "total_ipc_crimes_2022": 24100,
-      "crime_rate_per_lakh": 1353.9,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 50.2,
       "historical_trend_ipc": {
         "2018": 19800,
@@ -610,7 +666,10 @@
           "share_pct": 19.4,
           "description": "Burglary, land disputes, and physical hurt"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_ON": {
       "district_code": "DEL_ON",
@@ -618,7 +677,7 @@
       "headquarters": "Samaypur Badli",
       "population_projection_2022": 1120000,
       "total_ipc_crimes_2022": 14650,
-      "crime_rate_per_lakh": 1308.0,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 49.1,
       "historical_trend_ipc": {
         "2018": 11200,
@@ -663,7 +722,10 @@
           "share_pct": 20.8,
           "description": "Industrial disputes, factory break-ins, and hurt"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_SHD": {
       "district_code": "DEL_SHD",
@@ -671,7 +733,7 @@
       "headquarters": "Shalimar Park / Shahdara",
       "population_projection_2022": 1650000,
       "total_ipc_crimes_2022": 21300,
-      "crime_rate_per_lakh": 1290.9,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 47.9,
       "historical_trend_ipc": {
         "2018": 17500,
@@ -716,7 +778,10 @@
           "share_pct": 18.3,
           "description": "Burglary, commercial cheating, and hurt"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_E": {
       "district_code": "DEL_E",
@@ -724,7 +789,7 @@
       "headquarters": "Mandawali",
       "population_projection_2022": 1980000,
       "total_ipc_crimes_2022": 24850,
-      "crime_rate_per_lakh": 1255.1,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 46.8,
       "historical_trend_ipc": {
         "2018": 20100,
@@ -769,7 +834,10 @@
           "share_pct": 18.1,
           "description": "Residential burglary, hurt, and traffic violations"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     },
     "DEL_DWK": {
       "district_code": "DEL_DWK",
@@ -777,7 +845,7 @@
       "headquarters": "Dwarka Sector 19",
       "population_projection_2022": 1390000,
       "total_ipc_crimes_2022": 18900,
-      "crime_rate_per_lakh": 1359.7,
+      "crime_rate_per_lakh": null,
       "clearance_rate_pct": 48.7,
       "historical_trend_ipc": {
         "2018": 15600,
@@ -822,7 +890,10 @@
           "share_pct": 17.6,
           "description": "Subcity burglary, rash driving, and municipal disputes"
         }
-      ]
+      ],
+      "data_status": "derived_estimate",
+      "is_derived_estimate": true,
+      "rate_unavailable_reason": "Official Census population denominators do not align with operational police district boundaries; per-capita rate calculation is suppressed to avoid distortions from daytime commuter populations."
     }
   }
 }

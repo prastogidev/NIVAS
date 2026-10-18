@@ -306,20 +306,28 @@ def generate_grounded_telemetry_reply(
 
         # Resolved district crime baseline
         try:
-            from backend.services.crime_data import resolve_police_district, load_crime_baseline
+            from backend.services.crime_data import (
+                resolve_police_district,
+                load_crime_baseline,
+                get_official_state_crime_stat,
+            )
+            state_stat = get_official_state_crime_stat()
+            lines.append(
+                f"• Verified Official State/UT Crime Baseline (NCRB 2022 Table 1A.1): {state_stat.total_ipc_cases:,} total reported IPC crimes ({state_stat.crime_rate_per_lakh:.1f} per 100k residents across NCT of Delhi)."
+            )
             resolved = resolve_police_district(ctx.latitude, ctx.longitude)
             if resolved:
                 dcode, _ = resolved
                 baseline = load_crime_baseline()
                 ddata = baseline.get("districts", {}).get(dcode)
                 if ddata:
-                    lines.append(f"• Jurisdictional Police District: {ddata['district_name']} (HQ: {ddata.get('headquarters', 'N/A')}).")
-                    lines.append(f"• Official Annual Statistics (2022 NCRB): {ddata['total_ipc_crimes_2022']:,} total reported IPC crimes ({ddata.get('crime_rate_per_lakh', 'N/A')} per 100k residents).")
+                    lines.append(f"• Indicative Police District: {ddata['district_name']} (HQ: {ddata.get('headquarters', 'N/A')}).")
+                    lines.append(f"• District Allocation (Derived Estimate): ~{ddata['total_ipc_crimes_2022']:,} allocated IPC crimes (per-capita rate suppressed; Census boundaries do not align with operational police districts).")
                     top_cats = ddata.get("categories_2022", [])
                     if top_cats:
                         top_strs = [f"{c['label']} ({c['share_pct']}%)" for c in top_cats[:3]]
                         lines.append(f"• Primary Reported Offense Types: {', '.join(top_strs)}.")
-                    lines.append("• Crime Telemetry Disclosure: High theft figures reflect online e-FIR auto-registration rather than higher localized physical danger. Individual incident addresses are not published to safeguard citizen privacy.")
+                    lines.append("• Crime Telemetry Disclosure: High theft figures reflect online e-FIR auto-registration rather than higher localized physical danger. Boundary polygons are spatial approximations, not official cadastral layers.")
         except Exception as e:
             logger.debug("District crime lookup in advisor: %s", e)
 
@@ -475,7 +483,7 @@ GROUNDING_SYSTEM_PROMPT = (
     "6. Never infer safety, clean air, or low flood risk from missing sensor data.\n"
     "7. Do NOT invent a composite livability score or safety grade.\n"
     "8. For simple conversational greetings (e.g. 'hi', 'hello', 'how are you'), reply briefly and politely introducing your assistance for the selected area. Do NOT dump the full telemetry report in greeting responses.\n"
-    "9. Crime figures represent district-level administrative allocations from official NCRB and Delhi Police annual compendiums; individual incident addresses are never published to safeguard citizen privacy.\n"
+    "9. NCRB publishes official crime statistics at the State/UT level (NCT of Delhi 2022: 298,988 IPC cases, 1,422.6 per 100k). Police-district allocations are exploratory administrative estimates rather than direct census-tract enumerations; per-capita rates at district level are suppressed because Census boundaries do not align with operational police districts. Individual incident addresses are never published to safeguard citizen privacy.\n"
     "10. Hazard zoning reflects static statutory standards (BIS IS 1893:2016) and river gauge baselines (CWC), NOT a real-time meteorological warning or radar forecast. Clearly disclose that live emergency alert feeds are unavailable.\n"
 )
 
@@ -496,7 +504,12 @@ def format_context_prompt(ctx: LivabilityChatContext, query: str) -> str:
     # Fetch district crime intelligence if in Delhi
     district_info = "Police district crime records: Unindexed or outside Delhi boundary."
     try:
-        from backend.services.crime_data import resolve_police_district, load_crime_baseline
+        from backend.services.crime_data import (
+            resolve_police_district,
+            load_crime_baseline,
+            get_official_state_crime_stat,
+        )
+        state_stat = get_official_state_crime_stat()
         res = resolve_police_district(ctx.latitude, ctx.longitude)
         if res:
             dcode, _ = res
@@ -504,8 +517,8 @@ def format_context_prompt(ctx: LivabilityChatContext, query: str) -> str:
             d = b.get("districts", {}).get(dcode)
             if d:
                 district_info = (
-                    f"Jurisdictional District: {d['district_name']} (2022 Official NCRB Report). "
-                    f"Total Reported IPC Crimes: {d['total_ipc_crimes_2022']:,} ({d.get('crime_rate_per_lakh', 'N/A')} per 100k residents). "
+                    f"Official State/UT Baseline (NCRB 2022 Table 1A.1): {state_stat.total_ipc_cases:,} total IPC crimes ({state_stat.crime_rate_per_lakh:.1f} per 100k). "
+                    f"Indicative Police District: {d['district_name']} (Derived research estimate: ~{d['total_ipc_crimes_2022']:,} allocated IPC crimes; per-capita rate suppressed due to unaligned Census population denominators). "
                     f"Notice: Vehicle & property theft constitutes ~70-75% of filings via online e-FIR. "
                     f"Individual incident addresses are NOT published by police to safeguard privacy."
                 )
