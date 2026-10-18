@@ -10,3 +10,4 @@ Pillow
 scipy
 python-dotenv
 opencv-python-headless
+pypdf
