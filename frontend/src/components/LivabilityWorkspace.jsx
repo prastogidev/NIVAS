@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import PropertyLocationPicker from './PropertyLocationPicker';
-import { fetchLivabilityLocationData, sendLivabilityChatMessage } from '../services/api';
+import {
+  fetchLivabilityLocationData,
+  sendLivabilityChatMessage,
+  analyzeDocuments,
+  compareExtractedDocuments,
+} from '../services/api';
 import {
   Compass,
   MapPin,
@@ -21,9 +26,21 @@ import {
   Scale,
   X,
   RefreshCw,
+  Paperclip,
+  FileText,
+  FileCheck2,
+  Upload,
 } from 'lucide-react';
 import LocalityComparisonView from './LocalityComparisonView';
 import SafetyIntelligenceView from './SafetyIntelligenceView';
+import DocumentChatCard from './DocumentChatCard';
+import {
+  validateDocumentFiles,
+  formatFileSize,
+  isNeighborhoodQuery,
+  isDocumentQuery,
+  generateDocumentFollowUpReply,
+} from '../services/documentChatHelper';
 
 /**
  * Calculate great-circle distance between two coordinates in kilometers using the Haversine formula.
@@ -102,6 +119,9 @@ export default function LivabilityWorkspace({
   onLocationChange: propOnLocationChange,
   searchQuery: propSearchQuery,
   onSearchQueryChange: propOnSearchQueryChange,
+  initialChatOpen,
+  initialFiles,
+  onClearInitialFiles,
 }) {
   // Independent fallback state if not provided by parent
   const [internalLocation, setInternalLocation] = useState(() => {
@@ -164,7 +184,13 @@ export default function LivabilityWorkspace({
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [dataError, setDataError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [isChatOpen, setIsChatOpen] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(initialChatOpen !== undefined ? initialChatOpen : true);
+
+  useEffect(() => {
+    if (initialChatOpen) {
+      setIsChatOpen(true);
+    }
+  }, [initialChatOpen]);
   const activeRequestRef = useRef(0);
 
   // Dynamic Search Radius State (0m to 10000m, step 250m, default 1200m)
@@ -469,13 +495,104 @@ export default function LivabilityWorkspace({
   const chatAbortControllerRef = useRef(null);
   const messagesEndRef = useRef(null);
 
+  // Document Intelligence Chat Integration State
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [activeDocuments, setActiveDocuments] = useState([]);
+  const [fileValidationErrors, setFileValidationErrors] = useState([]);
+  const fileInputRef = useRef(null);
+
+  // Sync initialFiles from navigation/bridge
+  useEffect(() => {
+    if (initialFiles && initialFiles.length > 0) {
+      setIsChatOpen(true);
+      const { validFiles, errors } = validateDocumentFiles(initialFiles, attachedFiles.length);
+      if (errors.length > 0) {
+        setFileValidationErrors(errors);
+      }
+      if (validFiles.length > 0) {
+        setAttachedFiles((prev) => {
+          const combined = [...prev, ...validFiles];
+          return combined.slice(0, 10);
+        });
+      }
+      if (typeof onClearInitialFiles === 'function') {
+        onClearInitialFiles();
+      }
+    }
+  }, [initialFiles, onClearInitialFiles]);
+
+  const handleFileAttachClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileInputChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const { validFiles, errors } = validateDocumentFiles(files, attachedFiles.length);
+    if (errors.length > 0) {
+      setFileValidationErrors(errors);
+    } else {
+      setFileValidationErrors([]);
+    }
+    if (validFiles.length > 0) {
+      setAttachedFiles((prev) => {
+        const combined = [...prev, ...validFiles];
+        return combined.slice(0, 10);
+      });
+    }
+  };
+
+  const handleRemoveAttachedFile = (idxToRemove) => {
+    setAttachedFiles((prev) => prev.filter((_, idx) => idx !== idxToRemove));
+    setFileValidationErrors([]);
+  };
+
+  const handleClearAllAttachments = () => {
+    setAttachedFiles([]);
+    setFileValidationErrors([]);
+  };
+
+  const handleRemoveActiveDoc = (docId) => {
+    setActiveDocuments((prev) => prev.filter((d) => (d.document_id || d.filename) !== docId));
+  };
+
+  const handleClearAllActiveDocs = () => {
+    setActiveDocuments([]);
+  };
+
+  const activeSuggestedPrompts = useMemo(() => {
+    if (activeDocuments.length === 1) {
+      return [
+        'Who are the buyer and seller in this deed?',
+        'What is the declared sale consideration?',
+        'What is the plot and khasra number?',
+        'What are the registration and execution dates?',
+        'What steps should a lawyer take to verify this deed?',
+        'Does this document match the Dwarka map pin?',
+      ];
+    }
+    if (activeDocuments.length >= 2) {
+      return [
+        'Compare the 2 documents for discrepancies',
+        'Are the plot numbers consistent across both deeds?',
+        'Check for consideration differences',
+        'Who are all the parties across both documents?',
+        'Verify seller chain of ownership',
+      ];
+    }
+    return SUGGESTED_PROMPTS;
+  }, [activeDocuments.length]);
+
   const [messages, setMessages] = useState([
     {
       id: 1,
       sender: 'assistant',
-      text: 'Welcome to the NIVAS Neighborhood AI Advisor. I answer questions about your selected location using verified OpenStreetMap civic infrastructure and atmospheric telemetry.\n\nSearch or tap on the map to choose any locality for spatial analysis.',
+      text: 'Welcome to the NIVAS Neighborhood AI Advisor. I answer questions about your selected location using verified OpenStreetMap civic infrastructure and atmospheric telemetry.\n\nYou can also attach property documents (Sale Deeds, Conveyance, Agreements) using the paperclip icon for legal entity extraction and cross-instrument discrepancy analysis.',
       time: 'Ready',
-      sources: ['OpenStreetMap Overpass API'],
+      sources: ['OpenStreetMap Overpass API', 'NIVAS Document Intelligence'],
       isAiGenerated: false,
       providerConfigured: false,
     },
@@ -522,7 +639,7 @@ export default function LivabilityWorkspace({
   const handleSend = async (e) => {
     if (e) e.preventDefault();
     const query = chatInput.trim();
-    if (!query || isChatLoading) return;
+    if ((!query && attachedFiles.length === 0) || isChatLoading) return;
 
     if (chatAbortControllerRef.current) {
       chatAbortControllerRef.current.abort();
@@ -530,6 +647,136 @@ export default function LivabilityWorkspace({
     const abortController = new AbortController();
     chatAbortControllerRef.current = abortController;
 
+    // FLOW 1: Document Upload & Analysis
+    if (attachedFiles.length > 0) {
+      const stagedFiles = [...attachedFiles];
+      const previousChatInput = chatInput;
+      const userMsgText = query || (stagedFiles.length === 1
+        ? `Analyze uploaded document: ${stagedFiles[0].name}`
+        : `Analyze ${stagedFiles.length} uploaded documents for legal review and comparison`);
+
+      const userMsg = {
+        id: Date.now(),
+        sender: 'user',
+        text: userMsgText,
+        time: 'Just now',
+        locationName: selectedLocation.address || 'Selected Map Location',
+        attachments: stagedFiles.map((f) => ({ name: f.name, size: f.size })),
+      };
+
+      setMessages((prev) => [...prev, userMsg]);
+      setChatInput('');
+      setAttachedFiles([]);
+      setFileValidationErrors([]);
+      setIsChatLoading(true);
+      setChatError(null);
+
+      try {
+        const response = await analyzeDocuments(stagedFiles, abortController.signal);
+
+        if (chatAbortControllerRef.current === abortController) {
+          const newDocs = response.documents || [];
+          setActiveDocuments((prev) => {
+            const existingIds = new Set(prev.map((d) => d.document_id || d.filename));
+            const filteredNew = newDocs.filter((d) => !existingIds.has(d.document_id || d.filename));
+            return [...prev, ...filteredNew];
+          });
+
+          let replyText = newDocs.length === 1
+            ? `Document Intelligence analyzed "${newDocs[0].filename}". Extracted legal metadata, parties, property schedule, and registration citations are shown below.`
+            : `Document Intelligence analyzed ${newDocs.length} documents. Extracted legal metadata, parties, property schedule, and cross-document reconciliation results are shown below.`;
+
+          const sources = newDocs.map((d) => `${d.filename} (Page-grounded extraction)`);
+
+          if (query && !isNeighborhoodQuery(query)) {
+            const followUp = generateDocumentFollowUpReply(query, newDocs, selectedLocation);
+            if (followUp && followUp.text) {
+              replyText = `${replyText}\n\n${followUp.text}`;
+              if (followUp.sources) {
+                sources.push(...followUp.sources);
+              }
+            }
+          }
+
+          const assistantMsg = {
+            id: Date.now() + 1,
+            sender: 'assistant',
+            text: replyText,
+            time: 'Just now',
+            isDocumentAnalysis: true,
+            analysisData: {
+              documents: newDocs,
+              comparison: response.comparison || null,
+              legal_disclaimer: response.legal_disclaimer,
+              registry_verification_status: response.registry_verification_status,
+            },
+            sources: Array.from(new Set(sources)),
+            isAiGenerated: false,
+          };
+
+          setMessages((prev) => [...prev, assistantMsg]);
+          setIsChatLoading(false);
+          chatAbortControllerRef.current = null;
+        }
+      } catch (err) {
+        if (err.name !== 'CanceledError' && err.name !== 'AbortError' && err?.code !== 'ERR_CANCELED') {
+          if (chatAbortControllerRef.current === abortController) {
+            setAttachedFiles(stagedFiles);
+            setChatInput(previousChatInput);
+            const errMsg = {
+              id: Date.now() + 1,
+              sender: 'assistant',
+              text: `Document analysis failed: ${err.response?.data?.detail || err.message || 'Service unreachable'}. Your staged files have been preserved so you can retry.`,
+              time: 'Error',
+              isError: true,
+            };
+            setMessages((prev) => [...prev, errMsg]);
+            setChatError(err.response?.data?.detail || err.message || 'Error uploading document');
+            setIsChatLoading(false);
+            chatAbortControllerRef.current = null;
+          }
+        }
+      }
+      return;
+    }
+
+    // FLOW 2: Document Context Follow-up Query
+    const hasActiveDocs = activeDocuments.length > 0;
+    const isDocQ = isDocumentQuery(query, false, activeDocuments.length);
+    const isNeighQ = isNeighborhoodQuery(query);
+
+    if (hasActiveDocs && (isDocQ || !isNeighQ)) {
+      const userMsg = {
+        id: Date.now(),
+        sender: 'user',
+        text: query,
+        time: 'Just now',
+        locationName: selectedLocation.address || 'Selected Map Location',
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      setChatInput('');
+      setIsChatLoading(true);
+      setChatError(null);
+
+      const followUp = generateDocumentFollowUpReply(query, activeDocuments, selectedLocation);
+
+      const replyMsg = {
+        id: Date.now() + 1,
+        sender: 'assistant',
+        text: followUp.text,
+        time: 'Just now',
+        sources: followUp.sources || ['NIVAS Document Intelligence', 'Extracted Legal Clauses'],
+        isAiGenerated: false,
+        providerConfigured: false,
+        locationName: selectedLocation.address || 'Selected Map Location',
+      };
+      setMessages((prev) => [...prev, replyMsg]);
+      setIsChatLoading(false);
+      chatAbortControllerRef.current = null;
+      return;
+    }
+
+    // FLOW 3: Spatial & Neighborhood Telemetry Query
     const userMsg = {
       id: Date.now(),
       sender: 'user',
@@ -1263,6 +1510,44 @@ export default function LivabilityWorkspace({
               </div>
             </div>
 
+            {/* Active Document Context Pill Strip */}
+            {activeDocuments.length > 0 && (
+              <div className="chat-active-docs-bar" data-testid="chat-active-docs-bar">
+                <span className="chat-active-docs-label">
+                  <FileCheck2 size={12} />
+                  <span>Active Docs ({activeDocuments.length}):</span>
+                </span>
+                {activeDocuments.map((doc) => (
+                  <span
+                    key={doc.document_id || doc.filename}
+                    className="chat-active-doc-badge"
+                    data-testid="chat-active-doc-badge"
+                  >
+                    <FileText size={11} />
+                    <span title={doc.filename}>{doc.filename}</span>
+                    <button
+                      type="button"
+                      className="chat-active-doc-badge-remove"
+                      onClick={() => handleRemoveActiveDoc(doc.document_id || doc.filename)}
+                      aria-label={`Remove ${doc.filename} from active context`}
+                      title="Remove from context"
+                    >
+                      <X size={10} />
+                    </button>
+                  </span>
+                ))}
+                <button
+                  type="button"
+                  className="chat-active-docs-clear"
+                  onClick={handleClearAllActiveDocs}
+                  title="Clear all active documents"
+                  data-testid="chat-clear-active-docs-btn"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+
             {/* Chat Messages Body */}
             <div className="chat-messages-scroll" role="log" aria-live="polite">
               {messages.length === 0 ? (
@@ -1300,6 +1585,22 @@ export default function LivabilityWorkspace({
                       )}
                       <div className={`chat-bubble ${msg.sender === 'user' ? 'bubble-user' : 'bubble-assistant'} ${msg.isError ? 'bubble-error' : ''}`}>
                         <p className="chat-bubble-text">{msg.text}</p>
+                        {msg.attachments && msg.attachments.length > 0 && (
+                          <div className="chat-msg-attachments-badge" style={{ marginTop: '0.35rem', display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                            {msg.attachments.map((att, aIdx) => (
+                              <span key={aIdx} className="chat-source-badge" style={{ background: 'rgba(255,255,255,0.2)', color: '#ffffff' }}>
+                                📎 {att.name} ({formatFileSize(att.size)})
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {msg.isDocumentAnalysis && msg.analysisData && (
+                          <DocumentChatCard
+                            documents={msg.analysisData.documents}
+                            comparison={msg.analysisData.comparison}
+                            legalDisclaimer={msg.analysisData.legal_disclaimer}
+                          />
+                        )}
                         {msg.sources && msg.sources.length > 0 && (
                           <div className="chat-bubble-sources">
                             <span className="chat-sources-label">Sources:</span>
@@ -1308,13 +1609,18 @@ export default function LivabilityWorkspace({
                             ))}
                           </div>
                         )}
-                        {msg.sender === 'assistant' && !msg.isError && (
+                        {msg.sender === 'assistant' && !msg.isError && !msg.isDocumentAnalysis && (
                           <div className="chat-provenance-tag">
                             {msg.isAiGenerated ? (
                               <span className="tag-ai">AI Model: {msg.providerName || 'Generative LLM'}</span>
                             ) : (
                               <span className="tag-telemetry">Telemetry Grounded (AI Unconfigured)</span>
                             )}
+                          </div>
+                        )}
+                        {msg.sender === 'assistant' && msg.isDocumentAnalysis && (
+                          <div className="chat-provenance-tag">
+                            <span className="tag-telemetry">Grounded Extraction · Page Citations Verified</span>
                           </div>
                         )}
                         <span className="chat-bubble-time">{msg.time}</span>
@@ -1352,7 +1658,7 @@ export default function LivabilityWorkspace({
             <div className="chat-prompts-section">
               <span className="prompts-label">Suggested Inquiries:</span>
               <div className="prompts-chips-wrapper">
-                {SUGGESTED_PROMPTS.map((prompt, idx) => (
+                {activeSuggestedPrompts.map((prompt, idx) => (
                   <button
                     key={idx}
                     type="button"
@@ -1367,11 +1673,90 @@ export default function LivabilityWorkspace({
 
             {/* Chat Input Bar */}
             <form onSubmit={handleSend} className="chat-input-form">
+              {/* Staged Attachments Tray */}
+              {attachedFiles.length > 0 && (
+                <div className="chat-attachments-tray" data-testid="chat-attachments-tray">
+                  {attachedFiles.map((file, idx) => (
+                    <div key={idx} className="chat-attachment-chip" data-testid="chat-attachment-chip">
+                      <FileText size={12} />
+                      <span className="chat-attachment-chip-name" title={file.name}>{file.name}</span>
+                      <span className="chat-attachment-chip-size">({formatFileSize(file.size)})</span>
+                      <button
+                        type="button"
+                        className="chat-attachment-chip-remove"
+                        onClick={() => handleRemoveAttachedFile(idx)}
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
+                  {attachedFiles.length > 1 && (
+                    <button
+                      type="button"
+                      className="chat-attachments-clear-btn"
+                      onClick={handleClearAllAttachments}
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* File Validation Errors */}
+              {fileValidationErrors.length > 0 && (
+                <div
+                  className="chat-validation-errors"
+                  data-testid="chat-validation-errors"
+                  style={{
+                    color: '#dc2626',
+                    fontSize: '0.72rem',
+                    marginBottom: '0.4rem',
+                    padding: '0.2rem 0.5rem',
+                    background: '#fef2f2',
+                    borderRadius: '4px',
+                  }}
+                >
+                  {fileValidationErrors.map((err, idx) => (
+                    <div key={idx} className="flex items-center gap-1">
+                      <AlertCircle size={11} className="inline mr-1" />
+                      <span>{err}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="chat-input-wrapper">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.txt,.text,.md,.markdown,.csv"
+                  style={{ display: 'none' }}
+                  onChange={handleFileInputChange}
+                  data-testid="chat-file-input"
+                />
+                <button
+                  type="button"
+                  className={`chat-attach-btn ${attachedFiles.length > 0 ? 'has-attachments' : ''}`}
+                  onClick={handleFileAttachClick}
+                  aria-label="Attach documents for analysis"
+                  title="Attach property documents (PDF, TXT, MD up to 10MB)"
+                  disabled={isChatLoading}
+                  data-testid="chat-attach-btn"
+                >
+                  <Paperclip size={16} />
+                </button>
                 <input
                   type="text"
                   className="chat-text-input"
-                  placeholder="Ask about neighborhood livability, commute, schools..."
+                  placeholder={
+                    attachedFiles.length > 0
+                      ? `Ask questions about ${attachedFiles.length} attached document${attachedFiles.length > 1 ? 's' : ''}...`
+                      : activeDocuments.length > 0
+                      ? `Ask about ${activeDocuments[0].filename} or neighborhood...`
+                      : 'Ask about neighborhood livability, commute, schools...'
+                  }
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   disabled={isChatLoading}
@@ -1379,7 +1764,7 @@ export default function LivabilityWorkspace({
                 <button
                   type="submit"
                   className="chat-send-btn"
-                  disabled={!chatInput.trim() || isChatLoading}
+                  disabled={(!chatInput.trim() && attachedFiles.length === 0) || isChatLoading}
                   aria-label="Send message"
                 >
                   {isChatLoading ? <Loader2 size={15} className="spin-icon" /> : <Send size={15} />}
@@ -1387,7 +1772,11 @@ export default function LivabilityWorkspace({
               </div>
               <div className="chat-input-footnote">
                 <Info size={11} />
-                <span>Answers grounded strictly in verified location telemetry · Zero synthetic data</span>
+                <span>
+                  {activeDocuments.length > 0
+                    ? 'Document & neighborhood intelligence grounded in page citations & OSM telemetry'
+                    : 'Answers grounded strictly in verified location telemetry · Zero synthetic data'}
+                </span>
               </div>
             </form>
           </aside>

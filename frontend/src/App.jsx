@@ -85,6 +85,8 @@ export default function App() {
     };
   });
   const [livabilitySearchQuery, setLivabilitySearchQuery] = useState('');
+  const [advisorInitialOpen, setAdvisorInitialOpen] = useState(true);
+  const [advisorInitialFiles, setAdvisorInitialFiles] = useState([]);
 
   // Persist active section across reloads and sync with URL hash
   useEffect(() => {
@@ -259,6 +261,9 @@ export default function App() {
             onLocationChange={setLivabilityLocation}
             searchQuery={livabilitySearchQuery}
             onSearchQueryChange={setLivabilitySearchQuery}
+            initialChatOpen={advisorInitialOpen}
+            initialFiles={advisorInitialFiles}
+            onClearInitialFiles={() => setAdvisorInitialFiles([])}
           />
         </main>
       ) : appSection === 'disaster' ? (
@@ -270,7 +275,15 @@ export default function App() {
         </main>
       ) : appSection === 'documents' ? (
         <main className="screen-content">
-          <DocumentIntelligenceWorkspace />
+          <DocumentIntelligenceWorkspace
+            onOpenInChat={(files) => {
+              if (files && files.length > 0) {
+                setAdvisorInitialFiles(files);
+              }
+              setAdvisorInitialOpen(true);
+              setAppSection('livability');
+            }}
+          />
         </main>
       ) : (
         /* Property Inspection Experience */

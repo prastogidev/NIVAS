@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { analyzeDocuments, fetchSampleDocuments } from '../services/api';
 
-export default function DocumentIntelligenceWorkspace() {
+export default function DocumentIntelligenceWorkspace({ onOpenInChat }) {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -188,6 +188,55 @@ export default function DocumentIntelligenceWorkspace() {
         </div>
       </div>
 
+      {/* Bridge Banner to Unified Chatbot */}
+      <div
+        className="doc-chat-bridge-banner"
+        data-testid="doc-chat-bridge-banner"
+        style={{
+          marginTop: '16px',
+          marginBottom: '20px',
+          padding: '14px 18px',
+          background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+          border: '1px solid #a7f3d0',
+          borderRadius: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Sparkles size={18} style={{ color: '#059669', flexShrink: 0 }} />
+          <span style={{ fontSize: '0.88rem', color: '#065f46' }}>
+            <strong>Unified Advisor Available:</strong> Analyze legal deeds, property schedules, and cross-document discrepancies directly in the <strong>Neighborhood AI Advisor</strong> alongside civic livability telemetry.
+          </span>
+        </div>
+        {typeof onOpenInChat === 'function' && (
+          <button
+            type="button"
+            onClick={() => onOpenInChat(selectedFiles)}
+            style={{
+              background: '#059669',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '7px 15px',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+            data-testid="doc-bridge-to-chat-btn"
+          >
+            <span>{selectedFiles.length > 0 ? `Analyze ${selectedFiles.length} File(s) in Advisor Chat` : 'Open in Neighborhood Advisor'}</span>
+            <ChevronRight size={14} />
+          </button>
+        )}
+      </div>
+
       {/* Upload & Staging Card */}
       {!analysisResult && (
         <div style={{
@@ -334,7 +383,30 @@ export default function DocumentIntelligenceWorkspace() {
                 ))}
               </div>
 
-              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+                {typeof onOpenInChat === 'function' && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenInChat(selectedFiles)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 18px',
+                      fontSize: '0.92rem',
+                      background: '#f0fdf4',
+                      border: '1px solid #10b981',
+                      color: '#065f46',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                    }}
+                    data-testid="doc-staged-open-in-chat-btn"
+                  >
+                    <Sparkles size={16} />
+                    <span>Analyze in Advisor Chat</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   className="btn-primary"
