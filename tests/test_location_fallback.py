@@ -153,3 +153,86 @@ class OverpassFallbackTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(diff.score_b, 55.0)
         self.assertIn("Overpass timeout", diff.reason)
 
+    async def test_empty_mirror_does_not_preempt_non_empty_mirror(self):
+        """A mirror returning 0 elements must not cancel other mirrors that have verified elements."""
+        class _EmptyResponse:
+            status_code = 200
+            def json(self):
+                return {"elements": []}
+
+        class _NonEmptyResponse:
+            status_code = 200
+            def json(self):
+                return {
+                    "elements": [
+                        {"tags": {"amenity": "school", "name": "Delhi Public School"}},
+                        {"tags": {"amenity": "hospital", "name": "City Hospital"}},
+                    ]
+                }
+
+        class _MockClient:
+            def __init__(self, *, timeout):
+                pass
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, *args):
+                return False
+            async def post(self, url, **kwargs):
+                if "fast-empty" in url:
+                    return _EmptyResponse()
+                return _NonEmptyResponse()
+
+        endpoints = [
+            "https://fast-empty.example/api/interpreter",
+            "https://has-elements.example/api/interpreter",
+        ]
+        with patch("backend.services.location.httpx.AsyncClient", _MockClient):
+            infra = await fetch_overpass_infrastructure(
+                lat=28.65, lon=77.15, endpoints=endpoints
+            )
+            self.assertIsNotNone(infra)
+            self.assertEqual(infra.schools_count, 1)
+            self.assertEqual(infra.hospitals_count, 1)
+            self.assertIn("Delhi Public School", infra.nearby_places)
+
+    async def test_all_mirrors_fail_returns_none_not_zero(self):
+        """When all mirrors fail or timeout, returns None so caller can set fetch_failed instead of 0 amenities."""
+        class _FailingClient:
+            def __init__(self, *, timeout):
+                pass
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, *args):
+                return False
+            async def post(self, url, **kwargs):
+                raise httpx.ReadTimeout("Mirror timed out")
+
+        with patch("backend.services.location.httpx.AsyncClient", _FailingClient):
+            infra = await fetch_overpass_infrastructure(
+                lat=28.65, lon=77.15, endpoints=["https://mirror1.example", "https://mirror2.example"]
+            )
+            self.assertIsNone(infra)
+
+    async def test_headers_include_accept_and_user_agent(self):
+        """Verify headers sent to Overpass mirrors contain Accept: application/json and User-Agent."""
+        captured_headers = {}
+
+        class _HeaderCapturingClient:
+            def __init__(self, *, timeout):
+                pass
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, *args):
+                return False
+            async def post(self, url, **kwargs):
+                captured_headers.update(kwargs.get("headers", {}))
+                return _FakeResponse()
+
+        with patch("backend.services.location.httpx.AsyncClient", _HeaderCapturingClient):
+            await fetch_overpass_infrastructure(
+                lat=28.65, lon=77.15, endpoints=["https://test.example"]
+            )
+            self.assertIn("application/json", captured_headers.get("Accept", ""))
+            self.assertIn("NIVAS", captured_headers.get("User-Agent", ""))
+
+

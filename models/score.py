@@ -42,6 +42,7 @@ class InfrastructureSummary(BaseOptimizedModel):
     railway_stations_count: int = 0
     major_roads_count: int = 0
     nearby_places: List[str] = []
+    facilities: List[Dict[str, Any]] = []
 
 
 class LocationResult(BaseOptimizedModel):

@@ -93,12 +93,12 @@ def calculate_location_score(infra: Optional[InfrastructureSummary]) -> Optional
 
 
 OVERPASS_ENDPOINTS = [
-    "https://lz4.overpass-api.de/api/interpreter",
+    "https://overpass.openstreetmap.fr/api/interpreter",
     "https://overpass-api.de/api/interpreter",
-    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",
 ]
+
 
 
 def _parse_overpass_infrastructure(elements: List[Dict[str, Any]]) -> InfrastructureSummary:
@@ -113,6 +113,8 @@ def _parse_overpass_infrastructure(elements: List[Dict[str, Any]]) -> Infrastruc
     railway_stations = 0
     major_roads = 0
     nearby_places_set = set()
+    facilities = []
+    seen_keys = set()
 
     for elem in elements:
         tags = elem.get("tags", {})
@@ -124,25 +126,71 @@ def _parse_overpass_infrastructure(elements: List[Dict[str, Any]]) -> Infrastruc
         railway = tags.get("railway")
         highway = tags.get("highway")
 
+        category = None
+        category_label = None
+
         if amenity == "school":
             schools += 1
+            category = "school"
+            category_label = "School"
         elif amenity == "hospital":
             hospitals += 1
+            category = "hospital"
+            category_label = "Hospital"
         elif amenity == "clinic":
             clinics += 1
+            category = "clinic"
+            category_label = "Clinic"
         elif amenity == "pharmacy":
             pharmacies += 1
+            category = "pharmacy"
+            category_label = "Pharmacy"
         elif amenity == "police":
             police += 1
+            category = "police"
+            category_label = "Police Station"
         elif amenity == "fire_station":
             fire_stations += 1
+            category = "fire"
+            category_label = "Fire Station"
         elif amenity == "bus_station":
             bus_stations += 1
+            category = "transit"
+            category_label = "Bus Station"
 
         if railway == "station":
             railway_stations += 1
+            category = "railway"
+            category_label = "Metro / Railway Station"
         if highway in ("primary", "secondary", "trunk", "motorway"):
             major_roads += 1
+            if not category:
+                category = "road"
+                category_label = f"Major Road ({highway.title()})"
+
+        # Real coordinates extraction
+        lat_coord = elem.get("lat")
+        lon_coord = elem.get("lon")
+        if lat_coord is None and "center" in elem:
+            center_obj = elem.get("center") or {}
+            lat_coord = center_obj.get("lat")
+            lon_coord = center_obj.get("lon")
+
+        if lat_coord is not None and lon_coord is not None and category:
+            fac_name = name or tags.get("ref") or f"Local {category_label}"
+            fac_id = str(elem.get("id") or f"{lat_coord}_{lon_coord}")
+            coord_key = (round(float(lat_coord), 5), round(float(lon_coord), 5), category)
+            if coord_key not in seen_keys:
+                seen_keys.add(coord_key)
+                facilities.append({
+                    "id": fac_id,
+                    "name": fac_name,
+                    "category": category,
+                    "category_label": category_label,
+                    "latitude": float(lat_coord),
+                    "longitude": float(lon_coord),
+                    "source": "OpenStreetMap",
+                })
 
     return InfrastructureSummary(
         schools_count=schools,
@@ -155,6 +203,7 @@ def _parse_overpass_infrastructure(elements: List[Dict[str, Any]]) -> Infrastruc
         railway_stations_count=railway_stations,
         major_roads_count=major_roads,
         nearby_places=list(nearby_places_set)[:10],
+        facilities=facilities,
     )
 
 
@@ -185,44 +234,66 @@ async def fetch_overpass_infrastructure(
     lat: float,
     lon: float,
     radius: int = 1200,
-    connect_timeout: float = 2.5,
-    read_timeout: float = 6.0,
+    connect_timeout: float = 3.5,
+    read_timeout: float = 12.0,
     endpoints: Optional[List[str]] = None,
 ) -> Optional[InfrastructureSummary]:
     """
     Fetch real infrastructure elements from OpenStreetMap Overpass API around (lat, lon).
     Iterates through OVERPASS_ENDPOINTS with concurrent per-mirror requests.
-    Short-circuits immediately upon first successful mirror response and cancels remaining tasks.
+    Returns immediately when a mirror returns verified elements. If a mirror returns 0 elements,
+    holds that empty result while allowing remaining mirrors to finish in case of broader coverage.
     Returns None if all API mirrors fail or time out (never treats missing API data as zero).
     """
     if lat is None or lon is None:
         return None
 
-    query = f"""[out:json][timeout:8];(node["amenity"~"school|hospital|clinic|pharmacy|police|fire_station|bus_station"](around:{radius},{lat},{lon});node["railway"="station"](around:{radius + 800},{lat},{lon});node["highway"~"primary|secondary|trunk|motorway"](around:{radius},{lat},{lon});way["highway"~"primary|secondary|trunk|motorway"](around:{radius},{lat},{lon}););out tags 40;"""
+    query = (
+        f"""[out:json][timeout:12];"""
+        f"""("""
+        f"""node["amenity"~"school|hospital|clinic|pharmacy|police|fire_station|bus_station"](around:{radius},{lat},{lon});"""
+        f"""node["railway"~"station|subway_entrance"](around:{radius + 800},{lat},{lon});"""
+        f"""way["highway"~"primary|secondary|trunk|motorway"](around:{radius},{lat},{lon});"""
+        f""");out center 50;"""
+    )
 
     headers = {
-        "User-Agent": "NIVAS-Inspection-App/1.0"
+        "User-Agent": "NIVAS-Livability-App/1.0 (https://github.com/nivas; contact@nivas.local)",
+        "Accept": "application/json, */*",
     }
 
     mirrors = endpoints if endpoints is not None else OVERPASS_ENDPOINTS
-    per_mirror_timeout = httpx.Timeout(connect=connect_timeout, read=read_timeout, write=2.0, pool=2.0)
+    per_mirror_timeout = httpx.Timeout(connect=connect_timeout, read=read_timeout, write=4.0, pool=4.0)
 
     async with httpx.AsyncClient(timeout=per_mirror_timeout) as client:
         tasks = [
             asyncio.create_task(_request_overpass_mirror(client, endpoint, query, headers))
             for endpoint in mirrors
         ]
+        empty_candidate = None
         try:
             for completed_task in asyncio.as_completed(tasks):
                 endpoint, elements = await completed_task
                 if elements is not None:
-                    logger.info("Overpass infrastructure retrieved successfully from mirror: %s", endpoint)
-                    return _parse_overpass_infrastructure(elements)
+                    if len(elements) > 0:
+                        logger.info(
+                            "Overpass infrastructure retrieved successfully from mirror %s (%d elements)",
+                            endpoint,
+                            len(elements),
+                        )
+                        return _parse_overpass_infrastructure(elements)
+                    elif empty_candidate is None:
+                        empty_candidate = (endpoint, elements)
         finally:
             for task in tasks:
                 if not task.done():
                     task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
+
+        if empty_candidate is not None:
+            endpoint, elements = empty_candidate
+            logger.info("Overpass query completed with 0 elements from mirror %s", endpoint)
+            return _parse_overpass_infrastructure(elements)
 
     logger.warning("All Overpass API mirrors failed or timed out for lat=%s, lon=%s", lat, lon)
     return None
