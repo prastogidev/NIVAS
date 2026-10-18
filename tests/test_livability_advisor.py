@@ -434,3 +434,29 @@ def test_inquiry_when_telemetry_fetch_failed(sample_chat_context):
     assert "timed out or encountered a network error" in general_reply
     assert "No synthetic amenity data can be reported" in general_reply
 
+
+def test_relocation_inquiry_handling(sample_chat_context):
+    """Relocation and comparison questions should provide evidence-based contrast guidance without declaring subjective winners."""
+    for query in [
+        "Should I relocate to this neighborhood?",
+        "How do I compare this property with another area?",
+        "Is it a good decision to buy here compared to elsewhere?",
+    ]:
+        reply, sources = generate_grounded_telemetry_reply(query, sample_chat_context)
+        assert "Relocation & Comparative Evaluation Guidelines" in reply
+        assert "NIVAS provides objective, evidence-based contrasts" in reply
+        assert "Relocation Candidate Compare" in reply
+        assert "missing telemetry for one candidate location must NEVER be interpreted as confirmation of lower risk" in reply
+        assert "NIVAS Comparative Telemetry Framework" in sources
+
+
+def test_safety_inquiry_separation_in_advisor(sample_chat_context):
+    """Safety inquiry must clearly separate verified official State/UT baseline from derived district allocation."""
+    reply, sources = generate_grounded_telemetry_reply("What are the crime rates and is it safe here?", sample_chat_context)
+    assert "Verified Official State/UT Crime Baseline (NCRB 2022 Table 1A.1)" in reply
+    assert "298,988 total reported IPC crimes" in reply
+    assert "1422.6 per 100k residents" in reply
+    assert "District Allocation (Derived Estimate)" in reply
+    assert "per-capita rate suppressed" in reply
+    assert "Delhi Police / NCRB Official Statistics" in sources
+

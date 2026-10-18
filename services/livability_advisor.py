@@ -428,6 +428,20 @@ def generate_grounded_telemetry_reply(
         lines.append("\nImportant: Missing data or unmapped nodes must NEVER be interpreted as confirmation of safety, low risk, or absence of facilities.")
         return ("\n".join(lines), sources)
 
+    # 6b. Relocation & Comparative Decision Inquiry
+    if any(k in q for k in ["relocate", "relocation", "moving", "compare", "recommend", "should i buy", "which is better", "decision"]):
+        sources.append("NIVAS Comparative Telemetry Framework")
+        lines = [
+            f"Relocation & Comparative Evaluation Guidelines for {loc_name}:",
+            "• Objective Evaluation: NIVAS provides objective, evidence-based contrasts rather than subjective recommendations or synthetic ranking grades.",
+            "• Dedicated Workspaces: Use the 'Relocation Candidate Compare' mode in Disaster Hazards and 'Compare Mode' in Property Inspection to contrast two properties on identical evidence baselines.",
+            f"• Grounded Telemetry for {loc_name}:",
+            f"  - Civic Amenities: {ctx.schools_count} schools, {ctx.hospitals_count + ctx.clinics_count + ctx.pharmacies_count} healthcare, {ctx.public_transport_count + ctx.railway_stations_count} transit nodes within search radius.",
+            f"  - Seismic Standard: BIS Zone IV (High Damage Risk - Zone factor 0.24). Structural compliance mandatory across Delhi.",
+            "• Comparison Principle: When evaluating relocation options, missing telemetry for one candidate location must NEVER be interpreted as confirmation of lower risk.",
+        ]
+        return ("\n".join(lines), sources)
+
     # 7. General / Infrastructure Overview
     lines = [
         f"Verified Location Overview for {loc_name} ({ctx.latitude:.4f}° N, {ctx.longitude:.4f}° E):",
