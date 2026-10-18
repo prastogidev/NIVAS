@@ -110,3 +110,17 @@ When Vercel **Deployment Protection** (Password Protection, SSO, or Vercel Authe
      ```
   2. Or test through an authenticated browser session where you are logged in to the Vercel team.
   3. Never log or output secret protection tokens in public terminal outputs or reports.
+
+---
+
+## 5. Submodule Branch Ignored Build Step
+
+In a single-repository multi-branch submodule architecture, commits pushed to the `backend` branch trigger Vercel Git webhooks. However, the `backend` branch contains only the FastAPI Python service without the root multi-service configuration (`vercel.json`) or `frontend/`. If Vercel attempts to build `backend` under the multi-service project, it encounters a missing services configuration error.
+
+To ensure routine pushes to `backend` are cleanly ignored by Vercel without producing failed deployments:
+The project's **Ignored Build Step** (`commandForIgnoringBuildStep` in **Vercel Project Settings > Git**) is configured with:
+```bash
+if [ "$VERCEL_GIT_COMMIT_REF" = "backend" ] || [ ! -f vercel.json ]; then exit 0; else exit 1; fi
+```
+- **Exit code `0` (Cancel/Skip):** Evaluated when `$VERCEL_GIT_COMMIT_REF` is `backend` or `vercel.json` is absent. Vercel skips the deployment cleanly without marking it as an error.
+- **Exit code `1` (Proceed):** Evaluated on `main` and valid preview branches containing `vercel.json`, allowing standard deployment to proceed.

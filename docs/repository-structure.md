@@ -64,6 +64,7 @@ If a pull request from `backend` into `main` is merged:
 - **Dismiss in Browser**: Click the **`X`** on the right side of the banner to dismiss it.
 - **Ignore the Prompt**: Treat the `backend` branch as an independent branch dedicated to serving the `backend/` submodule.
 - **Branch Protection**: You can configure a Branch Protection Rule on GitHub (`Settings > Branches`) to require pull requests with specific reviews before merging to `main`, preventing accidental one-click merges.
+- **Vercel Preview Protection**: Vercel's Ignored Build Step is configured to cancel builds automatically on the `backend` branch (`if [ "$VERCEL_GIT_COMMIT_REF" = "backend" ] || [ ! -f vercel.json ]; then exit 0; else exit 1; fi`), preventing routine submodule pushes from generating failed preview deployments. See [`docs/deployment.md`](./deployment.md).
 
 ---
 
