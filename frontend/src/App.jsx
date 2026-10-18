@@ -7,8 +7,9 @@ import CompareForm from './components/CompareForm';
 import CompareResultsView from './components/CompareResultsView';
 import LivabilityWorkspace from './components/LivabilityWorkspace';
 import DisasterWorkspace from './components/DisasterWorkspace';
+import DocumentIntelligenceWorkspace from './components/DocumentIntelligenceWorkspace';
 import { submitPropertyScore, compareProperties } from './services/api';
-import { Building2, RefreshCw, Scale, Search, Compass, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Building2, RefreshCw, Scale, Search, Compass, ShieldCheck, AlertTriangle, FileText } from 'lucide-react';
 import nivasLogo from './assets/nivas_logo.png';
 
 const HEADER_TAGLINE = 'Find the place that feels like home.';
@@ -35,12 +36,12 @@ const getInitialAppSection = () => {
   try {
     if (typeof window !== 'undefined' && window.location?.hash) {
       const hash = window.location.hash.replace('#', '').toLowerCase();
-      if (hash === 'livability' || hash === 'inspection' || hash === 'disaster') {
+      if (hash === 'livability' || hash === 'inspection' || hash === 'disaster' || hash === 'documents') {
         return hash;
       }
     }
     const saved = safeStorage.getItem('nivas_app_section');
-    if (saved === 'livability' || saved === 'inspection' || saved === 'disaster') {
+    if (saved === 'livability' || saved === 'inspection' || saved === 'disaster' || saved === 'documents') {
       return saved;
     }
   } catch (e) {
@@ -98,7 +99,7 @@ export default function App() {
     if (typeof window === 'undefined') return;
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '').toLowerCase();
-      if (hash === 'livability' || hash === 'inspection' || hash === 'disaster') {
+      if (hash === 'livability' || hash === 'inspection' || hash === 'disaster' || hash === 'documents') {
         setAppSection(hash);
       }
     };
@@ -206,7 +207,7 @@ export default function App() {
         </div>
 
         <div className="header-controls">
-          {/* Top-Right Section Switcher: Livability vs Disaster Hazards vs Property Inspection */}
+          {/* Top-Right Section Switcher: Livability vs Disaster Hazards vs Property Inspection vs Document Intelligence */}
           <div className="mode-switcher">
             <button
               className={`mode-btn ${appSection === 'livability' ? 'active' : ''}`}
@@ -230,6 +231,14 @@ export default function App() {
             >
               <ShieldCheck size={14} />
               <span>Property Inspection</span>
+            </button>
+
+            <button
+              className={`mode-btn ${appSection === 'documents' ? 'active' : ''}`}
+              onClick={() => setAppSection('documents')}
+            >
+              <FileText size={14} />
+              <span>Document Intelligence</span>
             </button>
           </div>
 
@@ -258,6 +267,10 @@ export default function App() {
             location={livabilityLocation}
             onLocationChange={setLivabilityLocation}
           />
+        </main>
+      ) : appSection === 'documents' ? (
+        <main className="screen-content">
+          <DocumentIntelligenceWorkspace />
         </main>
       ) : (
         /* Property Inspection Experience */

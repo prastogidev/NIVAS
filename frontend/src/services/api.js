@@ -83,3 +83,27 @@ export const compareDisasterLocations = async ({ location_a, location_b }, signa
   return response.data;
 };
 
+export const analyzeDocuments = async (files, signal) => {
+  const formData = new FormData();
+  Array.from(files).forEach((file) => {
+    formData.append('files', file);
+  });
+  const response = await apiClient.post('/api/documents/analyze', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    signal,
+  });
+  return response.data;
+};
+
+export const fetchSampleDocuments = async (signal) => {
+  const response = await apiClient.get('/api/documents/sample-documents', { signal });
+  return response.data;
+};
+
+export const compareExtractedDocuments = async (docs, signal) => {
+  const response = await apiClient.post('/api/documents/compare', docs, { signal });
+  return response.data;
+};
+
