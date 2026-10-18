@@ -676,20 +676,48 @@ export default function LivabilityWorkspace({
 
         if (chatAbortControllerRef.current === abortController) {
           const newDocs = response.documents || [];
-          setActiveDocuments((prev) => {
-            const existingIds = new Set(prev.map((d) => d.document_id || d.filename));
-            const filteredNew = newDocs.filter((d) => !existingIds.has(d.document_id || d.filename));
-            return [...prev, ...filteredNew];
-          });
+          let comparison = response.comparison || null;
 
-          let replyText = newDocs.length === 1
-            ? `Document Intelligence analyzed "${newDocs[0].filename}". Extracted legal metadata, parties, property schedule, and registration citations are shown below.`
-            : `Document Intelligence analyzed ${newDocs.length} documents. Extracted legal metadata, parties, property schedule, and cross-document reconciliation results are shown below.`;
+          // Merge newly extracted documents with active context
+          const existingIds = new Set(activeDocuments.map((d) => d.document_id || d.filename));
+          const filteredNew = newDocs.filter((d) => !existingIds.has(d.document_id || d.filename));
+          const combinedDocs = [...activeDocuments, ...filteredNew];
 
-          const sources = newDocs.map((d) => `${d.filename} (Page-grounded extraction)`);
+          // If comparison was not produced in this single-file batch, but combined active docs >= 2
+          // and either multiple files were uploaded or query indicates comparison intent:
+          if (!comparison && combinedDocs.length >= 2) {
+            const isCompIntent = query && (
+              query.toLowerCase().includes('compar') ||
+              query.toLowerCase().includes('discrepan') ||
+              query.toLowerCase().includes('conflict') ||
+              query.toLowerCase().includes('differenc') ||
+              query.toLowerCase().includes('reconcil') ||
+              query.toLowerCase().includes('both')
+            );
+            if (stagedFiles.length >= 2 || isCompIntent) {
+              try {
+                comparison = await compareExtractedDocuments(combinedDocs, abortController.signal);
+              } catch (cErr) {
+                console.warn('Cross-document comparison call error:', cErr);
+              }
+            }
+          }
 
-          if (query && !isNeighborhoodQuery(query)) {
-            const followUp = generateDocumentFollowUpReply(query, newDocs, selectedLocation);
+          setActiveDocuments(combinedDocs);
+
+          let replyText = '';
+          if (comparison && comparison.discrepancies && comparison.discrepancies.length > 0) {
+            replyText = `Document Intelligence compared ${combinedDocs.length} instruments ("${combinedDocs.map((d) => d.filename).join('", "')}") and identified ${comparison.discrepancies.length} discrepancy(ies) between declared terms. Cross-instrument reconciliation results and page citations are shown below.`;
+          } else if (newDocs.length === 1 && activeDocuments.length === 0) {
+            replyText = `Document Intelligence analyzed "${newDocs[0].filename}". Extracted legal metadata, parties, property schedule, and registration citations are shown below.`;
+          } else {
+            replyText = `Document Intelligence analyzed ${combinedDocs.length} documents. Extracted legal metadata, parties, property schedule, and cross-document reconciliation results are shown below.`;
+          }
+
+          const sources = (comparison && combinedDocs.length >= 2 ? combinedDocs : newDocs).map((d) => `${d.filename} (Page-grounded extraction)`);
+
+          if (query && !isNeighborhoodQuery(query) && (!comparison || !query.toLowerCase().includes('compar'))) {
+            const followUp = generateDocumentFollowUpReply(query, combinedDocs, selectedLocation);
             if (followUp && followUp.text) {
               replyText = `${replyText}\n\n${followUp.text}`;
               if (followUp.sources) {
@@ -705,8 +733,8 @@ export default function LivabilityWorkspace({
             time: 'Just now',
             isDocumentAnalysis: true,
             analysisData: {
-              documents: newDocs,
-              comparison: response.comparison || null,
+              documents: comparison && combinedDocs.length >= 2 ? combinedDocs : newDocs,
+              comparison: comparison,
               legal_disclaimer: response.legal_disclaimer,
               registry_verification_status: response.registry_verification_status,
             },
@@ -1491,8 +1519,8 @@ export default function LivabilityWorkspace({
                   }}
                 />
                 <div className="chat-header-title-text">
-                  <h3 className="chat-panel-title">Neighborhood AI Advisor</h3>
-                  <span className="chat-panel-status">Interactive Preview</span>
+                  <h3 className="chat-panel-title" data-testid="chat-panel-title">Neighborhood AI Advisor</h3>
+                  <span className="chat-panel-status">Interactive Preview · Document Intelligence</span>
                 </div>
               </div>
               <div className="chat-header-actions">
@@ -1793,7 +1821,7 @@ export default function LivabilityWorkspace({
             </div>
             <div className="launcher-text-wrap">
               <span className="launcher-title">Neighborhood AI Advisor</span>
-              <span className="launcher-badge">Telemetry Grounded Chat</span>
+              <span className="launcher-badge">Spatial Telemetry · Document Intelligence</span>
             </div>
           </button>
         )}
