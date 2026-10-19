@@ -101,6 +101,11 @@ export default function PropertyLocationPicker({
   initialView = 'local', // 'local' | 'national'
   showViewControls = false,
   districtLabel = null,
+  mapMode = 'inspect', // 'inspect' | 'overview'
+  thematicGeoJson = null,
+  onThematicFeatureClick = null,
+  selectedStateCode = null,
+  hideSearch = false,
   searchQuery: propSearchQuery,
   onSearchQueryChange,
   searchPlaceholder = 'Search address or locality (e.g. Indirapuram, Ghaziabad)...',
@@ -123,6 +128,7 @@ export default function PropertyLocationPicker({
   const circleInstanceRef = useRef(null);
   const overlayLayerRef = useRef(null);
   const polygonLayerRef = useRef(null);
+  const thematicLayerRef = useRef(null);
   const facilityMarkersMapRef = useRef(new Map());
   const isInternalUpdateRef = useRef(false);
   const hasAutoZoomedRef = useRef(false);
@@ -358,6 +364,12 @@ export default function PropertyLocationPicker({
         : { clearLayers: () => {}, addLayer: () => {} };
       polygonLayerRef.current = polygonLayer;
 
+      // Create separate layer group for India thematic choropleth layers
+      const thematicLayer = typeof L.layerGroup === 'function'
+        ? L.layerGroup().addTo(map)
+        : { clearLayers: () => {}, addLayer: () => {} };
+      thematicLayerRef.current = thematicLayer;
+
       // Marker drag event: dynamically follow pin while dragging
       marker.on('drag', () => {
         const pos = marker.getLatLng();
@@ -376,8 +388,11 @@ export default function PropertyLocationPicker({
         reverseGeocode(pos.lat, pos.lng);
       });
 
-      // Map click event
+      // Map click event (active only in local inspection mode)
       map.on('click', (e) => {
+        if (mapModeRef.current === 'overview') {
+          return;
+        }
         const { lat, lng } = e.latlng;
         marker.setLatLng([lat, lng]);
         if (circleInstanceRef.current) {
@@ -420,6 +435,14 @@ export default function PropertyLocationPicker({
         overlayLayerRef.current.clearLayers();
         overlayLayerRef.current = null;
       }
+      if (polygonLayerRef.current) {
+        polygonLayerRef.current.clearLayers();
+        polygonLayerRef.current = null;
+      }
+      if (thematicLayerRef.current) {
+        thematicLayerRef.current.clearLayers();
+        thematicLayerRef.current = null;
+      }
       if (mapInstanceRef.current) {
         if (mapInstanceRef.current._resizeObserver) {
           mapInstanceRef.current._resizeObserver.disconnect();
@@ -436,12 +459,132 @@ export default function PropertyLocationPicker({
     onFacilitySelectRef.current = onFacilitySelect;
   }, [onFacilitySelect]);
 
+  const mapModeRef = useRef(mapMode);
+  useEffect(() => {
+    mapModeRef.current = mapMode;
+  }, [mapMode]);
+
+  const onThematicFeatureClickRef = useRef(onThematicFeatureClick);
+  useEffect(() => {
+    onThematicFeatureClickRef.current = onThematicFeatureClick;
+  }, [onThematicFeatureClick]);
+
+  // Synchronize thematic GeoJSON (Choropleth overlay in 'overview' mode)
+  useEffect(() => {
+    if (!thematicLayerRef.current || !mapInstanceRef.current) return;
+    thematicLayerRef.current.clearLayers();
+
+    if (mapMode === 'overview') {
+      // Hide local marker and search circle from national view
+      if (
+        markerInstanceRef.current &&
+        typeof mapInstanceRef.current.hasLayer === 'function' &&
+        mapInstanceRef.current.hasLayer(markerInstanceRef.current) &&
+        typeof mapInstanceRef.current.removeLayer === 'function'
+      ) {
+        mapInstanceRef.current.removeLayer(markerInstanceRef.current);
+      }
+      if (
+        circleInstanceRef.current &&
+        typeof mapInstanceRef.current.hasLayer === 'function' &&
+        mapInstanceRef.current.hasLayer(circleInstanceRef.current) &&
+        typeof mapInstanceRef.current.removeLayer === 'function'
+      ) {
+        mapInstanceRef.current.removeLayer(circleInstanceRef.current);
+      }
+      if (overlayLayerRef.current) {
+        overlayLayerRef.current.clearLayers();
+      }
+      if (polygonLayerRef.current) {
+        polygonLayerRef.current.clearLayers();
+      }
+
+      // Smoothly set or fly to India national extent
+      if (typeof mapInstanceRef.current.flyTo === 'function') {
+        mapInstanceRef.current.flyTo([22.8, 79.5], 4.5, { duration: 0.8 });
+      } else {
+        mapInstanceRef.current.setView([22.8, 79.5], 4.5);
+      }
+
+      if (thematicGeoJson && typeof L.geoJSON === 'function') {
+        const geoLayer = L.geoJSON(thematicGeoJson, {
+          style: (feature) => {
+            const p = feature?.properties || {};
+            const isSelected = selectedStateCode && p.state_code === selectedStateCode;
+            return {
+              color: isSelected ? '#0F172A' : '#FFFFFF',
+              weight: isSelected ? 2.8 : 1.2,
+              opacity: 0.95,
+              fillColor: p.color || '#94A3B8',
+              fillOpacity: isSelected ? 0.65 : (p.fill_opacity || 0.38),
+            };
+          },
+          onEachFeature: (feature, layer) => {
+            const p = feature?.properties || {};
+            const rateStr = p.crime_rate_per_lakh != null ? `${p.crime_rate_per_lakh} / 100k` : 'No statutory data';
+            const tooltipHtml = `
+              <div class="thematic-map-tooltip">
+                <div class="tmt-title">${p.state_name || 'State'}</div>
+                <div class="tmt-rate">IPC Crime Rate: <strong>${rateStr}</strong></div>
+                <div class="tmt-badge tmt-${p.risk_tier || 'no_data'}">${p.tier_label || 'State Aggregate'}</div>
+              </div>
+            `;
+            if (typeof layer.bindTooltip === 'function') {
+              layer.bindTooltip(tooltipHtml, { sticky: true, className: 'nivas-thematic-tooltip' });
+            }
+            layer.on('click', (e) => {
+              if (e && e.originalEvent && L.DomEvent) {
+                L.DomEvent.stopPropagation(e.originalEvent);
+              }
+              if (typeof onThematicFeatureClickRef.current === 'function') {
+                onThematicFeatureClickRef.current(p);
+              }
+            });
+            layer.on('mouseover', () => {
+              layer.setStyle({
+                weight: 2.6,
+                color: '#1E293B',
+                fillOpacity: 0.58,
+              });
+              if (typeof layer.bringToFront === 'function') {
+                layer.bringToFront();
+              }
+            });
+            layer.on('mouseout', () => {
+              const isSelected = selectedStateCode && p.state_code === selectedStateCode;
+              layer.setStyle({
+                color: isSelected ? '#0F172A' : '#FFFFFF',
+                weight: isSelected ? 2.8 : 1.2,
+                fillOpacity: isSelected ? 0.65 : (p.fill_opacity || 0.38),
+              });
+            });
+          },
+        });
+        geoLayer.addTo(thematicLayerRef.current);
+      }
+    } else {
+      // In 'inspect' mode, ensure local marker is restored
+      if (
+        markerInstanceRef.current &&
+        typeof mapInstanceRef.current.hasLayer === 'function' &&
+        !mapInstanceRef.current.hasLayer(markerInstanceRef.current) &&
+        typeof markerInstanceRef.current.addTo === 'function'
+      ) {
+        markerInstanceRef.current.addTo(mapInstanceRef.current);
+      }
+    }
+  }, [mapMode, thematicGeoJson, selectedStateCode]);
+
   // Synchronize overlay markers whenever overlayMarkers changes
   useEffect(() => {
     if (!overlayLayerRef.current || !mapInstanceRef.current) return;
 
     overlayLayerRef.current.clearLayers();
     facilityMarkersMapRef.current.clear();
+
+    if (mapMode === 'overview') {
+      return;
+    }
 
     if (!Array.isArray(overlayMarkers) || overlayMarkers.length === 0) {
       return;
@@ -553,6 +696,10 @@ export default function PropertyLocationPicker({
     if (!polygonLayerRef.current || !mapInstanceRef.current) return;
     polygonLayerRef.current.clearLayers();
 
+    if (mapMode === 'overview') {
+      return;
+    }
+
     if (Array.isArray(polygonCoords) && polygonCoords.length >= 3 && typeof L.polygon === 'function') {
       const latLons = polygonCoords.map((pt) => {
         // Support both [lon, lat] and [lat, lon]
@@ -643,42 +790,44 @@ export default function PropertyLocationPicker({
   return (
     <div className="location-picker-root">
       {/* Search Input Bar (div container to prevent invalid nested form and page refresh) */}
-      <div className="location-search-form" role="search">
-        <div className="location-search-input-wrapper">
-          <Search size={15} className="location-search-icon" />
-          <input
-            type="text"
-            className="location-search-input"
-            placeholder={searchPlaceholder}
-            aria-label="Search locality or landmark in Delhi"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+      {!hideSearch && mapMode !== 'overview' && (
+        <div className="location-search-form" role="search">
+          <div className="location-search-input-wrapper">
+            <Search size={15} className="location-search-icon" />
+            <input
+              type="text"
+              className="location-search-input"
+              placeholder={searchPlaceholder}
+              aria-label="Search locality or landmark in Delhi"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSearchSubmit(e);
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="location-search-btn"
+              aria-label="Search location"
+              onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 handleSearchSubmit(e);
-              }
-            }}
-          />
-          <button
-            type="button"
-            className="location-search-btn"
-            aria-label="Search location"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleSearchSubmit(e);
-            }}
-            disabled={isSearching || !searchQuery.trim()}
-          >
-            {isSearching ? <Loader2 size={13} className="spin-icon" /> : 'Search'}
-          </button>
+              }}
+              disabled={isSearching || !searchQuery.trim()}
+            >
+              {isSearching ? <Loader2 size={13} className="spin-icon" /> : 'Search'}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Search Error Notice */}
-      {searchError && (
+      {!hideSearch && mapMode !== 'overview' && searchError && (
         <div className="location-picker-notice notice-error" role="alert">
           <AlertCircle size={13} />
           <span>{searchError}</span>
@@ -686,7 +835,7 @@ export default function PropertyLocationPicker({
       )}
 
       {/* Reverse Geocode Warning / Status Notice */}
-      {reverseError && (
+      {!hideSearch && mapMode !== 'overview' && reverseError && (
         <div className="location-picker-notice notice-warning" role="status">
           <AlertCircle size={13} />
           <span>{reverseError}</span>
@@ -736,7 +885,11 @@ export default function PropertyLocationPicker({
       />
 
       <div className="location-picker-help">
-        <span>Click anywhere or drag marker to pinpoint exact location</span>
+        <span>
+          {mapMode === 'overview'
+            ? 'Click any State or Union Territory to inspect official statutory benchmarks'
+            : 'Click anywhere or drag marker to pinpoint exact location'}
+        </span>
       </div>
     </div>
   );

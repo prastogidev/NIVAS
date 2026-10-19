@@ -177,8 +177,86 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
     ],
   };
 
+  const mockNationalOverview = {
+    status: 'success',
+    reporting_year: 2022,
+    source_agency: 'National Crime Records Bureau (NCRB)',
+    source_title: 'Crime in India 2022, Table 1A.1: Cognizable IPC Crimes in States/UTs',
+    source_url: 'https://ncrb.gov.in/crime-in-india.html',
+    national_benchmark_rate: 258.1,
+    total_all_india_ipc_cases: 3561379,
+    classification_method: 'Fixed Statutory Rate Thresholds',
+    thresholds: {
+      lower: '< 200 crimes per 100k population',
+      moderate: '200 to 350 crimes per 100k population (National Benchmark: 258.1)',
+      higher: '> 350 crimes per 100k population (High e-FIR portal adoption)',
+    },
+    color_palette: {
+      lower: '#10B981',
+      moderate: '#F59E0B',
+      higher: '#EF4444',
+    },
+    coverage_summary: {
+      total_states_mapped: 36,
+      states_with_statutory_data: 36,
+      states_with_subdistrict_polygons: 1,
+      coverage_percentage: 100.0,
+    },
+    geojson: {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {
+            state_code: 'IN-DL',
+            state_name: 'NCT of Delhi',
+            raw_name: 'Delhi',
+            reporting_year: 2022,
+            total_ipc_cases: 298988,
+            projected_population_lakhs: 210.2,
+            crime_rate_per_lakh: 1422.6,
+            risk_tier: 'higher',
+            tier_label: 'Higher Recorded IPC Rate (> 350 per 100k)',
+            color: '#EF4444',
+            fill_opacity: 0.38,
+            has_district_data: true,
+            source_citation: 'NCRB Crime in India 2022, Table 1A.1: IPC Crimes in States/UTs',
+            legal_disclosure: 'Statutory State/UT aggregate. Does not measure individual property or street-level crime.',
+            e_fir_effect: 'Higher recorded rate heavily reflects 100% digital citizen e-FIR registration for vehicle and property theft rather than localized physical violence.',
+          },
+          geometry: { type: 'Polygon', coordinates: [[[76.8, 28.4], [77.3, 28.4], [77.3, 28.9], [76.8, 28.9], [76.8, 28.4]]] },
+        },
+        {
+          type: 'Feature',
+          properties: {
+            state_code: 'IN-MH',
+            state_name: 'Maharashtra',
+            raw_name: 'Maharashtra',
+            reporting_year: 2022,
+            total_ipc_cases: 374038,
+            projected_population_lakhs: 1257.0,
+            crime_rate_per_lakh: 297.6,
+            risk_tier: 'moderate',
+            tier_label: 'Moderate Recorded IPC Rate (200-350 per 100k)',
+            color: '#F59E0B',
+            fill_opacity: 0.38,
+            has_district_data: false,
+            source_citation: 'NCRB Crime in India 2022, Table 1A.1: IPC Crimes in States/UTs',
+            legal_disclosure: 'Statutory State/UT aggregate.',
+            e_fir_effect: null,
+          },
+          geometry: { type: 'Polygon', coordinates: [[[72.8, 18.9], [73.5, 18.9], [73.5, 19.5], [72.8, 19.5], [72.8, 18.9]]] },
+        },
+      ],
+    },
+    interpretability_guide: [
+      { topic: 'Registration Volume vs. Danger', explanation: 'Crime rate measures reported cases, not unmeasured street crime.' },
+    ],
+  };
+
   beforeEach(() => {
     vi.spyOn(api, 'fetchSafetyData').mockResolvedValue(mockSafetyResponse);
+    vi.spyOn(api, 'fetchNationalSafetyOverview').mockResolvedValue(mockNationalOverview);
   });
 
   afterEach(() => {
@@ -190,6 +268,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
+        initialMode="inspect"
       />
     );
 
@@ -208,6 +287,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
+        initialMode="inspect"
       />
     );
 
@@ -235,6 +315,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
+        initialMode="inspect"
       />
     );
 
@@ -252,6 +333,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
+        initialMode="inspect"
       />
     );
 
@@ -268,6 +350,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
+        initialMode="inspect"
       />
     );
 
@@ -301,6 +384,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
+        initialMode="inspect"
       />
     );
 
@@ -337,6 +421,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
+        initialMode="inspect"
       />
     );
 
@@ -354,6 +439,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
+        initialMode="inspect"
       />
     );
 
@@ -369,6 +455,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
+        initialMode="inspect"
       />
     );
 
@@ -393,6 +480,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
+        initialMode="inspect"
       />
     );
 
@@ -410,6 +498,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
+        initialMode="inspect"
       />
     );
 
@@ -443,6 +532,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
         onLocationChange={vi.fn()}
         radius={1200}
+        initialMode="inspect"
       />
     );
 
@@ -470,6 +560,112 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
     expect(L.circle).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ radius: 1200 })
+    );
+  });
+
+  it('renders India Safety Overview by default with coverage banner, thematic legend, and state inspection card', async () => {
+    render(
+      <SafetyIntelligenceView
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        onLocationChange={vi.fn()}
+      />
+    );
+
+    // Segmented control exists with India Safety Overview active
+    await waitFor(() => {
+      expect(screen.getByTestId('safety-mode-bar')).toBeDefined();
+    });
+    const overviewBtn = screen.getByTestId('mode-overview-btn');
+    const inspectBtn = screen.getByTestId('mode-inspect-btn');
+    expect(overviewBtn.classList.contains('active')).toBe(true);
+    expect(inspectBtn.classList.contains('active')).toBe(false);
+
+    // Mode A container is rendered
+    expect(screen.getByTestId('safety-overview-section')).toBeDefined();
+
+    // Coverage banner displays statutory numbers
+    const covBanner = screen.getByTestId('safety-coverage-banner');
+    expect(covBanner.textContent).toContain('36 of 36 States & UTs');
+    expect(covBanner.textContent).toContain('258.1');
+
+    // Thematic legend renders with 3 tiers
+    const legend = screen.getByTestId('safety-thematic-legend');
+    expect(legend.textContent).toContain('Lower Rate');
+    expect(legend.textContent).toContain('< 200 per 100k');
+    expect(legend.textContent).toContain('Moderate Rate');
+    expect(legend.textContent).toContain('200–350 per 100k');
+    expect(legend.textContent).toContain('Higher Recorded');
+    expect(legend.textContent).toContain('> 350 per 100k');
+
+    // State inspection card renders NCT of Delhi by default
+    await waitFor(() => {
+      expect(screen.getByTestId('state-inspection-card')).toBeDefined();
+    });
+    expect(screen.getByText('NCT of Delhi')).toBeDefined();
+    expect(screen.getByText('1422.6')).toBeDefined();
+    expect(screen.getByTestId('state-efir-note')).toBeDefined();
+
+    // Toggle interpretability guide
+    const toggleGuideBtn = screen.getByTestId('toggle-interpret-guide-btn');
+    expect(screen.queryByTestId('interpret-content')).toBeNull();
+    fireEvent.click(toggleGuideBtn);
+    expect(screen.getByTestId('interpret-content')).toBeDefined();
+    expect(screen.getByText(/Registration Volume vs. Street Victimization/i)).toBeDefined();
+  });
+
+  it('switches between India Safety Overview and Check My Location seamlessly', async () => {
+    const handleLocationChange = vi.fn();
+    render(
+      <SafetyIntelligenceView
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        onLocationChange={handleLocationChange}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mode-inspect-btn')).toBeDefined();
+    });
+
+    // Click Check My Location segmented button
+    fireEvent.click(screen.getByTestId('mode-inspect-btn'));
+
+    // Mode B container and local toolbar should appear
+    expect(screen.getByTestId('safety-inspect-section')).toBeDefined();
+    expect(screen.getByTestId('safety-local-toolbar')).toBeDefined();
+    expect(screen.getByTestId('location-evidence-card')).toBeDefined();
+    expect(screen.getByText(/Verified District Telemetry Active/i)).toBeDefined();
+
+    // Nearest police stations should be visible in Mode B
+    expect(screen.getByTestId('nearest-police-stations-card')).toBeDefined();
+
+    // Click Return to India Overview
+    const returnBtn = screen.getByTestId('return-overview-btn');
+    fireEvent.click(returnBtn);
+
+    // Returns to Mode A
+    expect(screen.getByTestId('safety-overview-section')).toBeDefined();
+    expect(screen.queryByTestId('safety-inspect-section')).toBeNull();
+  });
+
+  it('switches to inspect mode when clicking Check Local Evidence in State Inspection card', async () => {
+    const handleLocationChange = vi.fn();
+    render(
+      <SafetyIntelligenceView
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        onLocationChange={handleLocationChange}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('inspect-state-btn')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByTestId('inspect-state-btn'));
+
+    // Should switch to inspect mode and update location if Delhi
+    expect(screen.getByTestId('safety-inspect-section')).toBeDefined();
+    expect(handleLocationChange).toHaveBeenCalledWith(
+      expect.objectContaining({ latitude: 28.6139, longitude: 77.2090 })
     );
   });
 });

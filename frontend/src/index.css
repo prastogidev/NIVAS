@@ -6858,6 +6858,600 @@ label:has(span.required)::after {
   border: 1px solid #FDE68A;
 }
 
+/* ── Two-Mode Segmented Control ────────────────────────────────────────── */
+.safety-mode-segmented-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 0.25rem;
+}
+
+.safety-mode-segmented-control {
+  display: inline-flex;
+  align-items: center;
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  border-radius: 10px;
+  padding: 0.3rem;
+  gap: 0.35rem;
+}
+
+.safety-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted, #64748B);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  line-height: 1;
+}
+
+.safety-mode-btn:hover {
+  color: var(--ink-deep, #1E3A5F);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.safety-mode-btn.active {
+  background: #FFFFFF;
+  color: var(--ink-deep, #1E3A5F);
+  border-color: #CBD5E1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-weight: 700;
+}
+
+/* ── Mode A: National Coverage Banner ──────────────────────────────────── */
+.safety-coverage-banner {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(30, 58, 95, 0.03) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-left: 4px solid #10B981;
+  border-radius: 10px;
+  padding: 1rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.coverage-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.coverage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+.coverage-status-tag {
+  font-size: 0.82rem;
+  color: var(--ink-deep, #1E3A5F);
+  font-weight: 500;
+}
+
+.coverage-metrics-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed rgba(16, 185, 129, 0.25);
+}
+
+.cov-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.cov-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #64748B);
+}
+
+.cov-val {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-deep, #1E3A5F);
+  line-height: 1.35;
+}
+
+/* ── Mode A: Thematic Legend ───────────────────────────────────────────── */
+.safety-thematic-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.85rem 1.15rem;
+}
+
+.thematic-legend-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-deep, #1E3A5F);
+}
+
+.thematic-legend-items {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.thematic-legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  min-width: 190px;
+}
+
+.thematic-color-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+.thematic-chip-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.thematic-chip-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--ink-deep, #1E3A5F);
+}
+
+.thematic-chip-range {
+  font-size: 0.7rem;
+  color: var(--text-muted, #64748B);
+}
+
+.thematic-legend-footnote {
+  font-size: 0.71rem;
+  color: var(--text-muted, #64748B);
+  line-height: 1.4;
+  padding-top: 0.35rem;
+  border-top: 1px dashed #E2E8F0;
+}
+
+/* ── Leaflet Thematic Tooltip ──────────────────────────────────────────── */
+.nivas-thematic-tooltip {
+  background: #0F172A !important;
+  color: #FFFFFF !important;
+  border: 1px solid #334155 !important;
+  border-radius: 8px !important;
+  padding: 0.55rem 0.85rem !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  font-family: inherit !important;
+}
+
+.nivas-thematic-tooltip::before {
+  border-top-color: #0F172A !important;
+}
+
+.thematic-map-tooltip .tmt-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.thematic-map-tooltip .tmt-rate {
+  font-size: 0.75rem;
+  color: #94A3B8;
+  margin-bottom: 0.35rem;
+}
+
+.thematic-map-tooltip .tmt-rate strong {
+  color: #38BDF8;
+}
+
+.thematic-map-tooltip .tmt-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #F1F5F9;
+}
+
+/* ── Mode A: State Inspection Card ─────────────────────────────────────── */
+.state-inspection-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.state-inspection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-color, #E2E8F0);
+}
+
+.state-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.state-badge-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid;
+}
+
+.state-inspection-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink-deep, #1E3A5F);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.state-code-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748B);
+  background: #F1F5F9;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.btn-switch-to-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: var(--ink-deep, #1E3A5F);
+  color: #FFFFFF;
+  border: 1px solid var(--ink-deep, #1E3A5F);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-switch-to-location:hover {
+  background: #0F172A;
+  border-color: #0F172A;
+}
+
+.state-inspection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.si-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+
+.si-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #64748B);
+}
+
+.si-val-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.si-val {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--ink-deep, #1E3A5F);
+  line-height: 1.15;
+}
+
+.si-unit {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748B);
+}
+
+.si-val-status {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink-deep, #1E3A5F);
+}
+
+.si-sub {
+  font-size: 0.71rem;
+  color: var(--text-muted, #64748B);
+  line-height: 1.35;
+}
+
+.state-efir-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: #FEF3C7;
+  border: 1px solid #FCD34D;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.78rem;
+  color: #92400E;
+  line-height: 1.45;
+}
+
+/* ── Mode A: How to Interpret Accordion ────────────────────────────────── */
+.how-to-interpret-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.interpret-toggle-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.35rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.interpret-toggle-header:hover {
+  background: #F8FAFC;
+}
+
+.interpret-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.interpret-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink-deep, #1E3A5F);
+}
+
+.interpret-content {
+  padding: 0 1.35rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-top: 1px solid #E2E8F0;
+  background: #FAFAFA;
+}
+
+.interpret-item {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-main, #334155);
+}
+
+.interpret-item strong {
+  color: var(--ink-deep, #1E3A5F);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.interpret-item p {
+  margin: 0;
+  color: var(--text-muted, #64748B);
+}
+
+/* ── Mode B: Local Actions Toolbar ─────────────────────────────────────── */
+.safety-local-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  background: #F8FAFC;
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: 8px;
+}
+
+.local-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.local-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-local-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-deep, #1E3A5F);
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.btn-local-action:hover {
+  background: #F1F5F9;
+  border-color: #94A3B8;
+}
+
+.btn-local-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-local-action.btn-return-overview {
+  background: rgba(30, 58, 95, 0.06);
+  border-color: rgba(30, 58, 95, 0.2);
+}
+
+.btn-local-action.btn-return-overview:hover {
+  background: rgba(30, 58, 95, 0.12);
+}
+
+/* ── Mode B: Location Evidence Assessment Card ─────────────────────────── */
+.location-evidence-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: 12px;
+  padding: 1.15rem 1.35rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.evidence-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.evidence-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.evidence-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+}
+
+.evidence-status-badge.status-active {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+.evidence-status-badge.status-outside {
+  background: #FFFBEB;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+
+.evidence-source-tag {
+  font-size: 0.72rem;
+  color: var(--text-muted, #64748B);
+}
+
+.evidence-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink-deep, #1E3A5F);
+  margin: 0 0 0.65rem 0;
+  line-height: 1.3;
+}
+
+.evidence-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+
+.evidence-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 0.65rem 0.85rem;
+}
+
+.ed-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #64748B);
+}
+
+.ed-val {
+  font-size: 0.8rem;
+  color: var(--text-main, #334155);
+  line-height: 1.4;
+}
+
+.evidence-summary-outside .outside-notice-p {
+  font-size: 0.82rem;
+  color: var(--text-muted, #64748B);
+  line-height: 1.5;
+  margin: 0 0 0.5rem 0;
+}
+
 /* ── National Context & District Map View Controls ─────────────────────── */
 .map-view-controls-bar {
   display: flex;

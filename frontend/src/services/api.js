@@ -64,6 +64,12 @@ export const fetchSafetyData = async ({ latitude, longitude, address, radius }, 
   return response.data;
 };
 
+export const fetchNationalSafetyOverview = async (signal) => {
+  const response = await apiClient.get('/api/livability/national-safety-overview', { signal });
+  return response.data;
+};
+
+
 export const fetchDisasterHazardData = async ({ latitude, longitude, address }, signal) => {
   const params = { latitude, longitude };
   if (address) params.address = address;
