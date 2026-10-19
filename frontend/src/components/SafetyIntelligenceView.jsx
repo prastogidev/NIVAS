@@ -214,7 +214,77 @@ export default function SafetyIntelligenceView({
         )}
       </div>
 
-      {/* 2. Official State/UT Baseline Benchmark Card (NCRB Table 1A.1) */}
+      {/* 2. Interactive Map with District Boundary & Real Police Stations (Placed First) */}
+      <div className="card safety-map-panel" data-testid="safety-map-panel">
+        <div className="safety-map-header">
+          <div className="safety-map-title-wrap">
+            <MapPin size={18} className="section-icon" />
+            <div>
+              <h3>Police District Jurisdiction & Emergency Infrastructure</h3>
+              <span className="map-subtitle">
+                Green boundary indicates indicative reference territory for {matchedDistrict ? matchedDistrict.district_name : 'Police District'} (spatial approximation; not an official cadastral boundary). Markers indicate verified physical police facilities.
+              </span>
+            </div>
+          </div>
+
+          {matchedDistrict?.headquarters && (
+            <div className="hq-indicator">
+              <span className="hq-label">District HQ:</span>
+              <span className="hq-val">{matchedDistrict.headquarters}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="safety-map-container">
+          <PropertyLocationPicker
+            latitude={location.latitude}
+            longitude={location.longitude}
+            onLocationChange={onLocationChange}
+            mapHeight={380}
+            radiusCircleMeters={radius}
+            showRadius={false}
+            showSearchRadius={false}
+            polygonCoords={matchedDistrict?.jurisdiction_polygon}
+            polygonStyle={{
+              color: '#059669',
+              weight: 2.5,
+              opacity: 0.85,
+              fillColor: '#10B981',
+              fillOpacity: 0.12,
+            }}
+            overlayMarkers={policeStations.map((station) => ({
+              ...station,
+              category: 'police',
+              color: '#0D9488',
+            }))}
+            searchPlaceholder="Search address or locality in Delhi (e.g. Connaught Place, Dwarka, Rohini)..."
+          />
+        </div>
+
+        {/* Unobtrusive Map GIS Legend */}
+        <div className="safety-map-legend" data-testid="safety-map-legend">
+          <span className="legend-chip">
+            <span className="legend-swatch boundary-swatch" />
+            <span>Police District Boundary (Indicative spatial approximation)</span>
+          </span>
+          <span className="legend-chip">
+            <span className="legend-dot police-station-dot" />
+            <span>Verified Physical Police Stations (OpenStreetMap)</span>
+          </span>
+          <span className="legend-chip">
+            <span className="legend-dot user-pin-dot" />
+            <span>Selected Search Location</span>
+          </span>
+        </div>
+
+        <div className="safety-map-footer">
+          <span className="safety-footer-text">
+            Straight-line radius: <strong>{(radius / 1000).toFixed(1)} km</strong> · Physical facilities sourced from OpenStreetMap · No synthetic crime incident markers are plotted.
+          </span>
+        </div>
+      </div>
+
+      {/* 3. Official State/UT Baseline Benchmark Card (NCRB Table 1A.1) */}
       {safetyData?.official_state_crime && (
         <div className="card safety-official-benchmark-card" data-testid="official-state-benchmark">
           <div className="official-benchmark-header">
@@ -258,9 +328,9 @@ export default function SafetyIntelligenceView({
         </div>
       )}
 
-      {/* 3. Key Metrics Row */}
+      {/* 3b. Key Crime Intelligence Metrics Row */}
       {matchedDistrict && (
-        <div className="safety-metrics-grid">
+        <div className="safety-metrics-grid" data-testid="safety-metrics-grid">
           <div className="card safety-metric-card">
             <div className="metric-header-row">
               <span className="metric-label">2022 Reported IPC Crimes</span>
@@ -299,7 +369,9 @@ export default function SafetyIntelligenceView({
           </div>
 
           <div className="card safety-metric-card">
-            <span className="metric-label">Clearance / Charge-Sheet Rate</span>
+            <div className="metric-header-row">
+              <span className="metric-label">Clearance / Charge-Sheet Rate</span>
+            </div>
             <div className="metric-value-wrap">
               <span className="metric-num">{matchedDistrict.clearance_rate_pct?.toFixed(1)}%</span>
               <span className="metric-unit">disposed</span>
@@ -308,7 +380,9 @@ export default function SafetyIntelligenceView({
           </div>
 
           <div className="card safety-metric-card">
-            <span className="metric-label">Verified Police Stations in Radius</span>
+            <div className="metric-header-row">
+              <span className="metric-label">Verified Police Stations in Radius</span>
+            </div>
             <div className="metric-value-wrap">
               <span className="metric-num">{policeStations.length}</span>
               <span className="metric-unit">within {(radius / 1000).toFixed(1)} km</span>
@@ -317,53 +391,6 @@ export default function SafetyIntelligenceView({
           </div>
         </div>
       )}
-
-      {/* 4. Interactive Map with District Boundary & Real Police Stations */}
-      <div className="card safety-map-panel">
-        <div className="safety-map-header">
-          <div className="safety-map-title-wrap">
-            <MapPin size={18} className="section-icon" />
-            <div>
-              <h3>Police District Jurisdiction & Emergency Infrastructure</h3>
-              <span className="map-subtitle">
-                Green boundary indicates indicative reference territory for {matchedDistrict ? matchedDistrict.district_name : 'Police District'} (spatial approximation; not an official cadastral boundary). Markers indicate verified physical police facilities.
-              </span>
-            </div>
-          </div>
-
-          {matchedDistrict?.headquarters && (
-            <div className="hq-indicator">
-              <span className="hq-label">District HQ:</span>
-              <span className="hq-val">{matchedDistrict.headquarters}</span>
-            </div>
-          )}
-        </div>
-
-        <div className="safety-map-container" style={{ height: 340 }}>
-          <PropertyLocationPicker
-            latitude={location.latitude}
-            longitude={location.longitude}
-            onLocationChange={onLocationChange}
-            mapHeight={340}
-            radiusCircleMeters={radius}
-            polygonCoords={matchedDistrict?.jurisdiction_polygon}
-            polygonStyle={{
-              color: '#059669',
-              weight: 2.5,
-              opacity: 0.85,
-              fillColor: '#10B981',
-              fillOpacity: 0.12,
-            }}
-            overlayMarkers={policeStations}
-          />
-        </div>
-
-        <div className="safety-map-footer">
-          <span className="safety-footer-text">
-            Straight-line radius: <strong>{(radius / 1000).toFixed(1)} km</strong> · Physical facilities sourced from OpenStreetMap · No synthetic crime incident markers are plotted.
-          </span>
-        </div>
-      </div>
 
       {/* 4. Categorical Breakdown Cards */}
       {categories.length > 0 && (

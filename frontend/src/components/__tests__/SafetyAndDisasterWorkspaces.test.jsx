@@ -1,6 +1,8 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import L from 'leaflet';
+import PropertyLocationPicker from '../PropertyLocationPicker';
 import SafetyIntelligenceView from '../SafetyIntelligenceView';
 import DisasterWorkspace from '../DisasterWorkspace';
 import App from '../../App';
@@ -15,11 +17,25 @@ vi.mock('leaflet', () => {
     invalidateSize: vi.fn(),
     on: vi.fn(),
     fitBounds: vi.fn(),
+    createPane: vi.fn(),
+    getPane: vi.fn(),
   };
 
   const mockLayerGroup = {
     addTo: vi.fn(function() { return this; }),
     clearLayers: vi.fn(function() { return this; }),
+  };
+
+  const mockCircle = {
+    addTo: vi.fn(function() { return this; }),
+    setLatLng: vi.fn(),
+    setRadius: vi.fn(),
+    redraw: vi.fn(),
+    remove: vi.fn(),
+  };
+
+  const mockPolygon = {
+    addTo: vi.fn(function() { return this; }),
   };
 
   return {
@@ -28,8 +44,8 @@ vi.mock('leaflet', () => {
       tileLayer: () => ({ addTo: () => {} }),
       layerGroup: () => mockLayerGroup,
       geoJSON: () => ({ addTo: () => {} }),
-      polygon: () => ({ addTo: () => {} }),
-      circle: () => ({ addTo: () => {} }),
+      polygon: vi.fn(() => mockPolygon),
+      circle: vi.fn(() => mockCircle),
       marker: () => ({
         addTo: function() { return this; },
         bindPopup: function() { return this; },
@@ -278,6 +294,74 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
     fireEvent.click(screen.getByTestId('year-col-2021'));
     expect(screen.getByTestId('trend-year-focus')).toBeDefined();
     expect(screen.getByText('7,450 IPC cases')).toBeDefined();
+  });
+
+  it('renders map first before official benchmark and crime report cards with clean unobtrusive legend', async () => {
+    render(
+      <SafetyIntelligenceView
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        onLocationChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('safety-map-panel')).toBeDefined();
+    });
+
+    const mapPanel = screen.getByTestId('safety-map-panel');
+    const benchmarkCard = screen.getByTestId('official-state-benchmark');
+    const metricsGrid = screen.getByTestId('safety-metrics-grid');
+
+    // Verify map is rendered before benchmark and metrics cards in DOM order
+    expect(mapPanel.compareDocumentPosition(benchmarkCard) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(mapPanel.compareDocumentPosition(metricsGrid) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(benchmarkCard.compareDocumentPosition(metricsGrid) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    // Verify clean unobtrusive legend exists with district boundary and police stations
+    const legend = screen.getByTestId('safety-map-legend');
+    expect(legend).toBeDefined();
+    expect(legend.textContent).toContain('Police District Boundary');
+    expect(legend.textContent).toContain('Verified Physical Police Stations');
+    expect(legend.textContent).toContain('Selected Search Location');
+  });
+
+  it('disables radius circle on safety map while preserving radius circle on default/livability map', async () => {
+    L.circle.mockClear();
+
+    // Render SafetyIntelligenceView which has showRadius={false}
+    const { unmount } = render(
+      <SafetyIntelligenceView
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        onLocationChange={vi.fn()}
+        radius={1200}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('safety-map-panel')).toBeDefined();
+    });
+
+    // In SafetyIntelligenceView, L.circle must NOT be called for the radius
+    expect(L.circle).not.toHaveBeenCalled();
+
+    unmount();
+
+    // Now render PropertyLocationPicker with default showRadius={true} (used by Livability)
+    L.circle.mockClear();
+    render(
+      <PropertyLocationPicker
+        latitude={28.5921}
+        longitude={77.0460}
+        onLocationChange={vi.fn()}
+        radiusCircleMeters={1200}
+      />
+    );
+
+    // With default showRadius={true}, L.circle MUST be called with radius 1200
+    expect(L.circle).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ radius: 1200 })
+    );
   });
 });
 

@@ -34,15 +34,17 @@ const FACILITY_VISUALS = {
   pharmacy: { color: '#DC2626', icon: '💊', border: '#B91C1C' },
   transit: { color: '#059669', icon: '🚏', border: '#047857' },
   railway: { color: '#059669', icon: '🚆', border: '#047857' },
-  police: { color: '#D97706', icon: '🛡️', border: '#B45309' },
+  police: { color: '#0D9488', icon: '🛡️', border: '#0F766E' },
   fire: { color: '#D97706', icon: '🚒', border: '#B45309' },
   road: { color: '#475569', icon: '🛣️', border: '#334155' },
 };
 
-const createFacilityMarkerIcon = (category) => {
+const createFacilityMarkerIcon = (category, customColor) => {
   const vis = FACILITY_VISUALS[category] || { color: '#1E3A5F', icon: '📍', border: '#0F172A' };
+  const pinColor = customColor || vis.color;
+  const pinBorder = customColor ? customColor : vis.border;
   const html = `
-    <div class="facility-map-pin facility-${category || 'general'}" style="background-color: ${vis.color};">
+    <div class="facility-map-pin facility-${category || 'general'}" style="background-color: ${pinColor}; border-color: ${pinBorder};">
       <span class="facility-map-icon">${vis.icon}</span>
     </div>
   `;
@@ -104,11 +106,14 @@ export default function PropertyLocationPicker({
   selectedFacilityId = null,
   onFacilitySelect = null,
   radiusCircleMeters = null,
+  showRadius = true,
+  showSearchRadius = undefined,
   polygonCoords = null,
   polygonStyle = null,
   geoJsonLayers = null,
   children,
 }) {
+  const isRadiusVisible = showSearchRadius !== undefined ? Boolean(showSearchRadius) : Boolean(showRadius);
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerInstanceRef = useRef(null);
@@ -284,8 +289,8 @@ export default function PropertyLocationPicker({
         autoPan: true,
       }).addTo(map);
 
-      // Immediately instantiate radius circle if radiusCircleMeters > 0
-      if (typeof radiusCircleMeters === 'number' && radiusCircleMeters > 0 && typeof L.circle === 'function') {
+      // Immediately instantiate radius circle if isRadiusVisible and radiusCircleMeters > 0
+      if (isRadiusVisible && typeof radiusCircleMeters === 'number' && radiusCircleMeters > 0 && typeof L.circle === 'function') {
         const circlePane = (typeof map.getPane === 'function' && map.getPane('radiusCirclePane')) ? 'radiusCirclePane' : undefined;
         circleInstanceRef.current = L.circle([validLat, validLon], {
           radius: radiusCircleMeters,
@@ -406,7 +411,7 @@ export default function PropertyLocationPicker({
       }
 
       const facMarker = L.marker([item.latitude, item.longitude], {
-        icon: createFacilityMarkerIcon(item.category),
+        icon: createFacilityMarkerIcon(item.category, item.color),
         riseOnHover: true,
       });
 
@@ -459,7 +464,7 @@ export default function PropertyLocationPicker({
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
-    if (typeof radiusCircleMeters === 'number' && radiusCircleMeters > 0 && typeof L.circle === 'function') {
+    if (isRadiusVisible && typeof radiusCircleMeters === 'number' && radiusCircleMeters > 0 && typeof L.circle === 'function') {
       const pinPos = markerInstanceRef.current ? markerInstanceRef.current.getLatLng() : null;
       const centerLat = pinPos ? pinPos.lat : (typeof latitude === 'number' && !isNaN(latitude) ? latitude : validLat);
       const centerLon = pinPos ? pinPos.lng : (typeof longitude === 'number' && !isNaN(longitude) ? longitude : validLon);
@@ -492,7 +497,7 @@ export default function PropertyLocationPicker({
       }
       circleInstanceRef.current = null;
     }
-  }, [latitude, longitude, radiusCircleMeters, validLat, validLon]);
+  }, [latitude, longitude, radiusCircleMeters, isRadiusVisible, validLat, validLon]);
 
   // Synchronize boundary polygon and GeoJSON hazard layers
   useEffect(() => {
