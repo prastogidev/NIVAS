@@ -13,6 +13,8 @@ import {
   Building2,
   Scale,
   Compass,
+  Crosshair,
+  Navigation,
   Loader2,
   RefreshCw,
 } from 'lucide-react';
@@ -31,6 +33,7 @@ export default function SafetyIntelligenceView({
   const [retryTrigger, setRetryTrigger] = useState(0);
   const [showProvenance, setShowProvenance] = useState(false);
   const [selectedYear, setSelectedYear] = useState('2022');
+  const [selectedFacilityId, setSelectedFacilityId] = useState(null);
 
   const activeRequestRef = useRef(0);
 
@@ -78,9 +81,24 @@ export default function SafetyIntelligenceView({
   const matchedDistrict = safetyData?.matched_district;
   const categories = matchedDistrict?.categories_2022 || [];
   const historicalTrend = matchedDistrict?.historical_trend_ipc || {};
-  const policeStations = safetyData?.nearby_police_stations || [];
+  const nearbyStations = safetyData?.nearby_police_stations || [];
+  const nearestStations = safetyData?.nearest_police_stations?.length > 0
+    ? safetyData.nearest_police_stations
+    : (nearbyStations.length > 0 ? nearbyStations : []);
   const stateBenchmark = matchedDistrict?.state_ut_benchmark || {};
   const provenance = matchedDistrict?.provenance_details;
+
+  // Combine station markers to display on safety map
+  const mapStationMarkers = (nearestStations.length > 0 ? nearestStations : nearbyStations).map((station, idx) => ({
+    id: station.osm_id || `station_${idx}`,
+    name: station.name,
+    latitude: station.latitude,
+    longitude: station.longitude,
+    category: 'police',
+    category_label: station.locality ? `Police Station (${station.locality})` : 'Police Station',
+    color: '#0D9488',
+    source: station.source || 'OpenStreetMap / Delhi Police Directory',
+  }));
 
   return (
     <div className="safety-view-root" data-testid="safety-intelligence-view">
@@ -240,10 +258,16 @@ export default function SafetyIntelligenceView({
             latitude={location.latitude}
             longitude={location.longitude}
             onLocationChange={onLocationChange}
-            mapHeight={380}
+            mapHeight={420}
+            initialZoom={14}
+            initialView="national"
+            showViewControls={true}
+            districtLabel={matchedDistrict?.district_name}
             radiusCircleMeters={radius}
             showRadius={false}
             showSearchRadius={false}
+            selectedFacilityId={selectedFacilityId}
+            onFacilitySelect={(fac) => setSelectedFacilityId(fac.id)}
             polygonCoords={matchedDistrict?.jurisdiction_polygon}
             polygonStyle={{
               color: '#059669',
@@ -252,11 +276,7 @@ export default function SafetyIntelligenceView({
               fillColor: '#10B981',
               fillOpacity: 0.12,
             }}
-            overlayMarkers={policeStations.map((station) => ({
-              ...station,
-              category: 'police',
-              color: '#0D9488',
-            }))}
+            overlayMarkers={mapStationMarkers}
             searchPlaceholder="Search address or locality in Delhi (e.g. Connaught Place, Dwarka, Rohini)..."
           />
         </div>
@@ -381,13 +401,17 @@ export default function SafetyIntelligenceView({
 
           <div className="card safety-metric-card">
             <div className="metric-header-row">
-              <span className="metric-label">Verified Police Stations in Radius</span>
+              <span className="metric-label">Police Stations in Radius</span>
             </div>
             <div className="metric-value-wrap">
-              <span className="metric-num">{policeStations.length}</span>
+              <span className="metric-num">{nearbyStations.length}</span>
               <span className="metric-unit">within {(radius / 1000).toFixed(1)} km</span>
             </div>
-            <span className="metric-foot">Real OpenStreetMap GIS facilities</span>
+            <span className="metric-foot">
+              {nearestStations.length > 0
+                ? `${nearestStations.length} nearest verified stations listed below`
+                : 'Real OpenStreetMap GIS facilities'}
+            </span>
           </div>
         </div>
       )}
@@ -511,40 +535,106 @@ export default function SafetyIntelligenceView({
         </div>
       )}
 
-      {/* 6. Verified Nearby Police Stations Directory */}
-      <div className="card safety-stations-card">
+      {/* 6. Genuine Nearest Police Stations Directory */}
+      <div className="card safety-stations-card" data-testid="nearest-police-stations-card">
         <div className="card-section-header">
           <ShieldAlert size={18} className="section-icon" />
-          <div>
-            <h3>Verified Nearby Police Stations ({policeStations.length})</h3>
+          <div className="section-header-text">
+            <h3>Nearest Verified Police Stations Directory</h3>
             <p className="section-subtitle">
-              Physical police stations within the selected {(radius / 1000).toFixed(1)} km radius from OpenStreetMap GIS.
+              Verified operational police facilities sorted strictly by proximity to the selected location, distinguishing immediate neighborhood stations from regional facilities.
             </p>
           </div>
         </div>
 
-        {policeStations.length > 0 ? (
-          <div className="police-stations-list">
-            {policeStations.map((station, idx) => (
-              <div key={idx} className="police-station-row">
-                <div className="station-icon-wrap">
-                  <ShieldCheck size={18} className="station-icon" />
+        {nearestStations.length > 0 ? (
+          <div className="police-stations-directory-grid" data-testid="police-stations-directory-grid">
+            {nearestStations.map((station, idx) => {
+              const stationId = station.osm_id || `station_${idx}`;
+              const isSelected = selectedFacilityId === stationId;
+              const isWithin = Boolean(station.is_within_radius || (typeof station.distance_km === 'number' && station.distance_km <= (radius / 1000.0) + 0.005));
+              const distanceDisplay = station.formatted_distance || (station.distance_km != null ? `${station.distance_km.toFixed(1)} km` : 'Nearby');
+              const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}`;
+
+              return (
+                <div
+                  key={stationId}
+                  className={`police-station-card ${isSelected ? 'selected' : ''}`}
+                  data-testid={`station-card-${idx}`}
+                >
+                  <div className="ps-card-main">
+                    <div className="ps-header-row">
+                      <div className="ps-name-group">
+                        <div className={`ps-icon-badge ${isWithin ? 'in-radius' : 'out-radius'}`}>
+                          <ShieldCheck size={16} />
+                        </div>
+                        <div className="ps-title-container">
+                          <h4 className="ps-title" title={station.name}>{station.name}</h4>
+                          <span className="ps-locality-text">
+                            {station.locality || `${station.latitude.toFixed(4)}° N, ${station.longitude.toFixed(4)}° E`}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="ps-distance-group">
+                        <span className="ps-distance-badge">{distanceDisplay}</span>
+                        <span className={`ps-radius-status ${isWithin ? 'status-within' : 'status-outside'}`}>
+                          {isWithin ? `Within ${(radius / 1000).toFixed(1)} km` : `Outside ${(radius / 1000).toFixed(1)} km`}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="ps-details-row">
+                      <span className="ps-detail-item">
+                        <MapPin size={11} />
+                        <span>{station.latitude.toFixed(4)}° N, {station.longitude.toFixed(4)}° E</span>
+                      </span>
+                      <span className="ps-detail-source">{station.source || 'OpenStreetMap'}</span>
+                    </div>
+
+                    <div className="ps-card-actions">
+                      <button
+                        type="button"
+                        className="btn-ps-action btn-ps-focus"
+                        onClick={() => {
+                          setSelectedFacilityId(stationId);
+                          const mapEl = document.querySelector('.safety-map-panel');
+                          if (mapEl) {
+                            mapEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                          }
+                        }}
+                        title="Focus on map"
+                      >
+                        <Crosshair size={13} />
+                        <span>Focus on Map</span>
+                      </button>
+                      <a
+                        href={gmapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-ps-action btn-ps-directions"
+                        title="Open driving/transit directions in Google Maps"
+                      >
+                        <Navigation size={13} />
+                        <span>Directions</span>
+                        <ExternalLink size={11} />
+                      </a>
+                    </div>
+                  </div>
                 </div>
-                <div className="station-info">
-                  <span className="station-name">{station.name}</span>
-                  <span className="station-coords">
-                    {station.latitude.toFixed(4)}° N, {station.longitude.toFixed(4)}° E · Verified OpenStreetMap facility
-                  </span>
-                </div>
-                <div className="station-distance-badge">
-                  <span>{station.formatted_distance || `${station.distance_km?.toFixed(2)} km`}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <div className="stations-empty-state">
-            <p>0 police stations mapped within {(radius / 1000).toFixed(1)} km in OpenStreetMap. Expand search radius to detect regional stations.</p>
+          <div className="stations-fallback-notice" data-testid="stations-fallback-notice">
+            <Info size={18} className="fallback-notice-icon" />
+            <div className="fallback-notice-text">
+              <strong>Police facility directory temporarily unavailable.</strong>
+              <p>
+                Verified physical police stations are currently indexing for these coordinates.
+                In case of emergency in Delhi or anywhere across India, dial police control <strong>112</strong> immediately.
+              </p>
+            </div>
           </div>
         )}
       </div>

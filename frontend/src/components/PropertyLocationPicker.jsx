@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Search, Loader2, AlertCircle } from 'lucide-react';
+import { Search, Loader2, AlertCircle, Globe, Crosshair } from 'lucide-react';
 
 // Custom SVG icon matching NIVAS theme
 const createNivasMarkerIcon = () => {
@@ -98,6 +98,9 @@ export default function PropertyLocationPicker({
   onLocationChange,
   mapHeight = 280,
   initialZoom = 15,
+  initialView = 'local', // 'local' | 'national'
+  showViewControls = false,
+  districtLabel = null,
   searchQuery: propSearchQuery,
   onSearchQueryChange,
   searchPlaceholder = 'Search address or locality (e.g. Indirapuram, Ghaziabad)...',
@@ -122,6 +125,8 @@ export default function PropertyLocationPicker({
   const polygonLayerRef = useRef(null);
   const facilityMarkersMapRef = useRef(new Map());
   const isInternalUpdateRef = useRef(false);
+  const hasAutoZoomedRef = useRef(false);
+  const [currentView, setCurrentView] = useState(initialView);
 
   // Search input state (supports both uncontrolled and controlled modes)
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
@@ -230,11 +235,13 @@ export default function PropertyLocationPicker({
           // Update map and marker
           if (mapInstanceRef.current && markerInstanceRef.current) {
             isInternalUpdateRef.current = true;
+            hasAutoZoomedRef.current = true;
             mapInstanceRef.current.setView([newLat, newLon], 16);
             markerInstanceRef.current.setLatLng([newLat, newLon]);
             if (circleInstanceRef.current) {
               circleInstanceRef.current.setLatLng([newLat, newLon]);
             }
+            setCurrentView('district');
           }
 
           onLocationChange({
@@ -257,14 +264,49 @@ export default function PropertyLocationPicker({
     }
   };
 
+  // View control handlers (National Overview / District Zoom)
+  const handleResetToIndia = useCallback(() => {
+    if (mapInstanceRef.current) {
+      if (typeof mapInstanceRef.current.flyTo === 'function') {
+        mapInstanceRef.current.flyTo([22.5, 79.0], 4.5, { duration: 1.0 });
+      } else {
+        mapInstanceRef.current.setView([22.5, 79.0], 4.5);
+      }
+      setCurrentView('national');
+    }
+  }, []);
+
+  const handleZoomToDistrict = useCallback(() => {
+    if (!mapInstanceRef.current) return;
+    if (Array.isArray(polygonCoords) && polygonCoords.length >= 3 && typeof L.polygon === 'function') {
+      const latLons = polygonCoords.map((pt) => [pt[1], pt[0]]);
+      const poly = L.polygon(latLons);
+      if (typeof mapInstanceRef.current.fitBounds === 'function') {
+        mapInstanceRef.current.fitBounds(poly.getBounds(), { padding: [28, 28], maxZoom: 14 });
+      } else {
+        mapInstanceRef.current.setView([validLat, validLon], 14);
+      }
+    } else {
+      if (typeof mapInstanceRef.current.flyTo === 'function') {
+        mapInstanceRef.current.flyTo([validLat, validLon], 14, { duration: 1.0 });
+      } else {
+        mapInstanceRef.current.setView([validLat, validLon], 14);
+      }
+    }
+    setCurrentView('district');
+  }, [polygonCoords, validLat, validLon]);
+
   // Initialize Leaflet map once
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
+      const defaultCenter = initialView === 'national' ? [22.5, 79.0] : [validLat, validLon];
+      const defaultZoom = initialView === 'national' ? 4.5 : initialZoom;
+
       const map = L.map(mapContainerRef.current, {
-        center: [validLat, validLon],
-        zoom: initialZoom,
+        center: defaultCenter,
+        zoom: defaultZoom,
         zoomControl: true,
         attributionControl: true,
       });
@@ -451,12 +493,19 @@ export default function PropertyLocationPicker({
     });
   }, [overlayMarkers]);
 
-  // Open marker popup when selectedFacilityId changes without moving the exploration pin
+  // Open marker popup and center map when selectedFacilityId changes without moving the exploration pin
   useEffect(() => {
-    if (!selectedFacilityId || !facilityMarkersMapRef.current) return;
+    if (!selectedFacilityId || !facilityMarkersMapRef.current || !mapInstanceRef.current) return;
     const marker = facilityMarkersMapRef.current.get(String(selectedFacilityId));
-    if (marker && typeof marker.openPopup === 'function') {
-      marker.openPopup();
+    if (marker) {
+      if (typeof mapInstanceRef.current.panTo === 'function') {
+        mapInstanceRef.current.panTo(marker.getLatLng(), { animate: true });
+      } else {
+        mapInstanceRef.current.setView(marker.getLatLng(), 15);
+      }
+      if (typeof marker.openPopup === 'function') {
+        marker.openPopup();
+      }
     }
   }, [selectedFacilityId]);
 
@@ -551,6 +600,25 @@ export default function PropertyLocationPicker({
     }
   }, [polygonCoords, polygonStyle, geoJsonLayers]);
 
+  // Smoothly zoom from national overview into district boundary when polygon first becomes available
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    if (Array.isArray(polygonCoords) && polygonCoords.length >= 3 && typeof L.polygon === 'function') {
+      const latLons = polygonCoords.map((pt) => [pt[1], pt[0]]);
+      const poly = L.polygon(latLons);
+      if (!hasAutoZoomedRef.current && initialView === 'national') {
+        hasAutoZoomedRef.current = true;
+        const timer = setTimeout(() => {
+          if (mapInstanceRef.current && typeof mapInstanceRef.current.fitBounds === 'function') {
+            mapInstanceRef.current.fitBounds(poly.getBounds(), { padding: [28, 28], maxZoom: 14 });
+            setCurrentView('district');
+          }
+        }, 650);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [polygonCoords, initialView]);
+
   // Sync external coordinate changes (e.g. if parent changes lat/lon)
   useEffect(() => {
     if (isInternalUpdateRef.current) {
@@ -626,6 +694,37 @@ export default function PropertyLocationPicker({
       )}
 
       {children}
+
+      {/* Map View Controls (India Overview / District Zoom) */}
+      {showViewControls && (
+        <div className="map-view-controls-bar" data-testid="map-view-controls">
+          <div className="map-view-buttons-group">
+            <button
+              type="button"
+              className={`map-view-toggle-btn ${currentView === 'national' ? 'active' : ''}`}
+              onClick={handleResetToIndia}
+              data-testid="reset-to-india-view-btn"
+              title="Reset map to national overview of India"
+            >
+              <Globe size={13} />
+              <span>Reset to India view</span>
+            </button>
+            <button
+              type="button"
+              className={`map-view-toggle-btn ${currentView === 'district' ? 'active' : ''}`}
+              onClick={handleZoomToDistrict}
+              data-testid="zoom-to-district-btn"
+              title="Zoom into selected district boundary"
+            >
+              <Crosshair size={13} />
+              <span>{districtLabel ? `Zoom to ${districtLabel}` : 'Zoom to selected district'}</span>
+            </button>
+          </div>
+          <span className="map-view-status-hint">
+            {currentView === 'national' ? 'National Overview (India)' : (districtLabel ? `${districtLabel} View` : 'District View')}
+          </span>
+        </div>
+      )}
 
       {/* Interactive Map Box */}
       <div

@@ -12,6 +12,8 @@ import * as api from '../../services/api';
 vi.mock('leaflet', () => {
   const mockMap = {
     setView: vi.fn(),
+    flyTo: vi.fn(),
+    panTo: vi.fn(),
     getZoom: () => 14,
     remove: vi.fn(),
     invalidateSize: vi.fn(),
@@ -121,18 +123,56 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
     },
     nearby_police_stations: [
       {
+        osm_id: 'node_dwk_23',
         name: 'Dwarka Sector 23 Police Station',
         latitude: 28.5833,
         longitude: 77.0500,
         distance_km: 1.1,
-        address: 'Sector 23, Dwarka, Delhi',
+        formatted_distance: '1.1 km',
+        locality: 'Sector 23, Dwarka',
+        is_within_radius: true,
       },
       {
+        osm_id: 'node_dwk_north',
         name: 'Dwarka North Police Station',
         latitude: 28.6050,
         longitude: 77.0400,
         distance_km: 1.5,
-        address: 'Sector 16B, Dwarka, Delhi',
+        formatted_distance: '1.5 km',
+        locality: 'Sector 17, Dwarka',
+        is_within_radius: false,
+      },
+    ],
+    nearest_police_stations: [
+      {
+        osm_id: 'node_dwk_23',
+        name: 'Dwarka Sector 23 Police Station',
+        latitude: 28.5833,
+        longitude: 77.0500,
+        distance_km: 1.1,
+        formatted_distance: '1.1 km',
+        locality: 'Sector 23, Dwarka',
+        is_within_radius: true,
+      },
+      {
+        osm_id: 'node_dwk_north',
+        name: 'Dwarka North Police Station',
+        latitude: 28.6050,
+        longitude: 77.0400,
+        distance_km: 1.5,
+        formatted_distance: '1.5 km',
+        locality: 'Sector 17, Dwarka',
+        is_within_radius: false,
+      },
+      {
+        osm_id: 'node_dwk_south',
+        name: 'Dwarka South Police Station',
+        latitude: 28.5772,
+        longitude: 77.0610,
+        distance_km: 2.2,
+        formatted_distance: '2.2 km',
+        locality: 'Sector 9, Dwarka',
+        is_within_radius: false,
       },
     ],
   };
@@ -223,7 +263,7 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
     expect(screen.getByText('Violent Crimes (Robbery, Murder, Assault)')).toBeDefined();
   });
 
-  it('renders OSM-verified local police stations', async () => {
+  it('renders Nearest Police Stations Directory with distances, localities, within/outside badges, and actions', async () => {
     render(
       <SafetyIntelligenceView
         location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
@@ -232,12 +272,81 @@ describe('Safety & Crime Intelligence Workspace Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Dwarka Sector 23 Police Station')).toBeDefined();
+      expect(screen.getByTestId('nearest-police-stations-card')).toBeDefined();
     });
 
-    expect(screen.getByText(/1.10? km/i)).toBeDefined();
+    expect(screen.getByText('Nearest Verified Police Stations Directory')).toBeDefined();
+    expect(screen.getByText('Dwarka Sector 23 Police Station')).toBeDefined();
+    expect(screen.getByText('Sector 23, Dwarka')).toBeDefined();
+    expect(screen.getByText('1.1 km')).toBeDefined();
+    expect(screen.getByText('Within 1.2 km')).toBeDefined();
+
     expect(screen.getByText('Dwarka North Police Station')).toBeDefined();
-    expect(screen.getByText(/1.50? km/i)).toBeDefined();
+    expect(screen.getByText('Sector 17, Dwarka')).toBeDefined();
+    expect(screen.getByText('1.5 km')).toBeDefined();
+    expect(screen.getAllByText('Outside 1.2 km').length).toBeGreaterThanOrEqual(1);
+
+    expect(screen.getByText('Dwarka South Police Station')).toBeDefined();
+    expect(screen.getByText('2.2 km')).toBeDefined();
+
+    // Verify Focus on Map and Directions action buttons exist
+    const focusButtons = screen.getAllByRole('button', { name: /Focus on Map/i });
+    expect(focusButtons.length).toBe(3);
+    const directionLinks = screen.getAllByRole('link', { name: /Directions/i });
+    expect(directionLinks.length).toBe(3);
+  });
+
+  it('renders map view controls with Reset to India view and Zoom to selected district', async () => {
+    render(
+      <SafetyIntelligenceView
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        onLocationChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('map-view-controls')).toBeDefined();
+    });
+
+    const resetBtn = screen.getByTestId('reset-to-india-view-btn');
+    expect(resetBtn).toBeDefined();
+    expect(resetBtn.textContent).toContain('Reset to India view');
+
+    const zoomDistrictBtn = screen.getByTestId('zoom-to-district-btn');
+    expect(zoomDistrictBtn).toBeDefined();
+    expect(zoomDistrictBtn.textContent).toContain('Zoom to Dwarka (South-West)');
+
+    // Click Reset to India view
+    fireEvent.click(resetBtn);
+    expect(resetBtn.classList.contains('active')).toBe(true);
+
+    // Click Zoom to selected district
+    fireEvent.click(zoomDistrictBtn);
+    expect(zoomDistrictBtn.classList.contains('active')).toBe(true);
+  });
+
+  it('displays helpful fallback notice rather than misleading zero when stations are unavailable', async () => {
+    const emptyStationsMock = {
+      ...mockSafetyResponse,
+      nearby_police_stations: [],
+      nearest_police_stations: [],
+    };
+    vi.spyOn(api, 'fetchSafetyData').mockResolvedValue(emptyStationsMock);
+
+    render(
+      <SafetyIntelligenceView
+        location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        onLocationChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('stations-fallback-notice')).toBeDefined();
+    });
+
+    expect(screen.getByText(/Police facility directory temporarily unavailable/i)).toBeDefined();
+    expect(screen.getByText(/dial police control/i)).toBeDefined();
+    expect(screen.queryByText(/0 police stations mapped within/i)).toBeNull();
   });
 
   it('renders statutory disclosures and official data provenance', async () => {

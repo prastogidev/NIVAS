@@ -6805,8 +6805,29 @@ label:has(span.required)::after {
 .safety-header-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.65rem;
   flex-wrap: wrap;
+  align-self: flex-start;
+}
+
+.safety-header-actions .btn-outline-sm,
+.safety-header-actions .btn-secondary-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.safety-header-actions .btn-outline-sm:hover {
+  background: var(--bg-subtle, #F1F5F9);
+  border-color: #94A3B8;
 }
 
 .safety-status-row {
@@ -6835,6 +6856,60 @@ label:has(span.required)::after {
   background: #FFFBEB;
   color: #92400E;
   border: 1px solid #FDE68A;
+}
+
+/* ── National Context & District Map View Controls ─────────────────────── */
+.map-view-controls-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  background: #F8FAFC;
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: 8px;
+  margin-bottom: 0.65rem;
+}
+
+.map-view-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.map-view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-deep, #1E3A5F);
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.map-view-toggle-btn:hover {
+  background: #F1F5F9;
+  border-color: #94A3B8;
+}
+
+.map-view-toggle-btn.active {
+  background: var(--ink-deep, #1E3A5F);
+  color: #FFFFFF;
+  border-color: var(--ink-deep, #1E3A5F);
+}
+
+.map-view-status-hint {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748B);
 }
 
 /* ── Police District Jurisdiction & Emergency Infrastructure Map ──────── */
@@ -6998,42 +7073,42 @@ label:has(span.required)::after {
 
 .official-benchmark-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
 }
 
 @media (max-width: 860px) {
   .official-benchmark-grid {
     grid-template-columns: 1fr;
-    gap: 0.85rem;
+    gap: 1rem;
   }
 }
 
 .ob-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.35rem;
   min-width: 0;
 }
 
 .ob-label {
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   color: var(--text-muted, #64748B);
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .ob-val-wrap {
   display: flex;
   align-items: baseline;
-  gap: 0.35rem;
+  gap: 0.45rem;
   flex-wrap: wrap;
 }
 
 .ob-val {
-  font-size: 1.45rem;
+  font-size: 1.55rem;
   font-weight: 700;
   color: var(--ink-deep, #1E3A5F);
   line-height: 1.15;
@@ -7041,33 +7116,34 @@ label:has(span.required)::after {
 }
 
 .ob-val-text {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #1E40AF;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .ob-unit {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: var(--text-muted, #64748B);
 }
 
 .ob-sub {
-  font-size: 0.72rem;
-  color: var(--text-dim, #94A3B8);
-  line-height: 1.35;
+  font-size: 0.74rem;
+  color: var(--text-muted, #64748B);
+  line-height: 1.4;
 }
 
 /* ── Key Crime Intelligence Metrics Row ────────────────────────────────── */
 .safety-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
 }
 
 @media (max-width: 1024px) {
   .safety-metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -7081,11 +7157,11 @@ label:has(span.required)::after {
   background: var(--bg-paper, #FFFFFF);
   border: 1px solid var(--border-color, #E2E8F0);
   border-radius: 10px;
-  padding: 1.15rem 1.25rem;
+  padding: 1.2rem 1.25rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 0.65rem;
+  gap: 0.75rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   min-width: 0;
   transition: all 0.2s ease;
@@ -7102,16 +7178,19 @@ label:has(span.required)::after {
   justify-content: space-between;
   gap: 0.5rem;
   width: 100%;
+  min-width: 0;
 }
 
 .metric-label {
-  font-size: 0.76rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-muted, #64748B);
   line-height: 1.35;
   flex: 1;
+  min-width: 0;
+  word-break: break-word;
 }
 
 .metric-derived-badge {
@@ -7119,7 +7198,7 @@ label:has(span.required)::after {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 0.15rem 0.45rem;
+  padding: 0.2rem 0.5rem;
   border-radius: 4px;
   background: rgba(217, 119, 6, 0.1);
   color: #B45309;
@@ -7133,11 +7212,11 @@ label:has(span.required)::after {
   align-items: baseline;
   gap: 0.45rem;
   flex-wrap: wrap;
-  margin-top: 0.15rem;
+  margin-top: 0.1rem;
 }
 
 .metric-num {
-  font-size: 1.55rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--ink-deep, #1E3A5F);
   line-height: 1.15;
@@ -7151,8 +7230,8 @@ label:has(span.required)::after {
 }
 
 .metric-foot {
-  font-size: 0.72rem;
-  color: var(--text-dim, #94A3B8);
+  font-size: 0.73rem;
+  color: var(--text-muted, #64748B);
   line-height: 1.4;
   margin-top: auto;
   border-top: 1px dashed rgba(226, 232, 240, 0.8);
@@ -7374,7 +7453,7 @@ label:has(span.required)::after {
   line-height: 1.4;
 }
 
-/* ── Verified Nearby Police Stations Directory ────────────────────────── */
+/* ── Verified Nearest Police Stations Directory ───────────────────────── */
 .safety-stations-card {
   background: var(--bg-paper, #FFFFFF);
   border: 1px solid var(--border-color, #E2E8F0);
@@ -7383,83 +7462,246 @@ label:has(span.required)::after {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.police-stations-list {
+.police-stations-directory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
-.police-station-row {
+@media (max-width: 860px) {
+  .police-stations-directory-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.police-station-card {
   background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  padding: 0.75rem 0.95rem;
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: space-between;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+  min-width: 0;
+}
+
+.police-station-card:hover {
+  border-color: #CBD5E1;
+  background: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.police-station-card.selected {
+  border-color: #0D9488;
+  background: #F0FDFA;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+}
+
+.ps-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.ps-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: 0.75rem;
   min-width: 0;
 }
 
-.station-icon-wrap {
+.ps-name-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.ps-icon-badge {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: #CCFBF1;
-  color: #0D9488;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.station-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+.ps-icon-badge.in-radius {
+  background: #CCFBF1;
+  color: #0D9488;
+  border: 1px solid #99F6E4;
+}
+
+.ps-icon-badge.out-radius {
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+}
+
+.ps-title-container {
   flex: 1;
   min-width: 0;
 }
 
-.station-name {
-  font-size: 0.85rem;
+.ps-title {
+  font-size: 0.92rem;
   font-weight: 700;
   color: var(--ink-deep, #1E3A5F);
+  margin: 0 0 0.2rem 0;
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.station-coords {
-  font-size: 0.7rem;
+.ps-locality-text {
+  font-size: 0.74rem;
   color: var(--text-muted, #64748B);
+  display: block;
+  line-height: 1.35;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.station-distance-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 0.18rem 0.5rem;
-  border-radius: 4px;
-  background: #FFFFFF;
-  color: #0D9488;
-  border: 1px solid #99F6E4;
-  white-space: nowrap;
+.ps-distance-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
   flex-shrink: 0;
 }
 
-.stations-empty-state {
-  padding: 1.25rem;
-  text-align: center;
-  background: #F8FAFC;
-  border-radius: 8px;
-  border: 1px dashed #CBD5E1;
+.ps-distance-badge {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink-deep, #1E3A5F);
+  line-height: 1.2;
+}
+
+.ps-radius-status {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.ps-radius-status.status-within {
+  background: #CCFBF1;
+  color: #0F766E;
+  border: 1px solid #99F6E4;
+}
+
+.ps-radius-status.status-outside {
+  background: #F1F5F9;
+  color: #64748B;
+  border: 1px solid #E2E8F0;
+}
+
+.ps-details-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
   color: var(--text-muted, #64748B);
+  padding-top: 0.45rem;
+  border-top: 1px dashed rgba(226, 232, 240, 0.9);
+}
+
+.ps-detail-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ps-detail-source {
+  font-size: 0.68rem;
+  color: #94A3B8;
+}
+
+.ps-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.btn-ps-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex: 1;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.btn-ps-focus {
+  background: #FFFFFF;
+  color: var(--ink-deep, #1E3A5F);
+  border: 1px solid #CBD5E1;
+}
+
+.btn-ps-focus:hover {
+  background: #F1F5F9;
+  border-color: #94A3B8;
+}
+
+.btn-ps-directions {
+  background: rgba(13, 148, 136, 0.1);
+  color: #0F766E;
+  border: 1px solid rgba(13, 148, 136, 0.3);
+}
+
+.btn-ps-directions:hover {
+  background: rgba(13, 148, 136, 0.18);
+  border-color: #0D9488;
+}
+
+.stations-fallback-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1.15rem 1.25rem;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  color: var(--text-main, #334155);
   font-size: 0.82rem;
-  margin-top: 0.75rem;
+  line-height: 1.45;
+  margin-top: 0.85rem;
+}
+
+.fallback-notice-icon {
+  color: #0284C7;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.fallback-notice-text strong {
+  color: var(--ink-deep, #1E3A5F);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.fallback-notice-text p {
+  margin: 0;
+  color: var(--text-muted, #64748B);
 }
 
 /* ── Mandatory Transparency & Disclosures ────────────────────────────── */
