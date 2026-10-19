@@ -40,10 +40,28 @@ def calculate_haversine_distance_km(
 BASE_DIR = Path(__file__).resolve().parent.parent
 CRIME_DATA_PATH = BASE_DIR / "data" / "crime" / "delhi_district_crime_baseline.json"
 DISTRICTS_GEOJSON_PATH = BASE_DIR / "data" / "crime" / "delhi_police_districts.geojson"
+POLICE_STATIONS_PATH = BASE_DIR / "data" / "crime" / "delhi_police_stations_reference.json"
 
 # Module-level cache
 _CACHED_BASELINE: Optional[Dict[str, Any]] = None
 _CACHED_GEOJSON: Optional[Dict[str, Any]] = None
+_CACHED_POLICE_STATIONS: Optional[List[Dict[str, Any]]] = None
+
+
+def load_police_stations_reference() -> List[Dict[str, Any]]:
+    global _CACHED_POLICE_STATIONS
+    if _CACHED_POLICE_STATIONS is None:
+        try:
+            if POLICE_STATIONS_PATH.exists():
+                with open(POLICE_STATIONS_PATH, "r", encoding="utf-8") as f:
+                    _CACHED_POLICE_STATIONS = json.load(f)
+            else:
+                logger.warning("Police stations reference file not found at %s", POLICE_STATIONS_PATH)
+                _CACHED_POLICE_STATIONS = []
+        except Exception as e:
+            logger.error("Error loading police stations reference: %s", e)
+            _CACHED_POLICE_STATIONS = []
+    return _CACHED_POLICE_STATIONS
 
 
 def load_crime_baseline() -> Dict[str, Any]:
@@ -282,36 +300,105 @@ async def get_locality_safety_data(
         provenance_details=provenance_details,
     )
 
-    # 6. Query real emergency / police stations from OpenStreetMap via location service
+    # 6. Resolve verified emergency / police facilities (OpenStreetMap + Official Reference Catalog)
     nearby_stations: List[PoliceStationFacility] = []
+    nearest_stations: List[PoliceStationFacility] = []
+    station_candidates: List[Dict[str, Any]] = []
+
+    # 6a. Seed with verified Delhi Police directory facilities
+    ref_stations = load_police_stations_reference()
+    for ref in ref_stations:
+        rlat = float(ref["latitude"])
+        rlon = float(ref["longitude"])
+        d_km = calculate_haversine_distance_km(latitude, longitude, rlat, rlon)
+        if d_km is not None:
+            station_candidates.append({
+                "osm_id": ref.get("id"),
+                "name": ref["name"],
+                "latitude": rlat,
+                "longitude": rlon,
+                "locality": ref.get("locality"),
+                "distance_km": d_km,
+                "source": "Delhi Police Official Directory & OpenStreetMap",
+            })
+
+    # 6b. Augment with live OpenStreetMap Overpass telemetry when available
     try:
         if radius > 0:
-            infra_summary = await fetch_overpass_infrastructure(latitude, longitude, radius=radius)
+            query_radius = max(radius, 4000)
+            infra_summary = await fetch_overpass_infrastructure(
+                latitude, longitude, radius=query_radius, connect_timeout=1.5, read_timeout=3.0
+            )
             if infra_summary and getattr(infra_summary, "facilities", None):
-                radius_km = radius / 1000.0
                 for fac in infra_summary.facilities:
                     if getattr(fac, "category", "") == "police":
                         flat = float(fac.latitude)
                         flon = float(fac.longitude)
                         dist_km = calculate_haversine_distance_km(latitude, longitude, flat, flon)
-                        if dist_km is not None and dist_km <= radius_km + 0.005:
-                            dist_str = f"{int(round(dist_km * 1000))} m" if dist_km < 1.0 else f"{dist_km:.2f} km"
-                            nearby_stations.append(
-                                PoliceStationFacility(
-                                    osm_id=fac.id,
-                                    name=fac.name,
-                                    category="police",
-                                    category_label="Police Station",
-                                    latitude=flat,
-                                    longitude=flon,
-                                    distance_km=dist_km,
-                                    formatted_distance=dist_str,
-                                    source="OpenStreetMap Overpass API",
-                                )
+                        if dist_km is not None:
+                            # Avoid duplicate if station within 250m already present
+                            is_dup = any(
+                                calculate_haversine_distance_km(flat, flon, c["latitude"], c["longitude"]) < 0.25
+                                for c in station_candidates
                             )
-                nearby_stations.sort(key=lambda s: s.distance_km if s.distance_km is not None else float("inf"))
+                            if not is_dup:
+                                station_candidates.append({
+                                    "osm_id": str(fac.id),
+                                    "name": fac.name or "Police Station",
+                                    "latitude": flat,
+                                    "longitude": flon,
+                                    "locality": None,
+                                    "distance_km": dist_km,
+                                    "source": "OpenStreetMap Overpass API",
+                                })
     except Exception as e:
         logger.warning("Overpass police stations query failed: %s", e)
+
+    # 6c. Sort strictly by straight-line distance
+    station_candidates.sort(key=lambda s: s["distance_km"] if s["distance_km"] is not None else float("inf"))
+
+    radius_km = (radius / 1000.0) if radius > 0 else 0.0
+    for cand in station_candidates:
+        d_km = cand["distance_km"]
+        is_in_radius = (radius > 0) and (d_km <= radius_km + 0.005)
+        dist_str = f"{d_km:.1f} km"
+        facility = PoliceStationFacility(
+            osm_id=cand.get("osm_id"),
+            name=cand["name"],
+            category="police",
+            category_label="Police Station",
+            latitude=cand["latitude"],
+            longitude=cand["longitude"],
+            distance_km=d_km,
+            formatted_distance=dist_str,
+            source=cand.get("source", "OpenStreetMap / Delhi Police Directory"),
+            locality=cand.get("locality"),
+            is_within_radius=is_in_radius,
+        )
+        if is_in_radius:
+            nearby_stations.append(facility)
+
+    # Extract top 4 nearest verified stations
+    nearest_candidates = station_candidates[:4]
+    for cand in nearest_candidates:
+        d_km = cand["distance_km"]
+        is_in_radius = (radius > 0) and (d_km <= radius_km + 0.005)
+        dist_str = f"{d_km:.1f} km"
+        nearest_stations.append(
+            PoliceStationFacility(
+                osm_id=cand.get("osm_id"),
+                name=cand["name"],
+                category="police",
+                category_label="Police Station",
+                latitude=cand["latitude"],
+                longitude=cand["longitude"],
+                distance_km=d_km,
+                formatted_distance=dist_str,
+                source=cand.get("source", "OpenStreetMap / Delhi Police Directory"),
+                locality=cand.get("locality"),
+                is_within_radius=is_in_radius,
+            )
+        )
 
     return LocalitySafetyResponse(
         status="active",
@@ -324,5 +411,6 @@ async def get_locality_safety_data(
         jurisdiction_match_type="approximate_spatial_reference",
         jurisdiction_disclaimer="Approximate macro reference territory. Official cadastral police district boundaries are not open data; property jurisdiction is indicative.",
         nearby_police_stations=nearby_stations,
+        nearest_police_stations=nearest_stations,
         total_police_stations_in_radius=len(nearby_stations),
     )

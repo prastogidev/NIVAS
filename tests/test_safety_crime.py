@@ -229,4 +229,31 @@ async def test_get_locality_safety_data_zero_radius():
     assert res.status == "active"
     assert res.search_radius_meters == 0
     assert res.nearby_police_stations == []
+    # Nearest stations directory still provides orientation
+    assert len(res.nearest_police_stations) > 0
+
+
+@pytest.mark.asyncio
+async def test_get_locality_safety_data_nearest_police_stations():
+    """Verify nearest police stations are returned, strictly sorted by distance with locality."""
+    res = await get_locality_safety_data(
+        latitude=28.6315,
+        longitude=77.2167,
+        address="Connaught Place, New Delhi",
+        radius=1200,
+    )
+    assert res.status == "active"
+    assert len(res.nearest_police_stations) >= 3
+    # Check strict ascending order by distance
+    distances = [s.distance_km for s in res.nearest_police_stations]
+    assert distances == sorted(distances)
+    # Check attributes
+    first = res.nearest_police_stations[0]
+    assert first.name is not None
+    assert first.distance_km is not None
+    assert "km" in first.formatted_distance
+    assert first.latitude > 0
+    assert first.longitude > 0
+    assert isinstance(first.is_within_radius, bool)
+
 

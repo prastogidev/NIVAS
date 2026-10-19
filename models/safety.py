@@ -101,11 +101,13 @@ class PoliceStationFacility(BaseOptimizedModel):
     name: str = Field(..., description="Name of police station or post")
     category: str = Field("police", description="Facility category code")
     category_label: str = Field("Police Station", description="Human-readable category label")
-    latitude: float = Field(..., description="Latitude coordinate from OpenStreetMap")
-    longitude: float = Field(..., description="Longitude coordinate from OpenStreetMap")
+    latitude: float = Field(..., description="Latitude coordinate from OpenStreetMap or official directory")
+    longitude: float = Field(..., description="Longitude coordinate from OpenStreetMap or official directory")
     distance_km: Optional[float] = Field(None, description="Straight-line Haversine distance in km")
     formatted_distance: Optional[str] = Field(None, description="Human-readable distance string")
     source: str = Field("OpenStreetMap Overpass API", description="Underlying provider")
+    locality: Optional[str] = Field(None, description="Locality, sector, or street name")
+    is_within_radius: bool = Field(False, description="Whether facility is within user search radius")
 
 
 class LocalitySafetyResponse(BaseOptimizedModel):
@@ -122,6 +124,7 @@ class LocalitySafetyResponse(BaseOptimizedModel):
         description="Jurisdiction precision disclaimer",
     )
     nearby_police_stations: List[PoliceStationFacility] = Field(default_factory=list, description="Real police stations within radius")
+    nearest_police_stations: List[PoliceStationFacility] = Field(default_factory=list, description="Top nearest verified police facilities sorted by distance")
     total_police_stations_in_radius: int = Field(0, description="Count of verified police stations within radius")
     transparency_notes: List[str] = Field(
         default_factory=lambda: [

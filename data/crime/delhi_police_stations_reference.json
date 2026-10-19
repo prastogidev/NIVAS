@@ -1,0 +1,795 @@
+[
+  {
+    "id": "del_nd_parliament_st",
+    "name": "Parliament Street Police Station",
+    "district_code": "DEL_ND",
+    "locality": "Parliament Street, New Delhi",
+    "latitude": 28.6253,
+    "longitude": 77.2144,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_nd_connaught_place",
+    "name": "Connaught Place Police Station",
+    "district_code": "DEL_ND",
+    "locality": "Connaught Place, New Delhi",
+    "latitude": 28.6315,
+    "longitude": 77.2167,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_nd_mandir_marg",
+    "name": "Mandir Marg Police Station",
+    "district_code": "DEL_ND",
+    "locality": "Mandir Marg, New Delhi",
+    "latitude": 28.6319,
+    "longitude": 77.1992,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_nd_barakhamba_road",
+    "name": "Barakhamba Road Police Station",
+    "district_code": "DEL_ND",
+    "locality": "Barakhamba Road, New Delhi",
+    "latitude": 28.6288,
+    "longitude": 77.2274,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_nd_tilak_marg",
+    "name": "Tilak Marg Police Station",
+    "district_code": "DEL_ND",
+    "locality": "Tilak Marg, New Delhi",
+    "latitude": 28.6186,
+    "longitude": 77.2383,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_nd_chanakyapuri",
+    "name": "Chanakyapuri Police Station",
+    "district_code": "DEL_ND",
+    "locality": "Chanakyapuri, New Delhi",
+    "latitude": 28.5985,
+    "longitude": 77.1852,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_nd_tughlak_road",
+    "name": "Tughlak Road Police Station",
+    "district_code": "DEL_ND",
+    "locality": "Tughlak Road, New Delhi",
+    "latitude": 28.6015,
+    "longitude": 77.2185,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_c_daryaganj",
+    "name": "Daryaganj Police Station",
+    "district_code": "DEL_C",
+    "locality": "Daryaganj, Central Delhi",
+    "latitude": 28.6472,
+    "longitude": 77.2405,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_c_paharganj",
+    "name": "Paharganj Police Station",
+    "district_code": "DEL_C",
+    "locality": "Paharganj, Central Delhi",
+    "latitude": 28.6425,
+    "longitude": 77.2152,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_c_karol_bagh",
+    "name": "Karol Bagh Police Station",
+    "district_code": "DEL_C",
+    "locality": "Karol Bagh, Central Delhi",
+    "latitude": 28.6521,
+    "longitude": 77.1906,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_c_chandni_mahal",
+    "name": "Chandni Mahal Police Station",
+    "district_code": "DEL_C",
+    "locality": "Chandni Mahal, Central Delhi",
+    "latitude": 28.6481,
+    "longitude": 77.2341,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_c_jama_masjid",
+    "name": "Jama Masjid Police Station",
+    "district_code": "DEL_C",
+    "locality": "Jama Masjid, Central Delhi",
+    "latitude": 28.6508,
+    "longitude": 77.2334,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_c_rajinder_nagar",
+    "name": "Rajinder Nagar Police Station",
+    "district_code": "DEL_C",
+    "locality": "Old Rajinder Nagar, Central Delhi",
+    "latitude": 28.6402,
+    "longitude": 77.1812,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_c_dbg_road",
+    "name": "Desh Bandhu Gupta Road Police Station",
+    "district_code": "DEL_C",
+    "locality": "DBG Road, Karol Bagh, Central Delhi",
+    "latitude": 28.6510,
+    "longitude": 77.2015,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_dwk_south_sec9",
+    "name": "Dwarka South Police Station",
+    "district_code": "DEL_DWK",
+    "locality": "Sector 9, Dwarka",
+    "latitude": 28.5772,
+    "longitude": 77.0610,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_dwk_north_sec17",
+    "name": "Dwarka North Police Station",
+    "district_code": "DEL_DWK",
+    "locality": "Sector 17, Dwarka",
+    "latitude": 28.6025,
+    "longitude": 77.0392,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_dwk_sec23",
+    "name": "Dwarka Sector 23 Police Station",
+    "district_code": "DEL_DWK",
+    "locality": "Sector 23, Dwarka",
+    "latitude": 28.5583,
+    "longitude": 77.0545,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_dwk_palam",
+    "name": "Palam Village Police Station",
+    "district_code": "DEL_DWK",
+    "locality": "Palam Village, Dwarka Sub-City",
+    "latitude": 28.5885,
+    "longitude": 77.0872,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_dwk_dabri",
+    "name": "Dabri Police Station",
+    "district_code": "DEL_DWK",
+    "locality": "Dabri, Dwarka Sub-City",
+    "latitude": 28.6085,
+    "longitude": 77.0851,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_dwk_bindapur",
+    "name": "Bindapur Police Station",
+    "district_code": "DEL_DWK",
+    "locality": "Bindapur, Uttam Nagar, Delhi",
+    "latitude": 28.6182,
+    "longitude": 77.0585,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_dwk_mohan_garden",
+    "name": "Mohan Garden Police Station",
+    "district_code": "DEL_DWK",
+    "locality": "Mohan Garden, Uttam Nagar",
+    "latitude": 28.6285,
+    "longitude": 77.0315,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_dwk_najafgarh",
+    "name": "Najafgarh Police Station",
+    "district_code": "DEL_DWK",
+    "locality": "Najafgarh, South-West Delhi",
+    "latitude": 28.6110,
+    "76.9855": 76.9855,
+    "longitude": 76.9855,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_s_hauz_khas",
+    "name": "Hauz Khas Police Station",
+    "district_code": "DEL_S",
+    "locality": "Hauz Khas, South Delhi",
+    "latitude": 28.5475,
+    "longitude": 77.2025,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_s_malviya_nagar",
+    "name": "Malviya Nagar Police Station",
+    "district_code": "DEL_S",
+    "locality": "Malviya Nagar, South Delhi",
+    "latitude": 28.5325,
+    "longitude": 77.2120,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_s_saket",
+    "name": "Saket Police Station",
+    "district_code": "DEL_S",
+    "locality": "Saket, South Delhi",
+    "latitude": 28.5245,
+    "longitude": 77.2185,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_s_mehrauli",
+    "name": "Mehrauli Police Station",
+    "district_code": "DEL_S",
+    "locality": "Mehrauli, South Delhi",
+    "latitude": 28.5185,
+    "longitude": 77.1852,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_s_neb_sarai",
+    "name": "Neb Sarai Police Station",
+    "district_code": "DEL_S",
+    "locality": "Neb Sarai, IGNOU Road, South Delhi",
+    "latitude": 28.5110,
+    "longitude": 77.2115,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_s_fatehpur_beri",
+    "name": "Fatehpur Beri Police Station",
+    "district_code": "DEL_S",
+    "locality": "Fatehpur Beri, South Delhi",
+    "latitude": 28.4895,
+    "longitude": 77.1650,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_se_sarita_vihar",
+    "name": "Sarita Vihar Police Station",
+    "district_code": "DEL_SE",
+    "locality": "Sarita Vihar, South-East Delhi",
+    "latitude": 28.5285,
+    "longitude": 77.2995,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_se_kalkaji",
+    "name": "Kalkaji Police Station",
+    "district_code": "DEL_SE",
+    "locality": "Kalkaji, South-East Delhi",
+    "latitude": 28.5425,
+    "longitude": 77.2555,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_se_lajpat_nagar",
+    "name": "Lajpat Nagar Police Station",
+    "district_code": "DEL_SE",
+    "locality": "Lajpat Nagar, South-East Delhi",
+    "latitude": 28.5685,
+    "longitude": 77.2415,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_se_amar_colony",
+    "name": "Amar Colony Police Station",
+    "district_code": "DEL_SE",
+    "locality": "Amar Colony, Lajpat Nagar 4",
+    "latitude": 28.5582,
+    "longitude": 77.2410,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_se_govindpuri",
+    "name": "Govindpuri Police Station",
+    "district_code": "DEL_SE",
+    "locality": "Govindpuri, Kalkaji",
+    "latitude": 28.5325,
+    "longitude": 77.2625,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_se_okhla",
+    "name": "Okhla Industrial Area Police Station",
+    "district_code": "DEL_SE",
+    "locality": "Okhla Phase 3, South-East Delhi",
+    "latitude": 28.5320,
+    "longitude": 77.2785,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_se_badarpur",
+    "name": "Badarpur Police Station",
+    "district_code": "DEL_SE",
+    "locality": "Badarpur Border, Mathura Road",
+    "latitude": 28.5025,
+    "longitude": 77.3050,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_sw_vasant_vihar",
+    "name": "Vasant Vihar Police Station",
+    "district_code": "DEL_SW",
+    "locality": "Vasant Vihar, South-West Delhi",
+    "latitude": 28.5605,
+    "longitude": 77.1610,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_sw_vasant_kunj_n",
+    "name": "Vasant Kunj North Police Station",
+    "district_code": "DEL_SW",
+    "locality": "Sector B, Vasant Kunj",
+    "latitude": 28.5395,
+    "longitude": 77.1550,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_sw_vasant_kunj_s",
+    "name": "Vasant Kunj South Police Station",
+    "district_code": "DEL_SW",
+    "locality": "Sector D, Vasant Kunj",
+    "latitude": 28.5215,
+    "longitude": 77.1510,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_sw_delhi_cantt",
+    "name": "Delhi Cantt Police Station",
+    "district_code": "DEL_SW",
+    "locality": "Delhi Cantt, South-West Delhi",
+    "latitude": 28.5910,
+    "longitude": 77.1350,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_sw_safdarjung_enc",
+    "name": "Safdarjung Enclave Police Station",
+    "district_code": "DEL_SW",
+    "locality": "Safdarjung Enclave, New Delhi",
+    "latitude": 28.5680,
+    "longitude": 77.1950,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_sw_sarojini_nagar",
+    "name": "Sarojini Nagar Police Station",
+    "district_code": "DEL_SW",
+    "locality": "Sarojini Nagar, New Delhi",
+    "latitude": 28.5750,
+    "longitude": 77.1985,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_sw_kapashera",
+    "name": "Kapashera Police Station",
+    "district_code": "DEL_SW",
+    "locality": "Kapashera Border, Delhi",
+    "latitude": 28.5240,
+    "longitude": 77.0850,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_w_rajouri_garden",
+    "name": "Rajouri Garden Police Station",
+    "district_code": "DEL_W",
+    "locality": "Rajouri Garden, West Delhi",
+    "latitude": 28.6485,
+    "longitude": 77.1215,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_w_tilak_nagar",
+    "name": "Tilak Nagar Police Station",
+    "district_code": "DEL_W",
+    "locality": "Tilak Nagar, West Delhi",
+    "latitude": 28.6385,
+    "longitude": 77.0985,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_w_janakpuri",
+    "name": "Janakpuri Police Station",
+    "district_code": "DEL_W",
+    "locality": "Janakpuri District Centre, West Delhi",
+    "latitude": 28.6285,
+    "longitude": 77.0895,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_w_vikas_puri",
+    "name": "Vikas Puri Police Station",
+    "district_code": "DEL_W",
+    "locality": "Vikas Puri, West Delhi",
+    "latitude": 28.6350,
+    "longitude": 77.0685,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_w_punjabi_bagh",
+    "name": "Punjabi Bagh Police Station",
+    "district_code": "DEL_W",
+    "locality": "Punjabi Bagh, West Delhi",
+    "latitude": 28.6685,
+    "longitude": 77.1310,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_w_kirti_nagar",
+    "name": "Kirti Nagar Police Station",
+    "district_code": "DEL_W",
+    "locality": "Kirti Nagar Industrial Area, West Delhi",
+    "latitude": 28.6540,
+    "longitude": 77.1420,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_w_mayapuri",
+    "name": "Mayapuri Police Station",
+    "district_code": "DEL_W",
+    "locality": "Mayapuri Phase 1, West Delhi",
+    "latitude": 28.6320,
+    "longitude": 77.1285,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_n_civil_lines",
+    "name": "Civil Lines Police Station",
+    "district_code": "DEL_N",
+    "locality": "Civil Lines, North Delhi",
+    "latitude": 28.6815,
+    "longitude": 77.2215,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_n_kotwali",
+    "name": "Kotwali Police Station",
+    "district_code": "DEL_N",
+    "locality": "Chandni Chowk, North Delhi",
+    "latitude": 28.6585,
+    "longitude": 77.2310,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_n_kashmere_gate",
+    "name": "Kashmere Gate Police Station",
+    "district_code": "DEL_N",
+    "locality": "ISBT Kashmere Gate, North Delhi",
+    "latitude": 28.6675,
+    "longitude": 77.2295,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_n_timarpur",
+    "name": "Timarpur Police Station",
+    "district_code": "DEL_N",
+    "locality": "Timarpur, North Delhi",
+    "latitude": 28.6985,
+    "longitude": 77.2210,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_n_maurice_nagar",
+    "name": "Maurice Nagar Police Station",
+    "district_code": "DEL_N",
+    "locality": "University Enclave, North Campus, Delhi",
+    "latitude": 28.6885,
+    "longitude": 77.2105,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_n_sarai_rohilla",
+    "name": "Sarai Rohilla Police Station",
+    "district_code": "DEL_N",
+    "locality": "Sarai Rohilla, North Delhi",
+    "latitude": 28.6650,
+    "longitude": 77.1885,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_nw_ashok_vihar",
+    "name": "Ashok Vihar Police Station",
+    "district_code": "DEL_NW",
+    "locality": "Ashok Vihar Phase 1, North-West Delhi",
+    "latitude": 28.6925,
+    "longitude": 77.1755,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_nw_model_town",
+    "name": "Model Town Police Station",
+    "district_code": "DEL_NW",
+    "locality": "Model Town 2, North-West Delhi",
+    "latitude": 28.7050,
+    "longitude": 77.1880,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_nw_mukherjee_nagar",
+    "name": "Mukherjee Nagar Police Station",
+    "district_code": "DEL_NW",
+    "locality": "Mukherjee Nagar, North-West Delhi",
+    "latitude": 28.7125,
+    "longitude": 77.2095,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_nw_subhash_place",
+    "name": "Netaji Subhash Place Police Station",
+    "district_code": "DEL_NW",
+    "locality": "Pitampura, Netaji Subhash Place",
+    "latitude": 28.6950,
+    "longitude": 77.1510,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_nw_adarsh_nagar",
+    "name": "Adarsh Nagar Police Station",
+    "district_code": "DEL_NW",
+    "locality": "Adarsh Nagar, GT Karnal Road",
+    "latitude": 28.7185,
+    "longitude": 77.1725,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_ne_seelampur",
+    "name": "Seelampur Police Station",
+    "district_code": "DEL_NE",
+    "locality": "Seelampur, North-East Delhi",
+    "latitude": 28.6685,
+    "longitude": 77.2710,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_ne_shastri_park",
+    "name": "Shastri Park Police Station",
+    "district_code": "DEL_NE",
+    "locality": "Shastri Park, North-East Delhi",
+    "latitude": 28.6680,
+    "longitude": 77.2580,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_ne_jafrabad",
+    "name": "Jafrabad Police Station",
+    "district_code": "DEL_NE",
+    "locality": "Jafrabad, North-East Delhi",
+    "latitude": 28.6810,
+    "longitude": 77.2725,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_ne_bhajanpura",
+    "name": "Bhajanpura Police Station",
+    "district_code": "DEL_NE",
+    "locality": "Bhajanpura, Wazirabad Road",
+    "latitude": 28.6980,
+    "longitude": 77.2715,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_ne_gokalpuri",
+    "name": "Gokalpuri Police Station",
+    "district_code": "DEL_NE",
+    "locality": "Gokalpuri, North-East Delhi",
+    "latitude": 28.7015,
+    "longitude": 77.2910,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_e_mandawali",
+    "name": "Mandawali Police Station",
+    "district_code": "DEL_E",
+    "locality": "Mandawali, Fazalpur, East Delhi",
+    "latitude": 28.6250,
+    "longitude": 77.2980,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_e_preet_vihar",
+    "name": "Preet Vihar Police Station",
+    "district_code": "DEL_E",
+    "locality": "Preet Vihar, Vikas Marg, East Delhi",
+    "latitude": 28.6410,
+    "longitude": 77.2940,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_e_shakarpur",
+    "name": "Shakarpur Police Station",
+    "district_code": "DEL_E",
+    "locality": "Shakarpur, Laxmi Nagar, East Delhi",
+    "latitude": 28.6320,
+    "longitude": 77.2810,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_e_mayur_vihar",
+    "name": "Mayur Vihar Police Station",
+    "district_code": "DEL_E",
+    "locality": "Mayur Vihar Phase 1, East Delhi",
+    "latitude": 28.6050,
+    "longitude": 77.3015,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_e_kalyanpuri",
+    "name": "Kalyanpuri Police Station",
+    "district_code": "DEL_E",
+    "locality": "Kalyanpuri, East Delhi",
+    "latitude": 28.6180,
+    "longitude": 77.3150,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_shd_vivek_vihar",
+    "name": "Vivek Vihar Police Station",
+    "district_code": "DEL_SHD",
+    "locality": "Vivek Vihar, Shahdara",
+    "latitude": 28.6650,
+    "longitude": 77.3150,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_shd_shahdara",
+    "name": "Shahdara Police Station",
+    "district_code": "DEL_SHD",
+    "locality": "Shahdara, Delhi",
+    "latitude": 28.6720,
+    "longitude": 77.2910,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_shd_anand_vihar",
+    "name": "Anand Vihar Police Station",
+    "district_code": "DEL_SHD",
+    "locality": "Anand Vihar, Near ISBT, Shahdara",
+    "latitude": 28.6515,
+    "longitude": 77.3120,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_shd_seemapuri",
+    "name": "Seemapuri Police Station",
+    "district_code": "DEL_SHD",
+    "locality": "New Seemapuri, Shahdara",
+    "latitude": 28.6880,
+    "longitude": 77.3250,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_roh_begumpur",
+    "name": "Begumpur Police Station",
+    "district_code": "DEL_ROH",
+    "locality": "Begumpur, Sector 22, Rohini",
+    "latitude": 28.7285,
+    "longitude": 77.0780,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_roh_south",
+    "name": "Rohini South Police Station",
+    "district_code": "DEL_ROH",
+    "locality": "Sector 3, Rohini",
+    "latitude": 28.7050,
+    "longitude": 77.1150,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_roh_north",
+    "name": "Rohini North Police Station",
+    "district_code": "DEL_ROH",
+    "locality": "Sector 7, Rohini",
+    "latitude": 28.7210,
+    "longitude": 77.1120,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_roh_prashant_vihar",
+    "name": "Prashant Vihar Police Station",
+    "district_code": "DEL_ROH",
+    "locality": "Prashant Vihar, Sector 14, Rohini",
+    "latitude": 28.7115,
+    "longitude": 77.1320,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_roh_aman_vihar",
+    "name": "Aman Vihar Police Station",
+    "district_code": "DEL_ROH",
+    "locality": "Aman Vihar, Rohini Sub-City",
+    "latitude": 28.7110,
+    "longitude": 77.0650,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_out_paschim_vihar_e",
+    "name": "Paschim Vihar East Police Station",
+    "district_code": "DEL_OUT",
+    "locality": "Paschim Vihar East, Outer Delhi",
+    "latitude": 28.6720,
+    "longitude": 77.1080,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_out_paschim_vihar_w",
+    "name": "Paschim Vihar West Police Station",
+    "district_code": "DEL_OUT",
+    "locality": "Paschim Vihar West, Outer Delhi",
+    "latitude": 28.6680,
+    "longitude": 77.0890,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_out_mangolpuri",
+    "name": "Mangolpuri Police Station",
+    "district_code": "DEL_OUT",
+    "locality": "Mangolpuri, Outer Delhi",
+    "latitude": 28.6920,
+    "longitude": 77.0910,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_out_sultanpuri",
+    "name": "Sultanpuri Police Station",
+    "district_code": "DEL_OUT",
+    "locality": "Sultanpuri, Outer Delhi",
+    "latitude": 28.6980,
+    "longitude": 77.0780,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_out_nihal_vihar",
+    "name": "Nihal Vihar Police Station",
+    "district_code": "DEL_OUT",
+    "locality": "Nihal Vihar, Nangloi, Outer Delhi",
+    "latitude": 28.6610,
+    "longitude": 77.0710,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_on_samaypur_badli",
+    "name": "Samaypur Badli Police Station",
+    "district_code": "DEL_ON",
+    "locality": "Samaypur Badli, Outer-North Delhi",
+    "latitude": 28.7420,
+    "longitude": 77.1410,
+    "is_headquarters": true
+  },
+  {
+    "id": "del_on_narela",
+    "name": "Narela Police Station",
+    "district_code": "DEL_ON",
+    "locality": "Narela, Outer-North Delhi",
+    "latitude": 28.8480,
+    "longitude": 77.0950,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_on_bawana",
+    "name": "Bawana Police Station",
+    "district_code": "DEL_ON",
+    "locality": "Bawana, Outer-North Delhi",
+    "latitude": 28.7980,
+    "longitude": 77.0420,
+    "is_headquarters": false
+  },
+  {
+    "id": "del_on_alipur",
+    "name": "Alipur Police Station",
+    "district_code": "DEL_ON",
+    "locality": "Alipur, GT Karnal Road, Outer-North Delhi",
+    "latitude": 28.7985,
+    "longitude": 77.1350,
+    "is_headquarters": false
+  }
+]
