@@ -10,6 +10,7 @@ from backend.models.safety import (
     PoliceStationFacility,
     LocalitySafetyResponse,
     OfficialStateCrimeStat,
+    NationalSafetyOverviewResponse,
 )
 from backend.services.location import fetch_overpass_infrastructure
 
@@ -41,11 +42,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CRIME_DATA_PATH = BASE_DIR / "data" / "crime" / "delhi_district_crime_baseline.json"
 DISTRICTS_GEOJSON_PATH = BASE_DIR / "data" / "crime" / "delhi_police_districts.geojson"
 POLICE_STATIONS_PATH = BASE_DIR / "data" / "crime" / "delhi_police_stations_reference.json"
+INDIA_STATES_GEOJSON_PATH = BASE_DIR / "data" / "crime" / "india_states_safety.geojson"
+INDIA_STATES_TABLE1A_PATH = BASE_DIR / "data" / "crime" / "india_states_crime_table1a.json"
 
 # Module-level cache
 _CACHED_BASELINE: Optional[Dict[str, Any]] = None
 _CACHED_GEOJSON: Optional[Dict[str, Any]] = None
 _CACHED_POLICE_STATIONS: Optional[List[Dict[str, Any]]] = None
+_CACHED_INDIA_GEOJSON: Optional[Dict[str, Any]] = None
+_CACHED_INDIA_TABLE1A: Optional[Dict[str, Any]] = None
 
 
 def load_police_stations_reference() -> List[Dict[str, Any]]:
@@ -94,6 +99,83 @@ def load_districts_geojson() -> Dict[str, Any]:
             logger.error("Error loading districts GeoJSON: %s", e)
             _CACHED_GEOJSON = {"features": []}
     return _CACHED_GEOJSON
+
+
+def load_india_states_geojson() -> Dict[str, Any]:
+    global _CACHED_INDIA_GEOJSON
+    if _CACHED_INDIA_GEOJSON is None:
+        try:
+            if INDIA_STATES_GEOJSON_PATH.exists():
+                with open(INDIA_STATES_GEOJSON_PATH, "r", encoding="utf-8") as f:
+                    _CACHED_INDIA_GEOJSON = json.load(f)
+            else:
+                logger.error("India states GeoJSON not found at %s", INDIA_STATES_GEOJSON_PATH)
+                _CACHED_INDIA_GEOJSON = {"type": "FeatureCollection", "features": []}
+        except Exception as e:
+            logger.error("Error loading India states GeoJSON: %s", e)
+            _CACHED_INDIA_GEOJSON = {"type": "FeatureCollection", "features": []}
+    return _CACHED_INDIA_GEOJSON
+
+
+def load_india_states_table1a() -> Dict[str, Any]:
+    global _CACHED_INDIA_TABLE1A
+    if _CACHED_INDIA_TABLE1A is None:
+        try:
+            if INDIA_STATES_TABLE1A_PATH.exists():
+                with open(INDIA_STATES_TABLE1A_PATH, "r", encoding="utf-8") as f:
+                    _CACHED_INDIA_TABLE1A = json.load(f)
+            else:
+                logger.error("India states Table 1A.1 not found at %s", INDIA_STATES_TABLE1A_PATH)
+                _CACHED_INDIA_TABLE1A = {"metadata": {}, "states": {}}
+        except Exception as e:
+            logger.error("Error loading India states Table 1A.1: %s", e)
+            _CACHED_INDIA_TABLE1A = {"metadata": {}, "states": {}}
+    return _CACHED_INDIA_TABLE1A
+
+
+def get_national_safety_overview() -> NationalSafetyOverviewResponse:
+    """
+    Retrieve nationwide statutory safety indicators and green/amber/red thematic boundaries
+    derived strictly from official NCRB Table 1A.1 (2022).
+    """
+    geojson = load_india_states_geojson()
+    table1a = load_india_states_table1a()
+    meta = table1a.get("metadata", {})
+
+    features = geojson.get("features", [])
+    total_states = len(features)
+    states_with_data = sum(1 for f in features if f.get("properties", {}).get("risk_tier") in ("lower", "moderate", "higher"))
+    states_with_subdistrict = sum(1 for f in features if f.get("properties", {}).get("has_district_data") is True)
+
+    return NationalSafetyOverviewResponse(
+        status="active",
+        reporting_year=meta.get("reporting_year", 2022),
+        source_agency=meta.get("source", "National Crime Records Bureau (NCRB), Ministry of Home Affairs, Government of India"),
+        source_title=f"{meta.get('publication', 'Crime in India 2022')} · {meta.get('table', 'Table 1A.1')}",
+        source_url="https://ncrb.gov.in/crime-in-india.html",
+        national_benchmark_rate=meta.get("national_benchmark_rate", 258.1),
+        total_all_india_ipc_cases=meta.get("total_all_india_ipc_cases", 3561379),
+        classification_method="relative_comparison_against_national_benchmark",
+        thresholds=meta.get("thresholds", {
+            "lower_max": 200.0,
+            "moderate_max": 350.0,
+            "higher_min": 350.0,
+        }),
+        color_palette=meta.get("color_palette", {
+            "lower": "#10B981",
+            "moderate": "#F59E0B",
+            "higher": "#EF4444",
+            "no_data": "#94A3B8",
+        }),
+        coverage_summary={
+            "total_states_mapped": total_states,
+            "states_with_statutory_data": states_with_data,
+            "states_with_subdistrict_polygons": states_with_subdistrict,
+            "coverage_percentage": round((states_with_data / total_states * 100.0), 1) if total_states > 0 else 0.0,
+        },
+        geojson=geojson,
+    )
+
 
 
 def point_in_polygon(lon: float, lat: float, poly_coords: List[List[float]]) -> bool:

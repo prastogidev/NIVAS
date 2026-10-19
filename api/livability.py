@@ -18,8 +18,8 @@ from backend.models.score import InfrastructureSummary
 from backend.services.location import fetch_overpass_infrastructure
 from backend.services.air_quality import fetch_real_aqi_with_status
 from backend.services.livability_advisor import generate_advisor_response
-from backend.models.safety import LocalitySafetyResponse
-from backend.services.crime_data import get_locality_safety_data
+from backend.models.safety import LocalitySafetyResponse, NationalSafetyOverviewResponse
+from backend.services.crime_data import get_locality_safety_data, get_national_safety_overview
 
 logger = logging.getLogger("nivas.api.livability")
 
@@ -235,3 +235,13 @@ async def get_safety_data(
     return await get_locality_safety_data(
         latitude=latitude, longitude=longitude, address=address, radius=radius
     )
+
+
+@router.get("/national-safety-overview", response_model=NationalSafetyOverviewResponse)
+async def get_national_safety_indicators():
+    """
+    Retrieve nationwide statutory safety indicators and green/amber/red thematic boundaries
+    derived strictly from official NCRB Table 1A.1 (2022).
+    """
+    return get_national_safety_overview()
+

@@ -7,6 +7,8 @@ from backend.services.crime_data import (
     load_crime_baseline,
     load_districts_geojson,
     get_locality_safety_data,
+    get_national_safety_overview,
+    load_india_states_geojson,
 )
 
 
@@ -255,5 +257,65 @@ async def test_get_locality_safety_data_nearest_police_stations():
     assert first.latitude > 0
     assert first.longitude > 0
     assert isinstance(first.is_within_radius, bool)
+
+
+def test_national_safety_overview_dataset_and_service():
+    """Verify all 36 states/UTs are represented with official Table 1A.1 metrics and valid classification."""
+    overview = get_national_safety_overview()
+    assert overview.status == "active"
+    assert overview.reporting_year == 2022
+    assert overview.national_benchmark_rate == 258.1
+    assert overview.total_all_india_ipc_cases == 3561379
+    assert overview.coverage_summary["total_states_mapped"] == 36
+    assert overview.coverage_summary["states_with_statutory_data"] == 36
+    assert overview.coverage_summary["coverage_percentage"] == 100.0
+
+    features = overview.geojson.get("features", [])
+    assert len(features) == 36
+
+    # Verify classification logic
+    for f in features:
+        props = f["properties"]
+        assert props["state_code"].startswith("IN-")
+        assert props["reporting_year"] == 2022
+        assert props["risk_tier"] in ("lower", "moderate", "higher", "no_data")
+        assert props["color"] in ("#10B981", "#F59E0B", "#EF4444", "#94A3B8")
+        rate = props["crime_rate_per_lakh"]
+        if rate is not None:
+            if rate < 200.0:
+                assert props["risk_tier"] == "lower"
+                assert props["color"] == "#10B981"
+            elif rate <= 350.0:
+                assert props["risk_tier"] == "moderate"
+                assert props["color"] == "#F59E0B"
+            else:
+                assert props["risk_tier"] == "higher"
+                assert props["color"] == "#EF4444"
+
+    # Specific check for Delhi and Uttar Pradesh
+    delhi = [f["properties"] for f in features if f["properties"]["state_code"] == "IN-DL"][0]
+    assert delhi["crime_rate_per_lakh"] == 1422.6
+    assert delhi["risk_tier"] == "higher"
+    assert delhi["has_district_data"] is True
+    assert delhi["e_fir_effect"] is not None
+
+    up = [f["properties"] for f in features if f["properties"]["state_code"] == "IN-UP"][0]
+    assert up["crime_rate_per_lakh"] == 171.6
+    assert up["risk_tier"] == "lower"
+
+
+def test_national_safety_overview_api_endpoint(client):
+    """Verify GET /api/livability/national-safety-overview endpoint returns valid schema."""
+    resp = client.get("/api/livability/national-safety-overview")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "active"
+    assert data["reporting_year"] == 2022
+    assert data["national_benchmark_rate"] == 258.1
+    assert data["total_all_india_ipc_cases"] == 3561379
+    assert data["coverage_summary"]["total_states_mapped"] == 36
+    assert len(data["geojson"]["features"]) == 36
+    assert "interpretability_guide" in data
+
 
 

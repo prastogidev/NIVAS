@@ -136,3 +136,76 @@ class LocalitySafetyResponse(BaseOptimizedModel):
         ]
     )
     error_message: Optional[str] = None
+
+
+class StateSafetyFeatureProperties(BaseOptimizedModel):
+    state_code: str = Field(..., description="Standardized State/UT code (e.g. 'IN-DL', 'IN-UP')")
+    state_name: str = Field(..., description="Official State/UT name")
+    reporting_year: int = Field(2022, description="Statutory NCRB reporting year")
+    total_ipc_cases: Optional[int] = Field(None, ge=0, description="Total cognizable IPC cases registered in 2022")
+    projected_population_lakhs: Optional[float] = Field(None, ge=0.0, description="Mid-year projected population in lakhs (RGI Census)")
+    crime_rate_per_lakh: Optional[float] = Field(None, ge=0.0, description="Rate per 100,000 population from Table 1A.1")
+    risk_tier: str = Field(..., description="Classification: 'lower', 'moderate', 'higher', or 'no_data'")
+    tier_label: str = Field(..., description="Human-readable classification label")
+    color: str = Field(..., description="Hex color: #10B981, #F59E0B, #EF4444, #94A3B8")
+    fill_opacity: float = Field(0.38, ge=0.0, le=1.0, description="Leaflet polygon fill opacity")
+    has_district_data: bool = Field(False, description="Whether sub-state district boundaries are currently available")
+    source_citation: str = Field("NCRB Crime in India 2022, Table 1A.1: IPC Crimes in States/UTs", description="Official citation")
+    legal_disclosure: str = Field("Statutory State/UT aggregate. Does not measure individual property or street-level crime.")
+    e_fir_effect: Optional[str] = Field(None, description="Footnote explaining electronic FIR registration impact on reported volume")
+
+
+class NationalSafetyOverviewResponse(BaseOptimizedModel):
+    status: str = Field("active", description="Status: 'active' or 'data_unavailable'")
+    reporting_year: int = Field(2022, description="Statutory reporting year")
+    source_agency: str = Field(
+        "National Crime Records Bureau (NCRB), Ministry of Home Affairs, Government of India",
+        description="Official publication authority"
+    )
+    source_title: str = Field(
+        "Crime in India 2022 (Volume I) · Table 1A.1: IPC Crimes (State/UT-wise)",
+        description="Publication and table title"
+    )
+    source_url: str = Field("https://ncrb.gov.in/crime-in-india.html", description="Citation URL")
+    national_benchmark_rate: float = Field(258.1, description="All-India average cognizable IPC crime rate per 100k population")
+    total_all_india_ipc_cases: int = Field(3561379, description="All-India total cognizable IPC crime cases registered in 2022")
+    classification_method: str = Field(
+        "relative_comparison_against_national_benchmark",
+        description="Method used for green/amber/red classification"
+    )
+    thresholds: Dict[str, float] = Field(
+        default_factory=lambda: {
+            "lower_max": 200.0,
+            "moderate_max": 350.0,
+            "higher_min": 350.0,
+        },
+        description="Classification boundaries for rate per 100k population"
+    )
+    color_palette: Dict[str, str] = Field(
+        default_factory=lambda: {
+            "lower": "#10B981",
+            "moderate": "#F59E0B",
+            "higher": "#EF4444",
+            "no_data": "#94A3B8",
+        },
+        description="Color palette mapping for thematic tiers"
+    )
+    coverage_summary: Dict[str, Any] = Field(
+        default_factory=lambda: {
+            "total_states_mapped": 36,
+            "states_with_statutory_data": 36,
+            "states_with_subdistrict_polygons": 1,
+            "coverage_percentage": 100.0,
+        },
+        description="Data coverage indicators"
+    )
+    geojson: Dict[str, Any] = Field(..., description="GeoJSON FeatureCollection with state geometries and properties")
+    interpretability_guide: Dict[str, str] = Field(
+        default_factory=lambda: {
+            "geographic_level": "State and Union Territory statutory aggregates only. Not neighborhood or parcel level.",
+            "e_fir_notice": "High recorded rates in states/UTs like Delhi heavily reflect 100% digital e-FIR registration for vehicle and property theft, rather than higher localized physical danger.",
+            "relative_nature": "Green/Amber/Red reflects relative statistical comparison against the national benchmark (258.1/100k). It does not certify an individual property as absolutely safe or dangerous.",
+            "inspection_distinction": "To inspect local evidence (nearby police stations, district estimates, hazard zones), switch to 'Check My Location' mode."
+        }
+    )
+
