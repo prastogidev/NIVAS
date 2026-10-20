@@ -396,36 +396,47 @@ pre,
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 1050;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  background: #1E3A5F;
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 40px;
-  padding: 0.6rem 1.15rem 0.6rem 0.85rem;
-  box-shadow: 0 8px 24px rgba(30, 58, 95, 0.35);
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  font-family: inherit;
-}
-
-.floating-advisor-launcher:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(30, 58, 95, 0.45);
-  background: #254672;
-}
-
-.launcher-icon-wrap {
-  width: 32px;
-  height: 32px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
+  z-index: 1050;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  background: #1E3A5F;
+  color: #FFFFFF;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  padding: 0;
+  box-shadow: 0 8px 24px rgba(30, 58, 95, 0.4);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.floating-advisor-launcher:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 14px 32px rgba(30, 58, 95, 0.55);
+  background: #254672;
+}
+
+.floating-advisor-launcher:focus-visible {
+  outline: 3px solid #5EEAD4;
+  outline-offset: 3px;
+}
+
+.launcher-icon-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.launcher-logo-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
 .launcher-text-wrap {
@@ -510,6 +521,18 @@ pre,
 }
 
 @media (max-width: 640px) {
+  .floating-advisor-launcher {
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .launcher-logo-img {
+    width: 26px;
+    height: 26px;
+  }
+
   .floating-advisor-panel {
     bottom: 0;
     right: 0;

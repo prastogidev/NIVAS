@@ -8,6 +8,7 @@ import CompareResultsView from './components/CompareResultsView';
 import LivabilityWorkspace from './components/LivabilityWorkspace';
 import DisasterWorkspace from './components/DisasterWorkspace';
 import DocumentIntelligenceWorkspace from './components/DocumentIntelligenceWorkspace';
+import NeighborhoodAiAdvisor from './components/NeighborhoodAiAdvisor';
 import { submitPropertyScore, compareProperties } from './services/api';
 import { Building2, RefreshCw, Scale, Search, Compass, ShieldCheck, AlertTriangle, FileText } from 'lucide-react';
 import nivasLogo from './assets/nivas_logo.png';
@@ -85,7 +86,7 @@ export default function App() {
     };
   });
   const [livabilitySearchQuery, setLivabilitySearchQuery] = useState('');
-  const [advisorInitialOpen, setAdvisorInitialOpen] = useState(true);
+  const [isAdvisorOpen, setIsAdvisorOpen] = useState(false); // Minimized by default on startup & reload
   const [advisorInitialFiles, setAdvisorInitialFiles] = useState([]);
 
   // Persist active section across reloads and sync with URL hash
@@ -261,9 +262,7 @@ export default function App() {
             onLocationChange={setLivabilityLocation}
             searchQuery={livabilitySearchQuery}
             onSearchQueryChange={setLivabilitySearchQuery}
-            initialChatOpen={advisorInitialOpen}
-            initialFiles={advisorInitialFiles}
-            onClearInitialFiles={() => setAdvisorInitialFiles([])}
+            renderAdvisor={false}
           />
         </main>
       ) : appSection === 'disaster' ? (
@@ -280,8 +279,7 @@ export default function App() {
               if (files && files.length > 0) {
                 setAdvisorInitialFiles(files);
               }
-              setAdvisorInitialOpen(true);
-              setAppSection('livability');
+              setIsAdvisorOpen(true);
             }}
           />
         </main>
@@ -379,6 +377,15 @@ export default function App() {
       </main>
     </>
   )}
+
+      {/* Global NIVAS AI Advisor: Persistent across all tabs, minimized by default */}
+      <NeighborhoodAiAdvisor
+        isOpen={isAdvisorOpen}
+        onOpenChange={setIsAdvisorOpen}
+        location={livabilityLocation}
+        initialFiles={advisorInitialFiles}
+        onClearInitialFiles={() => setAdvisorInitialFiles([])}
+      />
     </div>
   );
 }
