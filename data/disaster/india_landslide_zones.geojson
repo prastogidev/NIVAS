@@ -1,0 +1,198 @@
+{
+  "type": "FeatureCollection",
+  "name": "India_GSI_Landslide_Susceptibility_Zones",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "layer_id": "landslide_zones",
+        "hazard_type": "landslide",
+        "region": "himalayan_arc",
+        "susceptibility": "very_high",
+        "tier_label": "Very High / High Landslide Susceptibility",
+        "terrain_type": "Active Tectonic Mountain Arc (Steep Slopes > 30\u00b0)",
+        "covered_states": "Uttarakhand, Himachal Pradesh, Jammu & Kashmir, Ladakh, Sikkim",
+        "source": "Geological Survey of India (GSI) National Landslide Susceptibility Mapping (NLSM)",
+        "color": "#B45309",
+        "fill_opacity": 0.32,
+        "description": "Young, fragile folded sedimentary and metamorphic lithologies subject to high seismicity and intense monsoon cloudburst pore-pressure failures. Chamoli, Kedarnath valley, Shimla, Kullu, and NH-58/NH-5 corridors exhibit chronic debris flows.",
+        "mitigation_notes": "Site-specific slope stability geotechnical analysis required. Mandatory subsurface weep holes, reinforced gabion retaining walls, and prohibition of slope toe cutting without engineered revetment."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              73.5,
+              34.5
+            ],
+            [
+              75.0,
+              33.0
+            ],
+            [
+              76.0,
+              31.5
+            ],
+            [
+              76.8,
+              30.5
+            ],
+            [
+              78.2,
+              30.0
+            ],
+            [
+              79.5,
+              29.5
+            ],
+            [
+              81.0,
+              29.2
+            ],
+            [
+              81.5,
+              30.5
+            ],
+            [
+              80.0,
+              31.8
+            ],
+            [
+              78.0,
+              33.2
+            ],
+            [
+              75.5,
+              35.5
+            ],
+            [
+              74.0,
+              35.5
+            ],
+            [
+              73.5,
+              34.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer_id": "landslide_zones",
+        "hazard_type": "landslide",
+        "region": "western_ghats",
+        "susceptibility": "high_to_moderate",
+        "tier_label": "High Landslide Susceptibility (Escarpment Slopes)",
+        "terrain_type": "Lateritic Escarpment & Deccan Basalt Traps",
+        "covered_states": "Kerala (Wayanad, Idukki), Maharashtra (Konkan Ghats), Karnataka (Kodagu), Tamil Nadu (Nilgiris)",
+        "source": "Geological Survey of India (GSI NLSM) & NDMA",
+        "color": "#D97706",
+        "fill_opacity": 0.28,
+        "description": "Steep western escarpment receiving torrential southwest monsoon precipitation exceeding 3,000mm/year. Heavy overburden laterite soil mantle susceptible to sudden translational slides and mudslides.",
+        "mitigation_notes": "Avoid construction in natural colluvial valley drainage hollows. Maintain natural vegetation cover; ensure unblocked surface contour drainage channels."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              72.9,
+              20.0
+            ],
+            [
+              73.2,
+              17.0
+            ],
+            [
+              74.8,
+              13.5
+            ],
+            [
+              75.8,
+              11.5
+            ],
+            [
+              77.0,
+              8.5
+            ],
+            [
+              77.8,
+              8.8
+            ],
+            [
+              77.2,
+              11.8
+            ],
+            [
+              76.0,
+              14.0
+            ],
+            [
+              74.5,
+              17.5
+            ],
+            [
+              73.8,
+              20.2
+            ],
+            [
+              72.9,
+              20.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer_id": "landslide_zones",
+        "hazard_type": "landslide",
+        "region": "northeast_hills",
+        "susceptibility": "high",
+        "tier_label": "High Landslide Susceptibility",
+        "terrain_type": "Tertiary Sandstone-Shale Folded Terrain",
+        "covered_states": "Meghalaya, Mizoram, Nagaland, Manipur, Arunachal Pradesh",
+        "source": "Geological Survey of India (GSI NLSM)",
+        "color": "#D97706",
+        "fill_opacity": 0.28,
+        "description": "High relief terrain subject to extreme precipitation (Cherrapunji/Mawsynram belt). Saturated clay-rich shales prone to rotational slides.",
+        "mitigation_notes": "Engineered terracing, horizontal slope drains, and bio-engineering vetiver grass stabilization."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              91.0,
+              25.0
+            ],
+            [
+              94.5,
+              24.0
+            ],
+            [
+              95.5,
+              27.0
+            ],
+            [
+              93.5,
+              28.0
+            ],
+            [
+              91.5,
+              26.5
+            ],
+            [
+              91.0,
+              25.0
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "type": "FeatureCollection",
+  "name": "india_heatwave_zones",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "layer_id": "heatwave_zones",
+        "hazard_type": "heatwave",
+        "zone_name": "IMD Core Heatwave Zone (North-West & Central Belt)",
+        "summer_peak_temp": "44\u00b0C to 48\u00b0C",
+        "heatwave_threshold": "40\u00b0C in plains, departure >= 4.5\u00b0C",
+        "color": "#E11D48",
+        "fill_opacity": 0.22,
+        "source": "India Meteorological Department (IMD) Climatological Atlas & NDMA",
+        "description": "Chronic summer heatwave vulnerability zone where maximum temperatures consistently breach 45\u00b0C during May-June with elevated nocturnal minimums.",
+        "mitigation_notes": "Incorporate cool roofs (SRI > 78), exterior solar shading louvers, and passive cross-ventilation."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              69.5,
+              27.0
+            ],
+            [
+              71.5,
+              29.5
+            ],
+            [
+              74.5,
+              31.0
+            ],
+            [
+              77.5,
+              30.5
+            ],
+            [
+              81.0,
+              28.5
+            ],
+            [
+              84.0,
+              26.5
+            ],
+            [
+              87.0,
+              25.0
+            ],
+            [
+              86.5,
+              21.0
+            ],
+            [
+              83.0,
+              19.5
+            ],
+            [
+              79.0,
+              18.0
+            ],
+            [
+              77.0,
+              21.5
+            ],
+            [
+              74.0,
+              23.5
+            ],
+            [
+              70.0,
+              24.5
+            ],
+            [
+              69.5,
+              27.0
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

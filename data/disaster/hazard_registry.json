@@ -1,0 +1,189 @@
+{
+  "version": "2.0.0",
+  "national_coverage": {
+    "jurisdiction": "Republic of India",
+    "total_states_uts": 36,
+    "bounding_box": [6.5, 68.0, 37.5, 97.5]
+  },
+  "layers": [
+    {
+      "layer_id": "seismic_zones",
+      "name": "BIS IS 1893:2016 Seismic Hazard Zones",
+      "category": "earthquake",
+      "category_label": "Earthquake & Seismic Hazard",
+      "description": "Statutory seismic zoning classification under Bureau of Indian Standards criteria IS 1893 (Part 1): 2016, delineating Zones II, III, IV, and V with applicable zone factors and ductile detailing mandates.",
+      "source_agency": "Bureau of Indian Standards (BIS) & National Center for Seismology (NCS)",
+      "source_url": "https://seismo.gov.in/",
+      "publication_year": 2016,
+      "data_type": "official_boundary",
+      "geographic_coverage": "National (All 36 States & UTs)",
+      "spatial_resolution": "Macro-Zonal Structural Standard",
+      "is_active_by_default": true,
+      "visual_style": {
+        "type": "choropleth",
+        "zones": {
+          "V": { "color": "#DC2626", "fillOpacity": 0.35, "label": "Zone V (Very High, Z = 0.36)" },
+          "IV": { "color": "#F97316", "fillOpacity": 0.30, "label": "Zone IV (High, Z = 0.24)" },
+          "III": { "color": "#FBBF24", "fillOpacity": 0.25, "label": "Zone III (Moderate, Z = 0.16)" },
+          "II": { "color": "#34D399", "fillOpacity": 0.20, "label": "Zone II (Low, Z = 0.10)" }
+        }
+      },
+      "interpretation_note": "Seismic zoning establishes structural design acceleration thresholds under the National Building Code (NBC 2016); it does not predict earthquake timing or probability.",
+      "known_limitations": "Macro-scale administrative zoning. Local micro-zonation and soil liquefaction susceptibility require site-specific geotechnical boring investigation."
+    },
+    {
+      "layer_id": "river_flood_basins",
+      "name": "CWC / NDMA Major River Basin Flood-Prone Corridors",
+      "category": "flood",
+      "category_label": "River Flooding & Floodplains",
+      "description": "Major riverine floodplains, low-lying drainage corridors, and historical inundation basins across the Ganga, Brahmaputra, Yamuna, Godavari, Krishna, and Mahanadi river systems.",
+      "source_agency": "Central Water Commission (CWC) & Ministry of Jal Shakti",
+      "source_url": "https://cwc.gov.in/",
+      "publication_year": 2023,
+      "data_type": "historical_vulnerability",
+      "geographic_coverage": "Regional (Major River Basins of India)",
+      "spatial_resolution": "Macro River Valley Corridor",
+      "is_active_by_default": true,
+      "visual_style": {
+        "color": "#2563EB",
+        "fillColor": "#3B82F6",
+        "fillOpacity": 0.25,
+        "weight": 2
+      },
+      "interpretation_note": "Demarcates valley plains historically susceptible to inundation during peak monsoon discharges; not an active real-time flood warning feed.",
+      "known_limitations": "Active floodplain inundation boundaries for non-surveyed minor rivers and tributaries are not modeled; absence of flood polygon does not certify zero local cloudburst risk."
+    },
+    {
+      "layer_id": "yamuna_flood_corridor",
+      "name": "Yamuna River Active Floodplain Corridor (Delhi)",
+      "category": "flood",
+      "category_label": "River Flooding & Floodplains",
+      "description": "High-resolution regulatory O-Zone and 25-year flood inundation corridor along the Yamuna River within the National Capital Territory of Delhi, benchmarked to Old Railway Bridge gauge levels.",
+      "source_agency": "Central Water Commission (CWC) & Delhi I&FC Department / NGT 2015",
+      "source_url": "https://cwc.gov.in/",
+      "publication_year": 2023,
+      "data_type": "official_boundary",
+      "geographic_coverage": "NCT of Delhi (Regional Detailed Layer)",
+      "spatial_resolution": "Surveyed Riverbed Boundary",
+      "is_active_by_default": true,
+      "visual_style": {
+        "color": "#DC2626",
+        "fillColor": "#EF4444",
+        "fillOpacity": 0.28,
+        "weight": 2.5
+      },
+      "interpretation_note": "Regulatory riverbed corridor; permanent construction strictly restricted by National Green Tribunal (NGT) directives. Historic High Flood Level (HFL) 208.66m recorded in July 2023.",
+      "known_limitations": "Specific to NCT of Delhi reaches of Yamuna; not extrapolated outside Delhi."
+    },
+    {
+      "layer_id": "cyclone_coastal",
+      "name": "NDMA / IMD Coastal Cyclone & Storm Surge Vulnerability",
+      "category": "cyclone",
+      "category_label": "Cyclones, Coastal Exposure & Storm Surge",
+      "description": "Coastal hazard classification covering 13 coastal States and Union Territories along India's 7,516 km coastline, categorizing East Coast (Bay of Bengal) and West Coast (Arabian Sea) cyclone and storm surge exposure.",
+      "source_agency": "National Disaster Management Authority (NDMA NCRMP) & IMD",
+      "source_url": "https://ndma.gov.in/",
+      "publication_year": 2021,
+      "data_type": "modeled_exposure",
+      "geographic_coverage": "13 Coastal States & Union Territories",
+      "spatial_resolution": "Coastal District & CRZ Buffer (500m)",
+      "is_active_by_default": true,
+      "visual_style": {
+        "color": "#7C3AED",
+        "fillColor": "#A78BFA",
+        "fillOpacity": 0.25,
+        "weight": 2
+      },
+      "interpretation_note": "Evaluates long-term climatological vulnerability to cyclonic wind forces (up to Category 4/5) and coastal inundation; real-time tropical cyclone tracking requires IMD live bulletins.",
+      "known_limitations": "Does not predict specific landfall tracks in advance of active meteorological depressions."
+    },
+    {
+      "layer_id": "landslide_zones",
+      "name": "GSI National Landslide Susceptibility Mapping (NLSM)",
+      "category": "landslide",
+      "category_label": "Landslides & Steep Terrain",
+      "description": "Macro landslide susceptibility zones mapped across the Himalayan arc, Western Ghats escarpment, and Northeastern hill tracts based on slope gradient, lithology, and historical failure records.",
+      "source_agency": "Geological Survey of India (GSI) & Ministry of Mines",
+      "source_url": "https://bhukosh.gsi.gov.in/",
+      "publication_year": 2022,
+      "data_type": "modeled_exposure",
+      "geographic_coverage": "Himalayan States, Western Ghats & Northeast (17 States/UTs)",
+      "spatial_resolution": "Macro-Susceptibility Belts (High / Moderate)",
+      "is_active_by_default": true,
+      "visual_style": {
+        "color": "#B45309",
+        "fillColor": "#F59E0B",
+        "fillOpacity": 0.26,
+        "weight": 2
+      },
+      "interpretation_note": "Identifies terrain prone to mass-wasting and slope instability during heavy monsoon triggers; does not classify all mountainous plots as equally hazardous.",
+      "known_limitations": "Macro-scale spatial mapping; site-specific slope stability requires geotechnical engineering analysis."
+    },
+    {
+      "layer_id": "delhi_waterlogging_hotspots",
+      "name": "Delhi PWD Chronic Monsoon Waterlogging Hotspots",
+      "category": "waterlogging",
+      "category_label": "Urban Flooding & Waterlogging",
+      "description": "Surveyed chronic monsoon waterlogging underpasses, arterial intersections, and stormwater culvert choke points across the National Capital Territory of Delhi.",
+      "source_agency": "Delhi Public Works Department (PWD) & Drainage Master Plan",
+      "source_url": "https://pwd.delhigovt.nic.in/",
+      "publication_year": 2023,
+      "data_type": "point_infrastructure",
+      "geographic_coverage": "NCT of Delhi (Local Detailed Layer)",
+      "spatial_resolution": "Surveyed Point Locations",
+      "is_active_by_default": true,
+      "visual_style": {
+        "color": "#FFFFFF",
+        "fillColor": "#D97706",
+        "radius": 6,
+        "weight": 1.5
+      },
+      "interpretation_note": "Identifies chronic roadway bottlenecks where surface drainage accumulates during rainfall > 40 mm/hr; absence of points in non-Delhi cities indicates lack of surveyed municipal open data, not zero waterlogging risk.",
+      "known_limitations": "Surveyed only for NCT of Delhi arterial roads; other Indian municipal corporations have not released standardized point GIS datasets."
+    },
+    {
+      "layer_id": "heatwave_zones",
+      "name": "IMD / NDMA Core Heatwave Vulnerability Climatology",
+      "category": "heatwave",
+      "category_label": "Extreme Heat & Climate Exposure",
+      "description": "Climatological core heatwave belt across North, Central, and Eastern India where summer maximum temperatures regularly exceed 42°C to 47°C during April to June.",
+      "source_agency": "India Meteorological Department (IMD) & NDMA Heat Action Plan",
+      "source_url": "https://mausam.imd.gov.in/",
+      "publication_year": 2022,
+      "data_type": "static_zonal",
+      "geographic_coverage": "Regional (14 North, Central & East Indian States)",
+      "spatial_resolution": "Macro-Climatic Belt",
+      "is_active_by_default": false,
+      "visual_style": {
+        "color": "#E11D48",
+        "fillColor": "#FB7185",
+        "fillOpacity": 0.20,
+        "weight": 1.5
+      },
+      "interpretation_note": "Documents regional climatological heatwave exposure and NDMA thresholds (40°C in plains, 37°C in coastal areas); live heatwave alerts require IMD operational daily bulletins.",
+      "known_limitations": "Regional macro climatology; localized Urban Heat Island (UHI) temperature elevations vary based on vegetative tree canopy and asphalt density."
+    },
+    {
+      "layer_id": "drought_water_stress",
+      "name": "CGWB Groundwater Over-Exploited & Drought Stress Belts",
+      "category": "drought",
+      "category_label": "Drought & Water Stress",
+      "description": "National compilation of over-exploited and critical groundwater extraction assessment units under Central Ground Water Board surveys, alongside DPAP historical drought vulnerability.",
+      "source_agency": "Central Ground Water Board (CGWB) & Ministry of Jal Shakti",
+      "source_url": "https://cgwb.gov.in/",
+      "publication_year": 2022,
+      "data_type": "historical_vulnerability",
+      "geographic_coverage": "National (Selected Hydrogeological Belts)",
+      "spatial_resolution": "Regional Assessment Units",
+      "is_active_by_default": false,
+      "visual_style": {
+        "color": "#92400E",
+        "fillColor": "#D97706",
+        "fillOpacity": 0.20,
+        "weight": 1.5
+      },
+      "interpretation_note": "Reflects chronic groundwater draft exceeding annual replenishable recharge (>100% extraction); informs long-term domestic water supply viability and rainwater harvesting mandates.",
+      "known_limitations": "Hydrogeological block aggregates; does not track real-time rainfall deficits or municipal piped water grid connectivity."
+    }
+  ]
+}

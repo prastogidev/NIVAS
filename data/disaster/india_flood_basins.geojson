@@ -1,0 +1,214 @@
+{
+  "type": "FeatureCollection",
+  "name": "India_Major_River_Basin_Flood_Corridors",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "layer_id": "river_flood_basins",
+        "hazard_type": "flood",
+        "basin_name": "Ganga River Lowland Basin",
+        "flood_tier": "high",
+        "tier_label": "Major Riverine Flood Basin (Ganga)",
+        "states_affected": "Uttar Pradesh, Bihar, West Bengal",
+        "source": "Central Water Commission (CWC) & NDMA Flood Hazard Atlas",
+        "color": "#2563EB",
+        "fill_opacity": 0.25,
+        "description": "Extensive low-gradient alluvial floodplain along the main stem Ganga, Gandak, Kosi, and Ghaghara rivers. Chronic monsoon river swells inundate floodplains across Patna, Bhagalpur, Malda, and Murshidabad.",
+        "mitigation_notes": "Verify master plan green buffer and embankments; ensure plinth level is minimum 1.0m above local 100-year High Flood Level (HFL)."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.0,
+              26.8
+            ],
+            [
+              82.5,
+              26.5
+            ],
+            [
+              85.5,
+              26.4
+            ],
+            [
+              88.2,
+              25.5
+            ],
+            [
+              88.8,
+              24.0
+            ],
+            [
+              88.5,
+              22.5
+            ],
+            [
+              87.0,
+              22.8
+            ],
+            [
+              84.5,
+              24.0
+            ],
+            [
+              81.5,
+              24.8
+            ],
+            [
+              80.0,
+              25.8
+            ],
+            [
+              80.0,
+              26.8
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer_id": "river_flood_basins",
+        "hazard_type": "flood",
+        "basin_name": "Brahmaputra Valley Flood Corridor",
+        "flood_tier": "critical",
+        "tier_label": "Severe Active Riverine Flood Corridor (Brahmaputra)",
+        "states_affected": "Assam",
+        "source": "Brahmaputra Board & CWC Flood Monitoring",
+        "color": "#1D4ED8",
+        "fill_opacity": 0.3,
+        "description": "Braided river valley characterized by extreme sediment discharge, severe bank erosion, and widespread seasonal inundation across Kaziranga, Majuli, Barpeta, and Dhubri.",
+        "mitigation_notes": "Stilt foundation design required in flood-prone alluvial reaches; avoid construction within 500m of actively migrating riverbanks."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              89.8,
+              26.0
+            ],
+            [
+              92.0,
+              26.3
+            ],
+            [
+              94.5,
+              27.2
+            ],
+            [
+              95.5,
+              27.8
+            ],
+            [
+              95.0,
+              28.0
+            ],
+            [
+              92.5,
+              26.8
+            ],
+            [
+              90.0,
+              26.4
+            ],
+            [
+              89.8,
+              26.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer_id": "river_flood_basins",
+        "hazard_type": "flood",
+        "basin_name": "Mahanadi Deltaic Plain",
+        "flood_tier": "high",
+        "tier_label": "Deltaic Floodplain (Mahanadi)",
+        "states_affected": "Odisha (Cuttack, Jagatsinghpur, Kendrapara, Puri)",
+        "source": "CWC & Odisha State Disaster Management Authority (OSDMA)",
+        "color": "#2563EB",
+        "fill_opacity": 0.25,
+        "description": "Low-lying deltaic plain with complex distributaries subject to simultaneous monsoon river discharge and tidal backwater surge.",
+        "mitigation_notes": "Elevate building foundations above regional flood markers; verify escape routes to elevated cyclone-cum-flood shelters."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              85.8,
+              20.5
+            ],
+            [
+              86.8,
+              20.4
+            ],
+            [
+              86.6,
+              19.8
+            ],
+            [
+              85.6,
+              20.0
+            ],
+            [
+              85.8,
+              20.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer_id": "river_flood_basins",
+        "hazard_type": "flood",
+        "basin_name": "Godavari & Krishna Delta Basin",
+        "flood_tier": "moderate_to_high",
+        "tier_label": "Delta Flood Corridor (Godavari & Krishna)",
+        "states_affected": "Andhra Pradesh",
+        "source": "CWC & Andhra Pradesh Disaster Management",
+        "color": "#3B82F6",
+        "fill_opacity": 0.22,
+        "description": "Agricultural and urban deltaic lowlands subject to flash inundation during heavy upstream releases from Prakasam and Dowleswaram barrages.",
+        "mitigation_notes": "Dual backflow flap valves on drainage; pump drainage for basements."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.5,
+              16.5
+            ],
+            [
+              82.0,
+              16.8
+            ],
+            [
+              82.2,
+              16.2
+            ],
+            [
+              80.6,
+              15.8
+            ],
+            [
+              80.5,
+              16.5
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
