@@ -70,6 +70,19 @@ export const fetchNationalSafetyOverview = async (signal) => {
 };
 
 
+export const fetchDisasterLayers = async (signal) => {
+  const response = await apiClient.get('/api/disaster/layers', { signal });
+  return response.data;
+};
+
+export const fetchDisasterLayerGeometry = async (layerId, signal) => {
+  const response = await apiClient.get('/api/disaster/layer-geometry', {
+    params: { layer_id: layerId },
+    signal,
+  });
+  return response.data;
+};
+
 export const fetchDisasterHazardData = async ({ latitude, longitude, address }, signal) => {
   const params = { latitude, longitude };
   if (address) params.address = address;

@@ -724,19 +724,29 @@ export default function PropertyLocationPicker({
         if (!feat) return;
         const isFlood = layerKey === 'yamuna_flood_corridor';
         const layer = L.geoJSON(feat, {
-          style: {
-            color: isFlood ? '#DC2626' : '#D97706',
-            weight: 2,
-            opacity: 0.85,
-            fillColor: isFlood ? '#EF4444' : '#F59E0B',
-            fillOpacity: isFlood ? 0.22 : 0.28,
+          style: (feature) => {
+            const props = feature?.properties || {};
+            const strokeColor = props.color || (isFlood ? '#DC2626' : '#D97706');
+            const fillColor = props.fillColor || props.color || (isFlood ? '#EF4444' : '#F59E0B');
+            const fillOpacity = props.fill_opacity !== undefined
+              ? props.fill_opacity
+              : (props.fillOpacity !== undefined ? props.fillOpacity : (isFlood ? 0.22 : 0.28));
+            const weight = props.weight !== undefined ? props.weight : 2;
+            return {
+              color: strokeColor,
+              weight: weight,
+              opacity: props.opacity !== undefined ? props.opacity : 0.85,
+              fillColor: fillColor,
+              fillOpacity: fillOpacity,
+            };
           },
           pointToLayer: (geoJsonPoint, latlng) => {
+            const props = geoJsonPoint?.properties || {};
             return L.circleMarker(latlng, {
-              radius: 6,
-              fillColor: '#DC2626',
-              color: '#FFFFFF',
-              weight: 1.5,
+              radius: props.radius || 6,
+              fillColor: props.fillColor || '#DC2626',
+              color: props.color || '#FFFFFF',
+              weight: props.weight || 1.5,
               opacity: 1,
               fillOpacity: 0.9,
             });

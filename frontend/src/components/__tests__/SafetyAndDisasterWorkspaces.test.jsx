@@ -882,7 +882,7 @@ describe('Top-Level Three-Way Navigation & URL Hash Integration', () => {
     });
   });
 
-  describe('GIS Hazard Zoning Explorer Redesign', () => {
+  describe('GIS Hazard Zoning Explorer Redesign & All-India Coverage', () => {
     it('renders cleanly organized map controls, without top-right checkboxes, and supports layer toggles & reset', async () => {
       render(
         <DisasterWorkspace
@@ -900,7 +900,7 @@ describe('Top-Level Three-Way Navigation & URL Hash Integration', () => {
       expect(mapHeader.querySelector('input[type="checkbox"]')).toBeNull();
 
       // 2. Address/locality search field is rendered
-      const searchInput = screen.getByRole('textbox', { name: /search locality or landmark in delhi/i });
+      const searchInput = screen.getByRole('textbox', { name: /search/i });
       expect(searchInput).toBeDefined();
 
       // 3. Compact, collapsible Map Layers panel
@@ -908,11 +908,11 @@ describe('Top-Level Three-Way Navigation & URL Hash Integration', () => {
       expect(togglePanelBtn).toBeDefined();
       expect(togglePanelBtn.getAttribute('aria-expanded')).toBe('true');
 
-      // 4. Initial active count badge
+      // 4. Initial active count badge (6 of 8 default layers active)
       const activeCountBadge = screen.getByTestId('layers-active-count');
-      expect(activeCountBadge.textContent).toContain('2 of 2 Active');
+      expect(activeCountBadge.textContent).toContain('6 of 8 Active');
 
-      // Reset button should initially be disabled because default state is all active
+      // Reset button should initially be disabled because default state is active
       const resetBtn = screen.getByTestId('reset-layers-btn');
       expect(resetBtn.hasAttribute('disabled')).toBe(true);
 
@@ -927,25 +927,25 @@ describe('Top-Level Three-Way Navigation & URL Hash Integration', () => {
       // Verify category labels
       expect(screen.getByText('Riverine Inundation')).toBeDefined();
       expect(screen.getByText('Surface Drainage')).toBeDefined();
-      expect(screen.getByText('Yamuna River Floodplain Corridor')).toBeDefined();
+      expect(screen.getByText('Major River Flood Basins & Floodplains')).toBeDefined();
       expect(screen.getByText('Chronic Monsoon Waterlogging Hotspots')).toBeDefined();
 
       // 6. Toggle Flood layer off
       fireEvent.click(floodToggle);
       expect(floodToggle.checked).toBe(false);
-      expect(activeCountBadge.textContent).toContain('1 of 2 Active');
+      expect(activeCountBadge.textContent).toContain('5 of 8 Active');
       expect(resetBtn.hasAttribute('disabled')).toBe(false);
 
       // Toggle Waterlog layer off
       fireEvent.click(waterlogToggle);
       expect(waterlogToggle.checked).toBe(false);
-      expect(activeCountBadge.textContent).toContain('0 of 2 Active');
+      expect(activeCountBadge.textContent).toContain('4 of 8 Active');
 
       // 7. Click Reset to Default action
       fireEvent.click(resetBtn);
       expect(floodToggle.checked).toBe(true);
       expect(waterlogToggle.checked).toBe(true);
-      expect(activeCountBadge.textContent).toContain('2 of 2 Active');
+      expect(activeCountBadge.textContent).toContain('6 of 8 Active');
       expect(resetBtn.hasAttribute('disabled')).toBe(true);
 
       // 8. Test collapse and expand behavior
@@ -958,6 +958,39 @@ describe('Top-Level Three-Way Navigation & URL Hash Integration', () => {
       fireEvent.click(togglePanelBtn);
       expect(togglePanelBtn.getAttribute('aria-expanded')).toBe('true');
       expect(screen.getByTestId('layer-toggle-flood')).toBeDefined();
+    });
+
+    it('supports switching between India Hazard Overview and Check My Location with local actions', async () => {
+      render(
+        <DisasterWorkspace
+          location={{ latitude: 28.5921, longitude: 77.0460, address: 'Dwarka Sector 12, Delhi' }}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('disaster-assessment-card')).toBeDefined();
+      });
+
+      // Switch to India Hazard Overview
+      const overviewBtn = screen.getByTestId('mode-india-overview-btn');
+      fireEvent.click(overviewBtn);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('disaster-overview-section')).toBeDefined();
+        expect(screen.getByTestId('disaster-national-banner')).toBeDefined();
+        expect(screen.getByText(/Statutory All-India Coverage/i)).toBeDefined();
+      });
+
+      // Switch back to Check My Location
+      const checkLocBtn = screen.getByTestId('mode-check-location-btn');
+      fireEvent.click(checkLocBtn);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('disaster-assessment-card')).toBeDefined();
+        expect(screen.getByTestId('disaster-local-actions-toolbar')).toBeDefined();
+        expect(screen.getByTestId('action-use-my-location')).toBeDefined();
+        expect(screen.getByTestId('action-reset-location')).toBeDefined();
+      });
     });
   });
 });
