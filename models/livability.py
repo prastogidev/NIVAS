@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional, List, Dict
 from pydantic import Field, field_validator
 from backend.models.score import BaseOptimizedModel
+from backend.services.weather import CurrentWeatherResult
 
 
 class LivabilityDataRequest(BaseOptimizedModel):
@@ -82,6 +83,7 @@ class LivabilityLocationDataResponse(BaseOptimizedModel):
     infrastructure: LivabilityInfrastructureData
     air_quality: LivabilityAirQualityData
     environmental_hazards: LivabilityHazardData
+    weather: Optional[CurrentWeatherResult] = Field(None, description="Real-time meteorological conditions from OpenWeather")
 
 
 class LivabilityChatFacilityItem(BaseOptimizedModel):

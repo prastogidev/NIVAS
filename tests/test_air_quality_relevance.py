@@ -41,6 +41,7 @@ class AQICNGeographicRelevanceTests(unittest.IsolatedAsyncioTestCase):
         _FakeAsyncClient.requests = []
 
         with (
+            patch.object(settings, "OPENWEATHER_API_KEY", None),
             patch.object(settings, "AQICN_TOKEN", "demo"),
             patch("backend.services.air_quality.httpx.AsyncClient", _FakeAsyncClient),
         ):
@@ -53,6 +54,7 @@ class AQICNGeographicRelevanceTests(unittest.IsolatedAsyncioTestCase):
         _FakeAsyncClient.requests = []
 
         with (
+            patch.object(settings, "OPENWEATHER_API_KEY", None),
             patch.object(settings, "AQICN_TOKEN", "configured-real-token"),
             patch("backend.services.air_quality.httpx.AsyncClient", _FakeAsyncClient),
         ):

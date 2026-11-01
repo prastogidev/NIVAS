@@ -17,6 +17,7 @@ from backend.models.livability import (
 from backend.models.score import InfrastructureSummary
 from backend.services.location import fetch_overpass_infrastructure
 from backend.services.air_quality import fetch_real_aqi_with_status
+from backend.services.weather import fetch_current_weather
 from backend.services.livability_advisor import generate_advisor_response
 from backend.models.safety import LocalitySafetyResponse, NationalSafetyOverviewResponse
 from backend.services.crime_data import get_locality_safety_data, get_national_safety_overview
@@ -70,14 +71,17 @@ async def retrieve_livability_data(
             nearby_places=[],
             facilities=[],
         )
-        aqi_result = await fetch_real_aqi_with_status(latitude, longitude)
+        aqi_task = fetch_real_aqi_with_status(latitude, longitude)
+        weather_task = fetch_current_weather(latitude, longitude)
+        aqi_result, weather_result = await asyncio.gather(aqi_task, weather_task, return_exceptions=True)
     else:
-        # Fetch infrastructure and air quality concurrently
+        # Fetch infrastructure, air quality, and current weather concurrently
         infra_task = fetch_overpass_infrastructure(latitude, longitude, radius=radius)
         aqi_task = fetch_real_aqi_with_status(latitude, longitude)
+        weather_task = fetch_current_weather(latitude, longitude)
 
-        infra_result, aqi_result = await asyncio.gather(
-            infra_task, aqi_task, return_exceptions=True
+        infra_result, aqi_result, weather_result = await asyncio.gather(
+            infra_task, aqi_task, weather_task, return_exceptions=True
         )
 
     # 1. Process Infrastructure Summary
@@ -167,6 +171,13 @@ async def retrieve_livability_data(
         message="Real-time environmental hazard sensor network not configured for this region",
     )
 
+    # 4. Current Weather
+    weather_data = None
+    if isinstance(weather_result, tuple):
+        weather_data = weather_result[0]
+    elif not isinstance(weather_result, Exception):
+        weather_data = weather_result
+
     return LivabilityLocationDataResponse(
         latitude=latitude,
         longitude=longitude,
@@ -176,6 +187,7 @@ async def retrieve_livability_data(
         infrastructure=infra_data,
         air_quality=aqi_data,
         environmental_hazards=hazard_data,
+        weather=weather_data,
     )
 
 
