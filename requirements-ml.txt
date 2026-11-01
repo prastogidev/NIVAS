@@ -1,0 +1,26 @@
+# ML/Training dependencies — NOT included in Vercel production requirements.
+# Install separately in your local training environment:
+#   pip install -r backend/requirements-ml.txt
+#
+# For Google Colab, run:
+#   !pip install -r backend/requirements-ml.txt
+#
+# These packages are large (PyTorch ~2 GB) and are excluded from the serverless
+# deployment bundle to stay within Vercel's size limits.
+
+torch>=2.1.0
+torchvision>=0.16.0
+torchaudio>=2.1.0
+
+# Image processing (also in production requirements but pinned here for training env)
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# Evaluation & metrics
+scikit-learn>=1.3.0
+
+# Optional: video frame extraction
+opencv-python-headless>=4.8.0
+
+# Optional: progress bars during training
+tqdm>=4.65.0

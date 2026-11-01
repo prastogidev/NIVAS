@@ -1,7 +1,9 @@
 import asyncio
 import base64
 import io
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch, MagicMock
 import numpy as np
 from PIL import Image
@@ -33,6 +35,20 @@ class MultiImageCVAnalysisTests(unittest.IsolatedAsyncioTestCase):
         self.img2_b64 = create_test_image_b64(102)
         self.img3_b64 = create_test_image_b64(103)
         self.thermal_b64 = create_test_image_b64(999)
+        # Create a temporary fake checkpoint file so P1 guard is satisfied
+        from backend.cv.model import build_efficientnet_b0, WALL_CONDITION_CLASSES
+        self._tmp_checkpoint = tempfile.NamedTemporaryFile(suffix=".pth", delete=False)
+        model = build_efficientnet_b0(num_classes=len(WALL_CONDITION_CLASSES), pretrained=False)
+        torch.save(model.state_dict(), self._tmp_checkpoint.name)
+        self._tmp_checkpoint.close()
+        self._fake_ckpt_path = Path(self._tmp_checkpoint.name)
+
+    def tearDown(self):
+        import os
+        try:
+            os.unlink(self._tmp_checkpoint.name)
+        except FileNotFoundError:
+            pass
 
     def test_extract_image_candidates_deduplication(self):
         """Test 5: Primary image_base64 is not duplicated when also present in images[]."""
@@ -78,7 +94,8 @@ class MultiImageCVAnalysisTests(unittest.IsolatedAsyncioTestCase):
             file_name="living_room.jpg",
             image_type="RGB"
         )
-        result = await run_cv_analysis(image_info)
+        with patch("backend.services.cv_model.MODEL_WEIGHTS_PATH", self._fake_ckpt_path):
+            result = await run_cv_analysis(image_info)
 
         self.assertIsNotNone(result)
         self.assertEqual(mock_model.call_count, 1)
@@ -101,7 +118,8 @@ class MultiImageCVAnalysisTests(unittest.IsolatedAsyncioTestCase):
                 {"image_base64": self.img3_b64, "file_name": "room3.jpg", "image_type": "RGB"},
             ]
         )
-        result = await run_cv_analysis(image_info)
+        with patch("backend.services.cv_model.MODEL_WEIGHTS_PATH", self._fake_ckpt_path):
+            result = await run_cv_analysis(image_info)
 
         self.assertIsNotNone(result)
         self.assertEqual(mock_model.call_count, 3)
@@ -115,6 +133,7 @@ class MultiImageCVAnalysisTests(unittest.IsolatedAsyncioTestCase):
         """Test 3: Multiple images with different predicted classes (clean, algae, mold).
         Verifies that each appears in visual_evidence with correct class/confidence
         and aggregate condition score is calculated according to the scoring formula.
+        Order: clean=0, damp=1, algae=2, mold=3, broken=4
         """
         mock_model = MagicMock()
         logits_img1 = torch.tensor([[10.0, 0.0, 0.0, 0.0, 0.0]])  # clean ~1.0
@@ -130,7 +149,8 @@ class MultiImageCVAnalysisTests(unittest.IsolatedAsyncioTestCase):
                 {"image_base64": self.img3_b64, "file_name": "ceiling_damp.jpg", "image_type": "RGB"},
             ]
         )
-        result = await run_cv_analysis(image_info)
+        with patch("backend.services.cv_model.MODEL_WEIGHTS_PATH", self._fake_ckpt_path):
+            result = await run_cv_analysis(image_info)
 
         self.assertIsNotNone(result)
         self.assertEqual(len(result.visual_evidence), 3)
@@ -171,7 +191,8 @@ class MultiImageCVAnalysisTests(unittest.IsolatedAsyncioTestCase):
             image_type="Thermal",
             file_name="thermal_ir.jpg"
         )
-        result = await run_cv_analysis(image_info)
+        with patch("backend.services.cv_model.MODEL_WEIGHTS_PATH", self._fake_ckpt_path):
+            result = await run_cv_analysis(image_info)
         self.assertIsNone(result)
         mock_model.assert_not_called()
 
@@ -191,7 +212,8 @@ class MultiImageCVAnalysisTests(unittest.IsolatedAsyncioTestCase):
                 {"image_base64": self.img2_b64, "file_name": "img2.jpg", "image_type": "RGB"},
             ]
         )
-        result = await run_cv_analysis(image_info)
+        with patch("backend.services.cv_model.MODEL_WEIGHTS_PATH", self._fake_ckpt_path):
+            result = await run_cv_analysis(image_info)
         self.assertIsNotNone(result)
         # Exactly 2 inferences, not 3
         self.assertEqual(mock_model.call_count, 2)
@@ -209,7 +231,8 @@ class MultiImageCVAnalysisTests(unittest.IsolatedAsyncioTestCase):
             file_name="single_wall.jpg",
             image_type="RGB"
         )
-        result = await run_cv_analysis(legacy_info)
+        with patch("backend.services.cv_model.MODEL_WEIGHTS_PATH", self._fake_ckpt_path):
+            result = await run_cv_analysis(legacy_info)
         self.assertIsNotNone(result)
         self.assertEqual(mock_model.call_count, 1)
         self.assertEqual(result.predicted_class, "clean")
@@ -230,7 +253,8 @@ class MultiImageCVAnalysisTests(unittest.IsolatedAsyncioTestCase):
                 {"image_base64": self.img1_b64, "file_name": "valid.jpg", "image_type": "RGB"},
             ]
         )
-        result = await run_cv_analysis(image_info)
+        with patch("backend.services.cv_model.MODEL_WEIGHTS_PATH", self._fake_ckpt_path):
+            result = await run_cv_analysis(image_info)
         self.assertIsNotNone(result)
         self.assertEqual(mock_model.call_count, 1)
         self.assertEqual(len(result.visual_evidence), 1)

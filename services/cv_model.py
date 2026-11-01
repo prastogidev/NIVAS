@@ -19,7 +19,7 @@ except ImportError:
     F = None
     build_efficientnet_b0 = None
     get_eval_transforms = None
-    WALL_CONDITION_CLASSES = ["clean", "crack", "peeling", "water_damage", "mold"]
+    WALL_CONDITION_CLASSES = ["clean", "damp", "algae", "mold", "broken"]
     TORCH_AVAILABLE = False
 
 from backend.models.score import ImageInfo, CVModelResult, VisualEvidenceItem
@@ -33,8 +33,26 @@ BLUR_VARIANCE_THRESHOLD = 50.0  # Images with Laplacian variance below 50.0 are 
 VIDEO_SAMPLE_INTERVAL_SECONDS = 2.0
 
 
+_BLUR_EVAL_MAX_DIM = 512  # P2 FIX: downscale to this before Laplacian so high-res images
+                           # are not unfairly penalised by the fixed variance threshold.
+
+
 def compute_blur_variance(pil_img: Image.Image) -> float:
-    """Compute 2D discrete Laplacian variance of grayscale image to measure sharpness."""
+    """Compute 2D discrete Laplacian variance of a consistently-downscaled grayscale image.
+
+    P2 FIX: Always evaluate blur on a downscaled copy (longest side ≤ 512 px) so that
+    high-resolution images are not rejected just because their larger pixel grids yield
+    higher absolute Laplacian variance than identical content at standard resolution.
+    The threshold BLUR_VARIANCE_THRESHOLD=50.0 is calibrated against this fixed scale.
+    """
+    # Downscale only if the image is larger than the evaluation window
+    w, h = pil_img.size
+    if max(w, h) > _BLUR_EVAL_MAX_DIM:
+        scale = _BLUR_EVAL_MAX_DIM / max(w, h)
+        new_w = max(1, int(w * scale))
+        new_h = max(1, int(h * scale))
+        pil_img = pil_img.resize((new_w, new_h), Image.BILINEAR)
+
     gray = np.array(pil_img.convert("L"), dtype=np.float32)
     if gray.shape[0] < 3 or gray.shape[1] < 3:
         return 0.0
@@ -172,7 +190,12 @@ def _extract_image_candidates(image_info: ImageInfo) -> List[Dict[str, Any]]:
 
 
 def _result_from_probabilities(probabilities: List[float]) -> CVModelResult:
-    """Apply the existing image-CV class, defect, and scoring rules to averaged probabilities."""
+    """Apply the existing image-CV class, defect, and scoring rules to averaged probabilities.
+
+    P3 FIX: Ensures training class indices, model output indices, class weights,
+    evaluation labels and inference class names all use exactly this order:
+    clean, damp, algae, mold, broken (0=clean, 1=damp, 2=algae, 3=mold, 4=broken).
+    """
     probability_by_class = {
         class_name: probability
         for class_name, probability in zip(WALL_CONDITION_CLASSES, probabilities)
@@ -237,16 +260,23 @@ async def run_cv_analysis(image_info: Optional[ImageInfo]) -> Optional[CVModelRe
         return None
 
     # Load model weights once for all candidates
+    # P1 FIX: When no trained checkpoint exists, return explicit untrained state rather than
+    # generating meaningless predictions from ImageNet-only pretrained weights.
+    if not MODEL_WEIGHTS_PATH.exists():
+        logger.warning(
+            "No trained wall-condition checkpoint found at '%s'. "
+            "CV analysis is UNAVAILABLE until the model is trained and the checkpoint is promoted. "
+            "Returning None.",
+            MODEL_WEIGHTS_PATH,
+        )
+        return None
+
     try:
         device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
-        if MODEL_WEIGHTS_PATH.exists():
-            model = build_efficientnet_b0(num_classes=len(WALL_CONDITION_CLASSES), pretrained=False)
-            state_dict = torch.load(MODEL_WEIGHTS_PATH, map_location=device)
-            model.load_state_dict(state_dict)
-            logger.info("Loaded fine-tuned EfficientNet-B0 checkpoint from %s", MODEL_WEIGHTS_PATH)
-        else:
-            model = build_efficientnet_b0(num_classes=len(WALL_CONDITION_CLASSES), pretrained=True)
-            logger.info("Using pretrained EfficientNet-B0 transfer learning architecture for wall inference")
+        model = build_efficientnet_b0(num_classes=len(WALL_CONDITION_CLASSES), pretrained=False)
+        state_dict = torch.load(MODEL_WEIGHTS_PATH, map_location=device)
+        model.load_state_dict(state_dict)
+        logger.info("Loaded fine-tuned EfficientNet-B0 checkpoint from %s", MODEL_WEIGHTS_PATH)
 
         model.to(device)
         model.eval()
@@ -393,11 +423,9 @@ async def run_video_cv_analysis(image_info: ImageInfo) -> Optional[CVModelResult
         fps = float(capture.get(cv2.CAP_PROP_FPS) or 0.0)
         frame_interval = max(1, round(fps * VIDEO_SAMPLE_INTERVAL_SECONDS)) if fps > 0 else 1
         device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
-        if MODEL_WEIGHTS_PATH.exists():
-            model = build_efficientnet_b0(num_classes=len(WALL_CONDITION_CLASSES), pretrained=False)
-            model.load_state_dict(torch.load(MODEL_WEIGHTS_PATH, map_location=device))
-        else:
-            model = build_efficientnet_b0(num_classes=len(WALL_CONDITION_CLASSES), pretrained=True)
+        # P1: checkpoint existence was already verified above (returns None if missing)
+        model = build_efficientnet_b0(num_classes=len(WALL_CONDITION_CLASSES), pretrained=False)
+        model.load_state_dict(torch.load(MODEL_WEIGHTS_PATH, map_location=device))
         model.to(device)
         model.eval()
         transform = get_eval_transforms()

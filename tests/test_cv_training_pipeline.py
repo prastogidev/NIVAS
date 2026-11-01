@@ -29,7 +29,10 @@ from backend.services.cv_model import _result_from_probabilities
 class TestCVTrainingPipeline(unittest.TestCase):
 
     def test_class_names_and_indices(self):
-        """Verify the 5 standard classes exist in expected order and indexing."""
+        """Verify the 5 standard classes exist in expected order (P3 fix) and correct indexing.
+
+        Canonical order: clean=0, damp=1, algae=2, mold=3, broken=4.
+        """
         expected_classes = ["clean", "damp", "algae", "mold", "broken"]
         self.assertEqual(WALL_CONDITION_CLASSES, expected_classes)
         self.assertEqual(len(WALL_CONDITION_CLASSES), 5)
@@ -40,7 +43,10 @@ class TestCVTrainingPipeline(unittest.TestCase):
         self.assertEqual(WALL_CONDITION_CLASSES[4], "broken")
 
     def test_classification_metrics_computation_5_classes(self):
-        """Verify accurate multi-class classification metric calculations and 5x5 confusion matrix."""
+        """Verify accurate multi-class classification metric calculations and 5x5 confusion matrix.
+
+        Order: clean=0, damp=1, algae=2, mold=3, broken=4.
+        """
         # 5 samples:
         # True:  0 (clean), 1 (damp), 2 (algae), 3 (mold), 4 (broken)
         # Pred:  0 (clean), 1 (damp), 2 (algae), 0 (clean - error!), 4 (broken)

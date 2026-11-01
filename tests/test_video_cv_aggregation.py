@@ -5,9 +5,9 @@ from backend.services.cv_model import _result_from_probabilities
 
 class VideoCVAggregationTests(unittest.TestCase):
     def test_aggregated_frame_probabilities_use_existing_cv_score_mapping(self):
-        # These represent the averaged outputs of valid sampled frames, not
-        # fabricated model output. The helper applies the existing score rules.
-        result = _result_from_probabilities([0.60, 0.25, 0.10, 0.05])
+        # 5 probabilities: clean=0.60, damp=0.25, algae=0.10, mold=0.05, broken=0.0
+        # clean, damp, algae, mold, broken
+        result = _result_from_probabilities([0.60, 0.25, 0.10, 0.05, 0.0])
 
         self.assertEqual(result.predicted_class, "clean")
         self.assertEqual(result.confidence, 0.6)

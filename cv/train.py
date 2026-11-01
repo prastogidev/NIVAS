@@ -97,6 +97,45 @@ def verify_real_dataset_exists(data_dir: Path) -> Tuple[int, Dict[str, int]]:
     return valid_count, class_counts
 
 
+def create_indexed_image_folder(folder_path: Path, transform=None) -> ImageFolder:
+    """
+    Creates an ImageFolder with explicit class-to-index mapping matching WALL_CONDITION_CLASSES:
+    ['clean', 'damp', 'algae', 'mold', 'broken'].
+
+    P3 FIX: Standard ImageFolder assigns indices alphabetically (algae: 0, broken: 1, ...),
+    which causes a mismatch with WALL_CONDITION_CLASSES and the model head.
+    This helper aligns dataset.classes, dataset.class_to_idx, and sample targets
+    strictly with WALL_CONDITION_CLASSES.
+    """
+    dataset = ImageFolder(str(folder_path), transform=transform)
+    target_mapping = {cls_name: i for i, cls_name in enumerate(WALL_CONDITION_CLASSES)}
+    dataset.classes = list(WALL_CONDITION_CLASSES)
+    dataset.class_to_idx = target_mapping
+    dataset.samples = [
+        (s[0], target_mapping[Path(s[0]).parent.name])
+        for s in dataset.samples
+    ]
+    dataset.targets = [s[1] for s in dataset.samples]
+    return dataset
+
+
+def _assert_class_order_matches(dataset: ImageFolder) -> None:
+    """
+    P3 FIX: Assert that ImageFolder's class-to-index mapping matches
+    WALL_CONDITION_CLASSES exactly:
+    clean=0, damp=1, algae=2, mold=3, broken=4.
+    """
+    expected_mapping = {cls_name: i for i, cls_name in enumerate(WALL_CONDITION_CLASSES)}
+    if dataset.class_to_idx != expected_mapping or dataset.classes != WALL_CONDITION_CLASSES:
+        raise ValueError(
+            "P3 CLASS-ORDER MISMATCH DETECTED.\n"
+            f"  Dataset class_to_idx: {dataset.class_to_idx}\n"
+            f"  Expected mapping: {expected_mapping}\n"
+            f"  Dataset classes: {dataset.classes}\n"
+            f"  Expected classes: {WALL_CONDITION_CLASSES}\n"
+        )
+
+
 def compute_class_weights(class_counts: Dict[str, int], device: torch.device) -> Optional[torch.Tensor]:
     """
     Calculates balanced class weights inversely proportional to class frequencies:
@@ -229,7 +268,17 @@ def train_wall_condition_model(
     train_path = data_path / "train"
     val_path = data_path / "val"
 
-    train_dataset = ImageFolder(str(train_path), transform=get_train_transforms())
+    train_dataset = create_indexed_image_folder(train_path, transform=get_train_transforms())
+
+    # P3 FIX: Enforce class-order consistency between ImageFolder and WALL_CONDITION_CLASSES.
+    # Training class indices, model output indices, class weights, evaluation labels and inference class names
+    # all use exactly this order: clean, damp, algae, mold, broken.
+    _assert_class_order_matches(train_dataset)
+    logger.info(
+        "P3 class-order check PASSED: Dataset class-to-index = %s",
+        train_dataset.class_to_idx,
+    )
+
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
@@ -240,8 +289,9 @@ def train_wall_condition_model(
 
     val_loader = None
     if val_path.exists():
-        val_dataset = ImageFolder(str(val_path), transform=get_val_transforms())
+        val_dataset = create_indexed_image_folder(val_path, transform=get_val_transforms())
         if len(val_dataset) > 0:
+            _assert_class_order_matches(val_dataset)
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=batch_size,

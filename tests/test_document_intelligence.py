@@ -261,3 +261,58 @@ def test_api_compare_extracted_documents_endpoint(client):
     assert data["document_count"] == 2
     assert data["overall_risk_level"] == "low"
     assert len(data["matches"]) >= 1
+
+
+def test_scanned_pdf_without_ocr_graceful_notice():
+    """Verify that a scanned PDF without machine-readable text or OCR engine triggers the scanned notice."""
+    from PIL import Image
+    from backend.services.document_analysis import set_ocr_engine_override
+
+    set_ocr_engine_override(None)  # Reset override
+
+    # Create a PDF with an image containing no text layer
+    img = Image.new("RGB", (100, 100), color=(240, 240, 240))
+    buf = io.BytesIO()
+    img.save(buf, format="PDF")
+    pdf_bytes = buf.getvalue()
+
+    pages, warnings, is_scanned_or_empty = extract_pages_from_file(pdf_bytes, "scanned_doc.pdf")
+    assert is_scanned_or_empty is True
+    assert len(pages) == 1
+    assert any("scanned" in w.lower() for w in warnings)
+
+
+def test_scanned_pdf_with_ocr_engine_success():
+    """Verify that when an OCR extractor succeeds on a scanned image PDF, page content and citations are extracted."""
+    from PIL import Image
+    from backend.services.document_analysis import set_ocr_engine_override
+
+    # Mock OCR engine returning deed text
+    def mock_ocr(pil_img):
+        return SAMPLE_SALE_DEED_TEXT
+
+    set_ocr_engine_override(mock_ocr)
+    try:
+        img = Image.new("RGB", (200, 200), color=(255, 255, 255))
+        buf = io.BytesIO()
+        img.save(buf, format="PDF")
+        pdf_bytes = buf.getvalue()
+
+        pages, warnings, is_scanned_or_empty = extract_pages_from_file(pdf_bytes, "scanned_deed.pdf")
+        assert is_scanned_or_empty is False
+        assert len(pages) == 1
+        assert "ABSOLUTE SALE DEED" in pages[0][1]
+        assert any("OCR" in w or "optical character recognition" in w.lower() for w in warnings)
+
+        # Full document analysis verification on the OCR-extracted document
+        doc_result = analyze_document_bytes(pdf_bytes, "scanned_deed.pdf")
+        vendor = next((p for p in doc_result.parties if "Vendor" in p.role), None)
+        assert vendor is not None
+        assert "Rajesh Kumar Sharma" in vendor.name
+        assert vendor.evidence is not None
+        assert vendor.evidence.page_number == 1
+        assert doc_result.financials.status == DocumentFieldStatus.EXPLICITLY_STATED
+        assert doc_result.property_details.plot_survey_number == "45-B"
+        assert "Rohini" in doc_result.property_details.address
+    finally:
+        set_ocr_engine_override(None)

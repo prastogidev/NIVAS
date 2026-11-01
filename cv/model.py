@@ -4,6 +4,15 @@ from torchvision import models
 from torchvision.transforms import transforms
 from typing import List
 
+# Canonical NIVAS 5-class wall-condition order:
+#   Index 0 -> clean
+#   Index 1 -> damp
+#   Index 2 -> algae
+#   Index 3 -> mold
+#   Index 4 -> broken
+# P3 FIX: Ensure training class indices, model output indices, class weights,
+# evaluation labels, and inference class names all use exactly this order:
+# clean, damp, algae, mold, broken.
 WALL_CONDITION_CLASSES: List[str] = ["clean", "damp", "algae", "mold", "broken"]
 
 

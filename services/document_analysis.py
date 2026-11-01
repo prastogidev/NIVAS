@@ -6,12 +6,47 @@ cross-document discrepancy comparison, and prompt-injection sanitization.
 """
 
 import io
+import logging
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pypdf
+
+logger = logging.getLogger(__name__)
+
+# Optional OCR hooks (pytesseract or custom callable)
+_ocr_engine_override: Optional[Callable[[Any], str]] = None
+
+
+def set_ocr_engine_override(engine: Optional[Callable[[Any], str]]) -> None:
+    """Configures a custom OCR extractor callback (e.g. for testing or external OCR services)."""
+    global _ocr_engine_override
+    _ocr_engine_override = engine
+
+
+def run_ocr_on_pil_image(image: Any) -> Optional[str]:
+    """
+    Attempts to run OCR on a PIL Image object.
+    Uses custom override if set, otherwise tries pytesseract if tesseract is installed.
+    Returns extracted text string, or None if OCR is unavailable or fails.
+    """
+    if _ocr_engine_override is not None:
+        try:
+            return _ocr_engine_override(image)
+        except Exception as e:
+            logger.debug("OCR override failed: %s", e)
+            return None
+
+    try:
+        import pytesseract
+
+        text = pytesseract.image_to_string(image)
+        return text if text else ""
+    except Exception as e:
+        logger.debug("Local tesseract OCR unavailable or failed: %s", e)
+        return None
 
 from backend.models.documents import (
     DiscrepancyItem,
@@ -100,11 +135,33 @@ def extract_pages_from_file(file_bytes: bytes, filename: str) -> Tuple[List[Tupl
             )
 
         total_extracted_chars = 0
+        ocr_attempted = False
+        ocr_extracted_chars = 0
+
         for i, page in enumerate(reader.pages, start=1):
             try:
                 page_text = page.extract_text() or ""
             except Exception:
                 page_text = ""
+
+            # If page text extraction yielded minimal characters, check for embedded scanned images and run OCR
+            if len(page_text.strip()) < 40 and hasattr(page, "images") and len(page.images) > 0:
+                ocr_attempted = True
+                extracted_image_texts: List[str] = []
+                for img_file in page.images:
+                    try:
+                        pil_img = img_file.image
+                        ocr_result = run_ocr_on_pil_image(pil_img)
+                        if ocr_result and ocr_result.strip():
+                            extracted_image_texts.append(ocr_result.strip())
+                    except Exception as e:
+                        logger.debug("Image extraction/OCR failed on page %d: %s", i, e)
+
+                if extracted_image_texts:
+                    combined_ocr = "\n".join(extracted_image_texts)
+                    page_text = f"{page_text}\n{combined_ocr}".strip() if page_text else combined_ocr
+                    ocr_extracted_chars += len(combined_ocr)
+
             clean_text, threats = sanitize_text(page_text)
             if threats:
                 warnings.extend([f"Page {i}: {t}" for t in threats])
@@ -113,9 +170,19 @@ def extract_pages_from_file(file_bytes: bytes, filename: str) -> Tuple[List[Tupl
 
         if total_extracted_chars < 80:
             is_scanned_or_empty = True
+            if ocr_attempted:
+                warnings.append(
+                    "This document contains scanned images, but OCR was either unavailable or could not detect machine-readable text. "
+                    "Please upload a clear, text-based PDF or TXT file for automated extraction."
+                )
+            else:
+                warnings.append(
+                    "This document appears to be a scanned image or empty PDF. Machine-readable text was not detected. "
+                    "Please upload an OCR-processed or text-based PDF or TXT file for automated extraction."
+                )
+        elif ocr_extracted_chars > 0:
             warnings.append(
-                "This document appears to be a scanned image or empty PDF. Machine-readable text was not detected. "
-                "Please upload an OCR-processed or text-based PDF or TXT file for automated extraction."
+                f"Document text was successfully extracted using optical character recognition (OCR) from embedded scanned pages."
             )
 
     elif lower_name.endswith((".txt", ".text", ".md", ".csv")):
